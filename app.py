@@ -306,17 +306,7 @@ page = st.sidebar.radio(
     index=0,
 )
 
-st.sidebar.markdown("---")
-st.sidebar.info(
-    "**System Features**:\n"
-    "- Thin mode (no Oracle Client needed)\n"
-    "- Parameterized queries (Bind Variables)\n"
-    "- Materialized Views & Refresh\n"
-    "- Analytic Window Functions (`RANK`, `LAG`, `SUM OVER`)\n"
-    "- Native JSON queries (`JSON_VALUE`)\n"
-    "- Timezone operations (`AT TIME ZONE`)\n"
-    "- Single-transaction Booking & Payment"
-)
+
 
 
 # =============================================================
@@ -1163,3 +1153,4 @@ elif page == "📈 Analytics":
                 ```
                 """
             )
+
