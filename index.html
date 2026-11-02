@@ -832,7 +832,17 @@
         const resp = await fetch(`${API_BASE}${endpoint}`, options);
         const json = await resp.json().catch(() => ({}));
         if (!resp.ok) {
-          throw new Error(json.detail || `Server error (HTTP ${resp.status})`);
+          let errorMsg = `Server error (HTTP ${resp.status})`;
+          if (json.detail) {
+            if (Array.isArray(json.detail)) {
+              errorMsg = json.detail.map(d => `${d.loc ? d.loc.slice(-1)[0] + ': ' : ''}${d.msg || JSON.stringify(d)}`).join(', ');
+            } else if (typeof json.detail === 'object') {
+              errorMsg = JSON.stringify(json.detail);
+            } else {
+              errorMsg = json.detail;
+            }
+          }
+          throw new Error(errorMsg);
         }
         return json;
       } catch (err) {

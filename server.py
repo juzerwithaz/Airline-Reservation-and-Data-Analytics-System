@@ -170,7 +170,7 @@ async def require_admin(current_user: Dict[str, Any] = Depends(get_current_user)
 class PassengerRegisterRequest(BaseModel):
     name: str = Field(..., min_length=2, max_length=100)
     email: str = Field(..., max_length=100)
-    phone: str = Field(..., min_length=5, max_length=20)
+    phone: str = Field(..., min_length=5, max_length=15)
     password: str = Field(..., min_length=8)
     preferences: Optional[Dict[str, Any]] = None
 
