@@ -40,7 +40,7 @@ ORACLE_DSN=localhost:1521/FREEPDB1
 
 ### 4. Run the Streamlit Application (Local)
 ```bash
-streamlit run app.py
+streamlit run streamlit_app.py
 ```
 The application will launch automatically in your web browser at `http://localhost:8501`.
 
@@ -58,7 +58,7 @@ Your full responsive application will be live in ~10 seconds with zero configura
 ```
 oracle_airline_website/
 ├── index.html            # Vercel-ready responsive single-page web app (Tailwind + Plotly)
-├── app.py                # Main Streamlit web application with sidebar navigation
+├── streamlit_app.py      # Streamlit web application for local development
 ├── db.py                 # Database connection helper (Thin-mode Oracle 23ai driver)
 ├── requirements.txt      # Python dependencies
 ├── .env                  # Environment file with database credentials (gitignored)
