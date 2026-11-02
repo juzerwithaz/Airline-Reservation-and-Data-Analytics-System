@@ -8,9 +8,25 @@ from dotenv import load_dotenv
 # Load environment variables from .env
 load_dotenv()
 
-DB_USER = os.getenv("ORACLE_USER", "airline")
-DB_PASSWORD = os.getenv("ORACLE_PASSWORD", "airline123")
-DB_DSN = os.getenv("ORACLE_DSN", "localhost:1521/FREEPDB1")
+def get_db_credentials() -> Tuple[str, str, str]:
+    """
+    Retrieve Oracle DB credentials, checking Streamlit Secrets first
+    (for Streamlit Community Cloud deployment), then falling back to .env / os.getenv.
+    """
+    user = os.getenv("ORACLE_USER", "airline")
+    password = os.getenv("ORACLE_PASSWORD", "airline123")
+    dsn = os.getenv("ORACLE_DSN", "localhost:1521/FREEPDB1")
+
+    try:
+        import streamlit as st
+        if hasattr(st, "secrets"):
+            user = st.secrets.get("ORACLE_USER", user)
+            password = st.secrets.get("ORACLE_PASSWORD", password)
+            dsn = st.secrets.get("ORACLE_DSN", dsn)
+    except Exception:
+        pass
+
+    return user, password, dsn
 
 
 def get_connection() -> oracledb.Connection:
@@ -18,11 +34,12 @@ def get_connection() -> oracledb.Connection:
     Establish a connection to Oracle Database in Thin Mode.
     No Oracle Instant Client or binary installation is required.
     """
+    user, password, dsn = get_db_credentials()
     try:
         return oracledb.connect(
-            user=DB_USER,
-            password=DB_PASSWORD,
-            dsn=DB_DSN,
+            user=user,
+            password=password,
+            dsn=dsn,
         )
     except oracledb.DatabaseError as e:
         error_obj, = e.args
@@ -35,6 +52,7 @@ def test_connection() -> Dict[str, Any]:
     """
     Test connectivity and return server version and current user.
     """
+    user, _, _ = get_db_credentials()
     conn = get_connection()
     try:
         with conn.cursor() as cursor:
@@ -42,7 +60,7 @@ def test_connection() -> Dict[str, Any]:
             row = cursor.fetchone()
             return {
                 "status": "connected",
-                "user": row[0] if row else DB_USER,
+                "user": row[0] if row else user,
                 "banner": row[1] if row else f"Oracle DB (version {conn.version})",
                 "version": conn.version,
             }
