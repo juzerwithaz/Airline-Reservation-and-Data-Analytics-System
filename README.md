@@ -101,3 +101,4 @@ Every page includes an interactive **"🔍 View SQL"** drawer specifically inclu
 - **In-Memory Caching**: Read-only queries use `@st.cache_data(ttl=30)` for high-performance responsiveness without overloading the database.
 - **Cache Invalidation**: Any mutation (booking confirmation, booking cancellation, or materialized view refresh) immediately calls `st.cache_data.clear()` to guarantee data consistency.
 - **Resilience**: Database exceptions are trapped and surfaced through user-friendly Streamlit banners (`st.error`, `st.warning`) without crashing the application.
+

@@ -247,3 +247,4 @@ def cancel_booking(booking_id: int) -> bool:
         raise e
     finally:
         conn.close()
+
