@@ -1,0 +1,8 @@
+{
+  "name": "airline-reservation-analytics",
+  "version": "1.0.0",
+  "description": "Airline Reservation and Booking Analytics System",
+  "scripts": {
+    "build": "echo 'Static build ready'"
+  }
+}
