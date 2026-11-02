@@ -1,6 +1,6 @@
-# Airline Reservation and Booking Analytics System ✈️
+# AZ Airlines — Airline Reservation & Booking Analytics System ✈️
 
-A comprehensive, production-grade airline reservation and data analytics platform connected to an **Oracle Database 23ai Free** instance (`FREEPDB1`). Built with a dual-portal architecture featuring a high-performance **FastAPI REST API backend**, an Emirates/Qatar Airways-inspired passenger and admin portal, and an internal **Streamlit analytics dashboard**.
+A production-grade airline reservation and data analytics platform connected to **Oracle Database 23ai Free** (`FREEPDB1`). Built with a modern, minimal airline interface inspired by IndiGo, a high-performance **FastAPI REST API backend**, and an internal **Streamlit analytics dashboard**.
 
 ---
 
@@ -25,8 +25,8 @@ A comprehensive, production-grade airline reservation and data analytics platfor
                          │
                          ▼ (JSON / REST API)
         ┌──────────────────────────────────┐
-        │  Modern Airline Web Interface    │
-        │           (index.html)           │
+        │  AZ Airlines Modern Web Portal   │
+        │   (index.html - Light Minimal)   │
         └──────────────────────────────────┘
 ```
 
@@ -39,7 +39,7 @@ A comprehensive, production-grade airline reservation and data analytics platfor
 - **Database Driver**: [python-oracledb](https://oracle.github.io/python-oracledb/) in **Thin Mode** (pure Python, requires zero Oracle Client / Instant Client installation)
 - **Security & Password Hashing**: [Argon2id](https://pypi.org/project/argon2-cffi/) & RFC 7519 HMAC-SHA256 JWT tokens
 - **Data Analysis & Visualization**: [pandas](https://pandas.pydata.org/), [Plotly](https://plotly.com/), and [Streamlit](https://streamlit.io/)
-- **Frontend**: Responsive Tailwind CSS, JavaScript, Plotly.js (`index.html`)
+- **Frontend**: Clean, minimal AZ Airlines UI inspired by IndiGo with Tailwind CSS, Vanilla JS, Plotly.js (`index.html`)
 
 ---
 
@@ -59,6 +59,8 @@ ORACLE_USER=airline
 ORACLE_PASSWORD=airline123
 ORACLE_DSN=localhost:1521/FREEPDB1
 JWT_SECRET_KEY=your-super-secure-jwt-secret-key-2026
+CORS_ORIGINS=*
+PORT=8000
 ```
 
 ### 3. Bootstrap Administrator Account
@@ -76,7 +78,15 @@ uvicorn server:app --reload --host 127.0.0.1 --port 8000
 - **Interactive Swagger Documentation**: `http://127.0.0.1:8000/docs`
 - **ReDoc Documentation**: `http://127.0.0.1:8000/redoc`
 
-### 5. Launch the Streamlit Analytical App (Optional)
+### 5. Launch the Web Frontend
+Open `index.html` directly in your browser or serve via any static web server:
+```bash
+python -m http.server 3000
+```
+Open `http://localhost:3000` or navigate to the deployed frontend.
+The frontend includes an **API Config** modal in the header to target any local or remote FastAPI backend.
+
+### 6. Launch the Streamlit Analytical App (Optional)
 ```bash
 streamlit run streamlit_app.py
 ```
@@ -86,7 +96,7 @@ Opens in your browser at `http://localhost:8501`.
 
 ## 🧪 Verification & Automated Testing
 
-Run the automated integration test suites against your live Oracle database:
+Run the automated integration and end-to-end QA test suites against your live Oracle database:
 
 ```bash
 # 1. Verify Database Layer & Sequences (Milestone 1)
@@ -94,9 +104,12 @@ python test_db_milestone1.py
 
 # 2. Verify FastAPI Endpoints, Auth & Transactions (Milestone 2)
 python test_server_milestone2.py
+
+# 3. Comprehensive End-to-End QA Suite (Milestone 4)
+python test_milestone4_qa.py
 ```
 
-Both suites execute end-to-end against Oracle and verify zero data loss across existing records.
+All 3 test suites execute against live Oracle Database 23ai and verify **100% test pass rate** with **zero data loss** across existing records.
 
 ---
 
@@ -126,10 +139,11 @@ Both suites execute end-to-end against Oracle and verify zero data loss across e
 ### Flights & Passenger Bookings
 | Method | Endpoint | Auth | Description |
 | :--- | :--- | :--- | :--- |
-| `GET` | `/api/flights` | None | Search flights with Oracle `AT TIME ZONE` projection (`origin`, `destination`, `timezone`) |
+| `GET` | `/api/flights` | None | Search flights with Oracle `AT TIME ZONE` projection (`origin`, `destination`, `date`, `timezone`) |
 | `GET` | `/api/flights/{id}` | None | Get detailed flight schedule and fare |
 | `POST` | `/api/bookings` | Bearer (Passenger) | Atomic booking + payment creation using `BOOKING_SEQ` & `PAYMENT_SEQ` |
 | `GET` | `/api/bookings/my` | Bearer (Passenger) | View personal booking history with real-time status and payment records |
+| `GET` | `/api/bookings/{id}` | Bearer (Passenger/Admin) | View specific booking details and payment record |
 | `POST` | `/api/bookings/{id}/cancel` | Bearer (Passenger) | Cancel eligible booking (enforces passenger ownership) |
 
 ### Administrator Record Management (CRUD)
@@ -140,9 +154,11 @@ Both suites execute end-to-end against Oracle and verify zero data loss across e
 | `PUT` | `/api/admin/airports/{code}` | Bearer (Admin) | Update airport details |
 | `DELETE` | `/api/admin/airports/{code}` | Bearer (Admin) | Delete airport (safely validates foreign key usage in flights first) |
 | `GET` | `/api/admin/flights` | Bearer (Admin) | List all flights |
-| `POST` | `/api/admin/flights` | Bearer (Admin) | Schedule a new flight |
+| `POST` | `/api/admin/flights` | Bearer (Admin) | Schedule a new flight (validates origin != destination) |
 | `PATCH` | `/api/admin/flights/{id}/fare` | Bearer (Admin) | Update fare for an existing flight |
-| `GET` | `/api/admin/passengers` | Bearer (Admin) | Search passengers and view booking history |
+| `DELETE` | `/api/admin/flights/{id}` | Bearer (Admin) | Safely delete flight if no confirmed bookings exist |
+| `GET` | `/api/admin/passengers` | Bearer (Admin) | Search passengers across the system |
+| `GET` | `/api/admin/passengers/{id}` | Bearer (Admin) | Retrieve single passenger details and their full booking history |
 | `GET` | `/api/admin/bookings` | Bearer (Admin) | Filter and view all bookings across the fleet |
 | `GET` | `/api/admin/payments` | Bearer (Admin) | Audit-only payment transaction viewing (immutable records) |
 
@@ -168,7 +184,9 @@ Both suites execute end-to-end against Oracle and verify zero data loss across e
 2. **Oracle Sequence ID Generation**:
    - `BOOKING_SEQ.NEXTVAL`, `PASSENGER_SEQ.NEXTVAL`, and `PAYMENT_SEQ.NEXTVAL` guarantee collision-free concurrent inserts.
 3. **Account Claiming Workflow**:
-   - Seeded passengers (from original seed scripts) possess no default passwords.
+   - Seeded passengers possess no default passwords.
    - Administrators generate a high-entropy 32-byte activation token. Oracle stores only the SHA-256 digest (`activation_token_hash`) with a time expiration.
 4. **ACID Transaction Control**:
    - Booking operations insert into `Bookings` and `Payments` under a single Oracle transaction (`conn.autocommit = False`), committing only when both succeed.
+5. **Deployment Guide**:
+   - For connecting the Vercel cloud frontend to local Oracle 23ai Free or migrating to Oracle Autonomous Database (ATP), see [`DEPLOYMENT.md`](file:///c:/Users/Admin/oracle_airline_website/DEPLOYMENT.md).

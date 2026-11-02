@@ -1,5 +1,11 @@
 streamlit_app.py
 db.py
+server.py
+setup_admin.py
 requirements-streamlit.txt
+schema_migrations.sql
+verify_migration.sql
+test_*.py
 .env
 .env.example
+*.md

@@ -669,6 +669,10 @@
         <button onclick="selectPortal('gateway')" class="text-[#0052CC] hover:underline font-medium transition">
           Switch Portal (Role Gateway)
         </button>
+        <span>•</span>
+        <button onclick="openModal('modal-api-settings')" class="text-gray-400 hover:text-gray-700 transition" title="Configure FastAPI Backend Endpoint">
+          ⚙️ API Config
+        </button>
       </div>
     </div>
   </footer>
@@ -676,6 +680,39 @@
   <!-- ============================================================== -->
   <!-- 4. CLEAN WHITE MODALS                                          -->
   <!-- ============================================================== -->
+
+  <!-- Modal: API Settings / Endpoint Configuration -->
+  <div id="modal-api-settings" class="hidden fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4">
+    <div class="bg-white rounded-xl border border-gray-200 shadow-xl max-w-md w-full p-6 space-y-4">
+      <div class="flex items-center justify-between border-b border-gray-100 pb-3">
+        <h3 class="text-lg font-bold text-[#001B48]">Backend API Configuration</h3>
+        <button onclick="closeModal('modal-api-settings')" class="text-gray-400 hover:text-gray-600 text-lg">✕</button>
+      </div>
+      <p class="text-xs text-gray-600">
+        Configure the FastAPI backend server URL. Useful when connecting a hosted frontend (e.g. Vercel) to a remote backend or local Cloudflare/ngrok tunnel.
+      </p>
+      <form onsubmit="handleSaveApiEndpoint(event)" class="space-y-3 text-sm">
+        <div>
+          <label class="block text-xs font-semibold text-gray-700 mb-1">FastAPI Backend URL</label>
+          <input type="url" id="input-api-endpoint" required placeholder="http://127.0.0.1:8000" class="w-full bg-white border border-gray-300 rounded-lg p-2.5 text-gray-900 font-mono text-xs focus:outline-none focus:border-[#0052CC]">
+        </div>
+        <div id="api-health-result" class="hidden p-2.5 rounded text-xs"></div>
+        <div class="flex items-center gap-2 pt-1">
+          <button type="button" onclick="testApiConnection()" class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-800 font-semibold py-2 px-3 rounded-lg text-xs transition">
+            Test Connection
+          </button>
+          <button type="submit" class="flex-1 bg-[#0052CC] hover:bg-[#0043A8] text-white font-bold py-2 px-3 rounded-lg text-xs transition">
+            Save & Connect
+          </button>
+        </div>
+        <div class="text-right">
+          <button type="button" onclick="resetApiEndpoint()" class="text-[11px] text-gray-400 hover:text-gray-600 underline">
+            Reset to default (http://127.0.0.1:8000)
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
 
   <!-- Modal: Passenger Sign In -->
   <div id="modal-passenger-login" class="hidden fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4">
@@ -1018,7 +1055,7 @@
   <!-- 5. JAVASCRIPT APPLICATION CORE                                 -->
   <!-- ============================================================== -->
   <script>
-    const API_BASE = "http://127.0.0.1:8000";
+    let API_BASE = localStorage.getItem('az_api_base') || "http://127.0.0.1:8000";
 
     // Global State
     let currentUser = null;
@@ -1030,7 +1067,7 @@
     let activeCrudTab = 'airports';
 
     // ----------------------------------------------------------------
-    // Centralized API Client (Clean Error Extraction)
+    // Centralized API Client (Clean Error Extraction & Failover)
     // ----------------------------------------------------------------
     async function apiRequest(endpoint, method = 'GET', data = null, customToken = null) {
       const headers = { 'Content-Type': 'application/json' };
@@ -1062,7 +1099,11 @@
         }
         return json;
       } catch (err) {
-        showToast(err.message || "Network error communicating with server", "error");
+        let msg = err.message || "Network error communicating with server";
+        if (msg === "Failed to fetch" || err.name === "TypeError") {
+          msg = `Cannot reach backend at ${API_BASE}. Please ensure FastAPI is running (uvicorn server:app --reload).`;
+        }
+        showToast(msg, "error");
         throw err;
       }
     }
@@ -1076,10 +1117,62 @@
       const dateInput = document.getElementById('search-date');
       if (dateInput) dateInput.value = today;
 
+      initApiEndpointUI();
       loadSession();
       await fetchAirportsList();
       await loadSqlExplanations();
     });
+
+    function initApiEndpointUI() {
+      const input = document.getElementById('input-api-endpoint');
+      if (input) input.value = API_BASE;
+    }
+
+    async function testApiConnection() {
+      const input = document.getElementById('input-api-endpoint');
+      const url = (input ? input.value : API_BASE).trim().replace(/\/+$/, '');
+      const resultEl = document.getElementById('api-health-result');
+      resultEl.className = "p-2.5 rounded text-xs bg-blue-50 text-blue-700 block border border-blue-200";
+      resultEl.textContent = `Pinging ${url}/health ...`;
+      resultEl.classList.remove('hidden');
+
+      try {
+        const resp = await fetch(`${url}/health`);
+        const data = await resp.json();
+        if (resp.ok && data.status === 'connected') {
+          resultEl.className = "p-2.5 rounded text-xs bg-emerald-50 text-emerald-800 border border-emerald-200 block";
+          resultEl.textContent = `✓ Connected to Oracle Database: ${data.banner || 'OK'}`;
+        } else {
+          throw new Error(data.detail || "Health check failed");
+        }
+      } catch (e) {
+        resultEl.className = "p-2.5 rounded text-xs bg-rose-50 text-rose-800 border border-rose-200 block";
+        resultEl.textContent = `✕ Connection failed: ${e.message}`;
+      }
+    }
+
+    function handleSaveApiEndpoint(e) {
+      e.preventDefault();
+      const input = document.getElementById('input-api-endpoint');
+      const url = input.value.trim().replace(/\/+$/, '');
+      API_BASE = url;
+      localStorage.setItem('az_api_base', url);
+      closeModal('modal-api-settings');
+      showToast(`Backend endpoint saved: ${url}`, "success");
+      fetchAirportsList();
+      loadSqlExplanations();
+    }
+
+    function resetApiEndpoint() {
+      API_BASE = "http://127.0.0.1:8000";
+      localStorage.removeItem('az_api_base');
+      const input = document.getElementById('input-api-endpoint');
+      if (input) input.value = API_BASE;
+      closeModal('modal-api-settings');
+      showToast("Reset API endpoint to http://127.0.0.1:8000", "info");
+      fetchAirportsList();
+      loadSqlExplanations();
+    }
 
     function loadSession() {
       const savedToken = localStorage.getItem('az_token');
@@ -1358,12 +1451,19 @@
     async function handleSearchClick() {
       const origin = document.getElementById('search-origin').value;
       const destination = document.getElementById('search-destination').value;
+      const travelDate = document.getElementById('search-date').value;
       const tz = document.getElementById('search-tz').value;
       const resultsWrapper = document.getElementById('flight-results-wrapper');
       const container = document.getElementById('flights-container');
       const countBadge = document.getElementById('flight-results-count');
       const heading = document.getElementById('flight-results-heading');
       const subheading = document.getElementById('flight-results-subheading');
+
+      // Validation: prevent identical origin and destination
+      if (origin && destination && origin === destination) {
+        showToast("Departure and Destination airports cannot be identical.", "error");
+        return;
+      }
 
       // Make results visible
       resultsWrapper.classList.remove('hidden');
@@ -1372,16 +1472,17 @@
       // Update heading text
       if (origin && destination) {
         heading.textContent = `Flights from ${origin} to ${destination}`;
-        subheading.textContent = `Direct scheduled flights with AZ Airlines`;
+        subheading.textContent = `Direct scheduled flights with AZ Airlines${travelDate ? ' on ' + travelDate : ''}`;
       } else {
         heading.textContent = `Available Scheduled Flights`;
-        subheading.textContent = `Direct domestic and international routes`;
+        subheading.textContent = `Direct domestic and international routes${travelDate ? ' for ' + travelDate : ''}`;
       }
 
       try {
         let endpoint = `/api/flights?timezone=${encodeURIComponent(tz)}`;
         if (origin) endpoint += `&origin=${encodeURIComponent(origin)}`;
         if (destination) endpoint += `&destination=${encodeURIComponent(destination)}`;
+        if (travelDate) endpoint += `&date=${encodeURIComponent(travelDate)}`;
 
         const data = await apiRequest(endpoint);
         globalFlights = data.flights;
@@ -1588,6 +1689,7 @@
     async function handleConfirmBooking(e) {
       e.preventDefault();
       const btn = document.getElementById('btn-submit-booking');
+      if (btn.disabled) return;
       btn.disabled = true;
       btn.textContent = "Confirming Reservation...";
 
@@ -1979,6 +2081,7 @@
                   <td class="py-2.5 px-3 font-mono text-emerald-700 font-bold">₹${Number(f.fare).toLocaleString()}</td>
                   <td class="py-2.5 px-3 text-right">
                     <button onclick="openUpdateFareModal(${f.flight_id}, '${f.flight_no}', ${f.fare})" class="text-[#0052CC] hover:underline font-bold text-xs">Edit Fare</button>
+                    <button onclick="handleDeleteFlight(${f.flight_id}, '${f.flight_no}')" class="text-rose-600 hover:underline font-bold text-xs ml-3">Delete</button>
                   </td>
                 </tr>
               `).join('')}
@@ -1988,6 +2091,16 @@
       } catch (e) {
         container.innerHTML = `<div class="text-red-600 text-center py-4">${e.message}</div>`;
       }
+    }
+
+    async function handleDeleteFlight(id, no) {
+      if (!confirm(`Are you sure you want to delete Flight ${no} (#${id})?`)) return;
+      try {
+        await apiRequest(`/api/admin/flights/${id}`, 'DELETE');
+        showToast(`Flight ${no} deleted successfully.`, "success");
+        await renderFlightsTable(document.getElementById('crud-table-container'));
+        await fetchAirportsList();
+      } catch (err) {}
     }
 
     function openUpdateFareModal(id, no, fare) {
@@ -2012,10 +2125,18 @@
 
     async function handleCreateFlight(e) {
       e.preventDefault();
+      const orig = document.getElementById('new-flight-orig').value;
+      const dest = document.getElementById('new-flight-dest').value;
+
+      if (orig && dest && orig === dest) {
+        showToast("Origin and Destination airports cannot be identical.", "error");
+        return;
+      }
+
       const payload = {
         flight_no: document.getElementById('new-flight-no').value.trim().toUpperCase(),
-        origin_id: document.getElementById('new-flight-orig').value,
-        destination_id: document.getElementById('new-flight-dest').value,
+        origin_id: orig,
+        destination_id: dest,
         departure_time: document.getElementById('new-flight-dep').value.trim(),
         arrival_time: document.getElementById('new-flight-arr').value.trim(),
         fare: parseFloat(document.getElementById('new-flight-fare').value),
@@ -2216,7 +2337,21 @@
 
     function showToast(message, type = 'info') {
       const container = document.getElementById('toast-container');
+      if (!container) return;
       const toast = document.createElement('div');
+
+      let displayMessage = message;
+      if (typeof message === 'object' && message !== null) {
+        if (message.message) {
+          displayMessage = message.message;
+        } else if (Array.isArray(message)) {
+          displayMessage = message.map(m => typeof m === 'object' ? JSON.stringify(m) : String(m)).join(', ');
+        } else {
+          displayMessage = JSON.stringify(message);
+        }
+      } else {
+        displayMessage = String(message || 'An unexpected error occurred.');
+      }
 
       const bg = type === 'success' ? 'bg-emerald-50 border-emerald-300 text-emerald-900'
                : type === 'error' ? 'bg-rose-50 border-rose-300 text-rose-900'
@@ -2226,7 +2361,7 @@
       toast.innerHTML = `
         <div class="flex items-center gap-2">
           <span class="font-bold">${type === 'success' ? '✓' : type === 'error' ? '✕' : 'ℹ'}</span>
-          <span class="font-medium">${message}</span>
+          <span class="font-medium">${displayMessage}</span>
         </div>
       `;
 

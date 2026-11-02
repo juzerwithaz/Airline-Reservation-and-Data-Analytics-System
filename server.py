@@ -48,10 +48,13 @@ app = FastAPI(
     redoc_url="/redoc",
 )
 
-# Enable CORS for local frontend development
+# CORS Configuration (Configurable via CORS_ORIGINS in .env for production deployment)
+raw_cors = os.getenv("CORS_ORIGINS", "*")
+allowed_origins = [o.strip() for o in raw_cors.split(",") if o.strip()] if raw_cors != "*" else ["*"]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=allowed_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -509,15 +512,33 @@ def issue_passenger_activation_endpoint(
 def search_flights_endpoint(
     origin: Optional[str] = Query(None, description="Origin Airport Code (e.g. BOM)"),
     destination: Optional[str] = Query(None, description="Destination Airport Code (e.g. DEL)"),
+    date: Optional[str] = Query(None, description="Travel date in YYYY-MM-DD format"),
     timezone: str = Query("Asia/Kolkata", description="Target local timezone for AT TIME ZONE projection"),
 ):
     """
     Search available flights with accurate timezone conversion using Oracle's AT TIME ZONE.
+    Validates that origin and destination cannot be identical.
     """
+    if origin and destination and origin.strip().upper() == destination.strip().upper():
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Origin and destination airports cannot be identical.",
+        )
+
+    if date:
+        try:
+            datetime.strptime(date.strip(), "%Y-%m-%d")
+        except ValueError:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid date format. Expected YYYY-MM-DD.",
+            )
+
     try:
         flights = db.search_flights(
             origin_airport_id=origin,
             destination_airport_id=destination,
+            flight_date=date,
             target_timezone=timezone,
         )
         return {"count": len(flights), "timezone": timezone, "flights": flights}
@@ -629,6 +650,27 @@ def cancel_booking_endpoint(
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
 
 
+@app.get("/api/bookings/{booking_id}", tags=["Passenger Bookings"])
+def get_booking_details_endpoint(
+    booking_id: int,
+    user: Dict[str, Any] = Depends(get_current_user),
+):
+    """
+    Retrieve full details for a specific booking and associated payment.
+    Enforces authorization: passengers can only view their own bookings,
+    while administrators can inspect any booking.
+    """
+    is_admin = user.get("role") in ["SUPER_ADMIN", "FLIGHT_OPS", "SUPPORT", "ADMIN"]
+    passenger_id = None if is_admin else int(user["sub"])
+    booking = db.get_booking_details(booking_id, passenger_id=passenger_id)
+    if not booking:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Booking #{booking_id} not found or access denied.",
+        )
+    return booking
+
+
 # ====================================================================
 # 6. ADMINISTRATOR RECORD MANAGEMENT (CRUD)
 # ====================================================================
@@ -694,6 +736,11 @@ def get_all_flights(admin: Dict[str, Any] = Depends(require_admin)):
 
 @app.post("/api/admin/flights", tags=["Admin CRUD"])
 def create_flight_endpoint(req: FlightCreateRequest, admin: Dict[str, Any] = Depends(require_admin)):
+    if req.origin_id.strip().upper() == req.destination_id.strip().upper():
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Origin and destination airports cannot be identical.",
+        )
     try:
         res = db.admin_create_flight(
             flight_no=req.flight_no,
@@ -705,6 +752,8 @@ def create_flight_endpoint(req: FlightCreateRequest, admin: Dict[str, Any] = Dep
             currency=req.currency,
         )
         return {"message": f"Flight {req.flight_no} created successfully.", "flight": res}
+    except ValueError as ve:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(ve))
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
@@ -722,6 +771,21 @@ def update_flight_fare_endpoint(
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
 
+@app.delete("/api/admin/flights/{flight_id}", tags=["Admin CRUD"])
+def delete_flight_endpoint(flight_id: int, admin: Dict[str, Any] = Depends(require_admin)):
+    """
+    Delete a flight if no active confirmed bookings exist.
+    """
+    try:
+        db.admin_delete_flight(flight_id)
+        return {"message": f"Flight {flight_id} deleted successfully."}
+    except ValueError as ve:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(ve))
+    except Exception as e:
+        logger.error(f"Delete flight error: {e}")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+
+
 # --- Passengers Management ---
 
 @app.get("/api/admin/passengers", tags=["Admin CRUD"])
@@ -730,6 +794,22 @@ def get_passengers_endpoint(
     admin: Dict[str, Any] = Depends(require_admin),
 ):
     return db.admin_get_passengers(search=search)
+
+
+@app.get("/api/admin/passengers/{passenger_id}", tags=["Admin CRUD"])
+def get_single_passenger_endpoint(passenger_id: int, admin: Dict[str, Any] = Depends(require_admin)):
+    """
+    Retrieve passenger details along with their full booking history.
+    """
+    passenger = db.get_passenger_by_id(passenger_id)
+    if not passenger:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Passenger #{passenger_id} not found.")
+    bookings = db.get_passenger_bookings_history(passenger_id)
+    return {
+        "passenger": passenger,
+        "total_bookings": len(bookings),
+        "bookings": bookings,
+    }
 
 
 # --- Bookings & Payments Management ---

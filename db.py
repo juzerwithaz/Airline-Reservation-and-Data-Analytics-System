@@ -602,6 +602,7 @@ def update_admin_last_login(admin_id: int) -> None:
 def search_flights(
     origin_airport_id: Optional[str] = None,
     destination_airport_id: Optional[str] = None,
+    flight_date: Optional[str] = None,
     target_timezone: str = "Asia/Kolkata",
 ) -> List[Dict[str, Any]]:
     """
@@ -637,11 +638,13 @@ def search_flights(
         WHERE 1=1
           AND (:orig_id IS NULL OR f.origin_id = :orig_id)
           AND (:dest_id IS NULL OR f.destination_id = :dest_id)
+          AND (:f_date IS NULL OR TO_CHAR(f.departure_time AT TIME ZONE '{tz_str}', 'YYYY-MM-DD') = :f_date)
         ORDER BY f.departure_time ASC
     """
     params = {
-        "orig_id": origin_airport_id if origin_airport_id and origin_airport_id != "All" else None,
-        "dest_id": destination_airport_id if destination_airport_id and destination_airport_id != "All" else None,
+        "orig_id": origin_airport_id.strip() if origin_airport_id and origin_airport_id != "All" else None,
+        "dest_id": destination_airport_id.strip() if destination_airport_id and destination_airport_id != "All" else None,
+        "f_date": flight_date.strip() if flight_date else None,
     }
     df = fetch_df(sql, params)
     return clean_records(df)
@@ -823,6 +826,51 @@ def get_passenger_bookings_history(passenger_id: int) -> List[Dict[str, Any]]:
     return clean_records(df)
 
 
+def get_booking_details(booking_id: int, passenger_id: Optional[int] = None) -> Optional[Dict[str, Any]]:
+    """
+    Retrieve comprehensive details for a specific booking and its transactional payment.
+    Optionally enforces ownership if passenger_id is provided.
+    """
+    sql = """
+        SELECT 
+            b.booking_id,
+            b.passenger_id,
+            p.name AS passenger_name,
+            p.email AS passenger_email,
+            b.flight_id,
+            f.flight_no,
+            a1.name AS origin_name,
+            a1.city AS origin_city,
+            a1.airport_id AS origin_id,
+            a2.name AS destination_name,
+            a2.city AS destination_city,
+            a2.airport_id AS destination_id,
+            TO_CHAR(f.departure_time, 'YYYY-MM-DD HH24:MI:SS TZR') AS departure_time,
+            TO_CHAR(f.arrival_time, 'YYYY-MM-DD HH24:MI:SS TZR') AS arrival_time,
+            TO_CHAR(b.booking_date, 'YYYY-MM-DD HH24:MI:SS') AS booking_date,
+            b.status AS booking_status,
+            b.metadata,
+            NVL(JSON_VALUE(b.metadata, '$.special_request'), 'Standard Service') AS special_request,
+            pay.payment_id,
+            pay.amount,
+            pay.currency,
+            pay.payment_method,
+            pay.status AS payment_status,
+            TO_CHAR(pay.payment_date, 'YYYY-MM-DD HH24:MI:SS') AS payment_date
+        FROM Bookings b
+        JOIN Passengers p ON b.passenger_id = p.passenger_id
+        JOIN Flights f ON b.flight_id = f.flight_id
+        JOIN Airports a1 ON f.origin_id = a1.airport_id
+        JOIN Airports a2 ON f.destination_id = a2.airport_id
+        LEFT JOIN Payments pay ON b.booking_id = pay.booking_id
+        WHERE b.booking_id = :bid
+          AND (:pid IS NULL OR b.passenger_id = :pid)
+    """
+    df = fetch_df(sql, {"bid": booking_id, "pid": passenger_id})
+    records = clean_records(df)
+    return records[0] if records else None
+
+
 def cancel_passenger_booking(booking_id: int, passenger_id: int) -> bool:
     """
     Cancel an eligible booking for an authenticated passenger.
@@ -934,15 +982,15 @@ def admin_delete_airport(airport_id: str) -> bool:
     try:
         with conn.cursor() as cursor:
             cursor.execute(
-                "SELECT COUNT(*) FROM Flights WHERE origin_id = :1 OR destination_id = :1",
-                [code],
+                "SELECT COUNT(*) FROM Flights WHERE origin_id = :c OR destination_id = :c",
+                {"c": code},
             )
             flight_count = cursor.fetchone()[0]
             if flight_count > 0:
                 raise ValueError(
                     f"Cannot delete airport '{code}': It is referenced by {flight_count} active flight(s)."
                 )
-            cursor.execute("DELETE FROM Airports WHERE airport_id = :1", [code])
+            cursor.execute("DELETE FROM Airports WHERE airport_id = :c", {"c": code})
         conn.commit()
         return True
     except Exception as e:
@@ -982,6 +1030,9 @@ def admin_create_flight(
     fare: float,
     currency: str = "INR",
 ) -> Dict[str, Any]:
+    if origin_id.strip().upper() == destination_id.strip().upper():
+        raise ValueError("Origin and destination airports cannot be identical.")
+
     conn = get_connection()
     conn.autocommit = False
     try:
@@ -1037,6 +1088,29 @@ def admin_update_flight(flight_id: int, fare: float) -> bool:
     try:
         with conn.cursor() as cursor:
             cursor.execute("UPDATE Flights SET fare = :fare WHERE flight_id = :id", {"fare": fare, "id": flight_id})
+        conn.commit()
+        return True
+    except Exception as e:
+        conn.rollback()
+        raise e
+    finally:
+        conn.close()
+
+
+def admin_delete_flight(flight_id: int) -> bool:
+    """
+    Safely delete a scheduled flight if it has no confirmed bookings.
+    """
+    conn = get_connection()
+    conn.autocommit = False
+    try:
+        with conn.cursor() as cursor:
+            cursor.execute("SELECT COUNT(*) FROM Bookings WHERE flight_id = :1 AND status = 'CONFIRMED'", [flight_id])
+            if cursor.fetchone()[0] > 0:
+                raise ValueError(f"Cannot delete Flight {flight_id}: confirmed bookings exist.")
+            cursor.execute("DELETE FROM Flights WHERE flight_id = :1", [flight_id])
+            if cursor.rowcount == 0:
+                raise ValueError(f"Flight {flight_id} not found.")
         conn.commit()
         return True
     except Exception as e:
