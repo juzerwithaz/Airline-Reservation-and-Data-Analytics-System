@@ -3,4 +3,7 @@ __pycache__/
 *.pyc
 .pytest_cache/
 .streamlit/
+PROJECT_LLM_BRIEF.md
+seed_data.json
+
 
