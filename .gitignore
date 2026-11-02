@@ -5,5 +5,7 @@ __pycache__/
 .streamlit/
 PROJECT_LLM_BRIEF.md
 seed_data.json
+prompt.md
+
 
 
