@@ -1,0 +1,6766 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Airline Reservation and Booking Analytics System</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Plotly.js -->
+  <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Source+Code+Pro:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background-color: #FAFAFA;
+      color: #1F2937;
+    }
+    .sql-font {
+      font-family: 'Source Code Pro', monospace;
+    }
+    .metric-card {
+      background: #FFFFFF;
+      border: 1px solid #E5E7EB;
+      border-radius: 8px;
+      padding: 1.25rem;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+    }
+    details summary {
+      cursor: pointer;
+      user-select: none;
+    }
+    details[open] summary {
+      margin-bottom: 0.75rem;
+    }
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #CBD5E1;
+      border-radius: 4px;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col md:flex-row">
+
+  <!-- Sidebar -->
+  <aside class="w-full md:w-64 bg-[#F0F2F6] border-r border-[#E5E7EB] flex-shrink-0 flex flex-col justify-between p-4">
+    <div>
+      <div class="mb-6">
+        <h2 class="text-xl font-bold text-gray-900 flex items-center gap-2">
+          <span>✈️</span> Airline Management
+        </h2>
+        <p class="text-xs text-gray-500 font-medium">Oracle 23ai Database Powered</p>
+        <div id="db-status-pill" class="mt-2 inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-800">
+          <span class="w-2 h-2 mr-1.5 rounded-full bg-green-500"></span> Connected (AIRLINE)
+        </div>
+      </div>
+
+      <nav class="space-y-1">
+        <button onclick="navigate('dashboard')" id="nav-dashboard" class="nav-btn w-full flex items-center gap-2.5 px-3 py-2 text-sm font-medium rounded-lg text-left transition-colors bg-white text-blue-800 shadow-sm border border-gray-200">
+          <span>📊</span> Dashboard
+        </button>
+        <button onclick="navigate('search')" id="nav-search" class="nav-btn w-full flex items-center gap-2.5 px-3 py-2 text-sm font-medium rounded-lg text-left transition-colors text-gray-700 hover:bg-gray-200">
+          <span>✈️</span> Search and Book
+        </button>
+        <button onclick="navigate('bookings')" id="nav-bookings" class="nav-btn w-full flex items-center gap-2.5 px-3 py-2 text-sm font-medium rounded-lg text-left transition-colors text-gray-700 hover:bg-gray-200">
+          <span>📋</span> Bookings
+        </button>
+        <button onclick="navigate('passengers')" id="nav-passengers" class="nav-btn w-full flex items-center gap-2.5 px-3 py-2 text-sm font-medium rounded-lg text-left transition-colors text-gray-700 hover:bg-gray-200">
+          <span>👤</span> Passengers (JSON)
+        </button>
+        <button onclick="navigate('analytics')" id="nav-analytics" class="nav-btn w-full flex items-center gap-2.5 px-3 py-2 text-sm font-medium rounded-lg text-left transition-colors text-gray-700 hover:bg-gray-200">
+          <span>📈</span> Analytics
+        </button>
+      </nav>
+    </div>
+
+    <div class="mt-8 pt-4 border-t border-gray-300 text-xs text-gray-500">
+      <div class="flex items-center justify-between">
+        <span>Vercel Deployment</span>
+        <span class="text-green-600 font-bold">● Active</span>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Main Content Area -->
+  <main class="flex-1 p-6 md:p-8 max-w-7xl mx-auto w-full overflow-y-auto">
+    <header class="mb-6">
+      <h1 class="text-2xl md:text-3xl font-extrabold text-[#1E3A8A]">
+        Airline Reservation and Booking Analytics System
+      </h1>
+      <p id="page-subtitle" class="text-gray-600 text-sm mt-1">
+        Real-time overview of bookings, revenue performance, and route popularity
+      </p>
+    </header>
+
+    <!-- Global Alert / Toast -->
+    <div id="alert-banner" class="hidden mb-6 p-4 rounded-lg text-sm font-medium flex items-center justify-between">
+      <span id="alert-message"></span>
+      <button onclick="hideAlert()" class="text-lg leading-none font-bold">&times;</button>
+    </div>
+
+    <!-- ================= PAGE 1: DASHBOARD ================= -->
+    <section id="page-dashboard" class="page-content space-y-6">
+      <!-- KPIs -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div class="metric-card">
+          <p class="text-xs uppercase tracking-wider text-gray-500 font-semibold">Total Confirmed Bookings</p>
+          <p id="kpi-confirmed" class="text-2xl md:text-3xl font-bold text-gray-900 mt-2">--</p>
+        </div>
+        <div class="metric-card">
+          <p class="text-xs uppercase tracking-wider text-gray-500 font-semibold">Total Revenue (INR)</p>
+          <p id="kpi-revenue" class="text-2xl md:text-3xl font-bold text-green-700 mt-2">--</p>
+        </div>
+        <div class="metric-card">
+          <p class="text-xs uppercase tracking-wider text-gray-500 font-semibold">Cancelled Bookings</p>
+          <p id="kpi-cancelled" class="text-2xl md:text-3xl font-bold text-red-600 mt-2">--</p>
+        </div>
+        <div class="metric-card">
+          <p class="text-xs uppercase tracking-wider text-gray-500 font-semibold">Active Flight Routes</p>
+          <p id="kpi-routes" class="text-2xl md:text-3xl font-bold text-blue-700 mt-2">--</p>
+        </div>
+      </div>
+
+      <!-- Route Revenue Section -->
+      <div class="bg-white border border-gray-200 rounded-lg p-5 shadow-sm space-y-4">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div>
+            <h3 class="text-lg font-bold text-gray-900">Route Revenue Rankings (Materialized View)</h3>
+            <p class="text-xs text-gray-500">Powered by <code class="bg-gray-100 px-1 py-0.5 rounded text-blue-700">ROUTE_REVENUE_MV</code> using <code class="bg-gray-100 px-1 py-0.5 rounded text-blue-700">RANK() OVER (ORDER BY total_revenue DESC)</code></p>
+          </div>
+          <button onclick="refreshMaterializedView()" id="btn-refresh-mv" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-md shadow flex items-center justify-center gap-2 transition-all">
+            <span>🔄</span> Refresh Materialized View
+          </button>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+          <div id="chart-routes" class="w-full h-80"></div>
+          <div class="overflow-x-auto border border-gray-200 rounded-lg max-h-80">
+            <table class="min-w-full divide-y divide-gray-200 text-sm">
+              <thead class="bg-gray-50 text-gray-600 text-xs uppercase font-semibold">
+                <tr>
+                  <th class="px-3 py-2 text-left">Rank</th>
+                  <th class="px-3 py-2 text-left">Route</th>
+                  <th class="px-3 py-2 text-right">Bookings</th>
+                  <th class="px-3 py-2 text-right">Total Revenue</th>
+                </tr>
+              </thead>
+              <tbody id="table-routes-body" class="divide-y divide-gray-200 bg-white"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Daily Revenue Section -->
+      <div class="bg-white border border-gray-200 rounded-lg p-5 shadow-sm space-y-4">
+        <div>
+          <h3 class="text-lg font-bold text-gray-900">Daily Revenue Trends & Cumulative Performance</h3>
+          <p class="text-xs text-gray-500">Demonstrating <code class="bg-gray-100 px-1 py-0.5 rounded text-blue-700">LAG()</code> for day-over-day changes and <code class="bg-gray-100 px-1 py-0.5 rounded text-blue-700">SUM() OVER</code> for running cumulative revenue</p>
+        </div>
+
+        <div id="chart-daily" class="w-full h-80"></div>
+
+        <details class="border border-gray-200 rounded-md p-3 bg-gray-50 text-xs">
+          <summary class="font-semibold text-gray-700 cursor-pointer">📋 View Daily Breakdown Data Table</summary>
+          <div class="overflow-x-auto max-h-60 mt-2 bg-white rounded border border-gray-200">
+            <table class="min-w-full divide-y divide-gray-200 text-xs">
+              <thead class="bg-gray-50 text-gray-600 font-semibold uppercase">
+                <tr>
+                  <th class="px-3 py-2 text-left">Date</th>
+                  <th class="px-3 py-2 text-right">Daily Revenue</th>
+                  <th class="px-3 py-2 text-right">Prev Day (LAG)</th>
+                  <th class="px-3 py-2 text-right">Day-over-Day Change</th>
+                  <th class="px-3 py-2 text-right">Running Total (SUM OVER)</th>
+                </tr>
+              </thead>
+              <tbody id="table-daily-body" class="divide-y divide-gray-200 bg-white"></tbody>
+            </table>
+          </div>
+        </details>
+      </div>
+
+      <!-- View SQL Expander -->
+      <details class="bg-white border border-gray-200 rounded-lg p-4 shadow-sm text-sm">
+        <summary class="font-bold text-[#1E3A8A] cursor-pointer">🔍 View SQL (Dashboard Features)</summary>
+        <div class="mt-3 space-y-3 sql-font text-xs text-gray-800 bg-gray-900 text-emerald-400 p-4 rounded-lg overflow-x-auto">
+          <p class="text-gray-400">-- 1. Route Ranking with RANK() OVER Analytic Function</p>
+          <pre>SELECT
+    origin_id,
+    destination_id,
+    origin_id || ' -> ' || destination_id AS route,
+    bookings,
+    total_revenue,
+    RANK() OVER (ORDER BY total_revenue DESC) AS revenue_rank
+FROM route_revenue_mv
+ORDER BY revenue_rank ASC;</pre>
+          <p class="text-gray-400 mt-2">-- 2. Materialized View Refresh PL/SQL Block</p>
+          <pre>BEGIN
+    DBMS_MVIEW.REFRESH('ROUTE_REVENUE_MV');
+END;</pre>
+          <p class="text-gray-400 mt-2">-- 3. Daily Revenue with LAG() and SUM() OVER Cumulative Total</p>
+          <pre>SELECT
+    booking_day,
+    daily_revenue,
+    LAG(daily_revenue) OVER (ORDER BY booking_day) AS prev_day_revenue,
+    ROUND(daily_revenue - LAG(daily_revenue) OVER (ORDER BY booking_day), 2) AS daily_change,
+    SUM(daily_revenue) OVER (
+        ORDER BY booking_day 
+        ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW
+    ) AS running_revenue
+FROM daily_revenue_v
+ORDER BY booking_day ASC;</pre>
+        </div>
+      </details>
+    </section>
+
+    <!-- ================= PAGE 2: SEARCH AND BOOK ================= -->
+    <section id="page-search" class="page-content space-y-6 hidden">
+      <!-- Search Filters -->
+      <div class="bg-white border border-gray-200 rounded-lg p-5 shadow-sm space-y-4">
+        <h3 class="text-lg font-bold text-gray-900">Search Flight Schedules</h3>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div>
+            <label class="block text-xs font-semibold text-gray-700 mb-1">Origin Airport</label>
+            <select id="search-origin" onchange="loadMatchingFlights()" class="w-full text-sm border-gray-300 rounded-md p-2 bg-gray-50 border focus:ring-blue-500 focus:border-blue-500">
+              <option value="All">All Airports</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-gray-700 mb-1">Destination Airport</label>
+            <select id="search-dest" onchange="loadMatchingFlights()" class="w-full text-sm border-gray-300 rounded-md p-2 bg-gray-50 border focus:ring-blue-500 focus:border-blue-500">
+              <option value="All">All Airports</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-gray-700 mb-1">Display Timezone (AT TIME ZONE)</label>
+            <select id="search-tz" onchange="loadMatchingFlights()" class="w-full text-sm border-gray-300 rounded-md p-2 bg-gray-50 border focus:ring-blue-500 focus:border-blue-500">
+              <option value="Asia/Kolkata">Asia/Kolkata (IST)</option>
+              <option value="Asia/Dubai">Asia/Dubai (GST)</option>
+              <option value="Europe/London">Europe/London (BST/GMT)</option>
+              <option value="America/New_York">America/New_York (EDT/EST)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="mt-4">
+          <h4 id="matched-count-label" class="text-sm font-semibold text-gray-700 mb-2">Matching Flights</h4>
+          <div class="overflow-x-auto border border-gray-200 rounded-lg max-h-72">
+            <table class="min-w-full divide-y divide-gray-200 text-xs">
+              <thead class="bg-gray-50 text-gray-600 uppercase font-semibold">
+                <tr>
+                  <th class="px-3 py-2 text-left">ID</th>
+                  <th class="px-3 py-2 text-left">Flight No</th>
+                  <th class="px-3 py-2 text-left">Route</th>
+                  <th class="px-3 py-2 text-left">Departure Time</th>
+                  <th class="px-3 py-2 text-left">Arrival Time</th>
+                  <th class="px-3 py-2 text-right">Fare</th>
+                </tr>
+              </thead>
+              <tbody id="table-flights-body" class="divide-y divide-gray-200 bg-white"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Booking Form -->
+      <div class="bg-white border border-gray-200 rounded-lg p-5 shadow-sm space-y-4">
+        <div>
+          <h3 class="text-lg font-bold text-gray-900">📝 New Booking & Payment Form</h3>
+          <p class="text-xs text-gray-500">Inserts into <code class="bg-gray-100 px-1 py-0.5 rounded text-blue-700">Bookings</code> (with JSON metadata) and <code class="bg-gray-100 px-1 py-0.5 rounded text-blue-700">Payments</code> inside ONE atomic database transaction</p>
+        </div>
+
+        <form id="booking-form" onsubmit="submitBooking(event)" class="space-y-4">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-xs font-semibold text-gray-700 mb-1">Select Passenger</label>
+              <select id="book-passenger" required class="w-full text-sm border-gray-300 rounded-md p-2 bg-gray-50 border"></select>
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-gray-700 mb-1">Select Flight</label>
+              <select id="book-flight" required onchange="updatePayableAmount()" class="w-full text-sm border-gray-300 rounded-md p-2 bg-gray-50 border"></select>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-xs font-semibold text-gray-700 mb-1">Special Request (saved as JSON in metadata)</label>
+              <select id="book-special" class="w-full text-sm border-gray-300 rounded-md p-2 bg-gray-50 border">
+                <option value="none">none</option>
+                <option value="extra legroom">extra legroom</option>
+                <option value="wheelchair">wheelchair</option>
+                <option value="pet carrier">pet carrier</option>
+                <option value="infant">infant</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-gray-700 mb-1">Payment Method</label>
+              <select id="book-method" class="w-full text-sm border-gray-300 rounded-md p-2 bg-gray-50 border">
+                <option value="UPI">UPI</option>
+                <option value="CARD">CARD</option>
+                <option value="NETBANKING">NETBANKING</option>
+                <option value="WALLET">WALLET</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 items-center bg-gray-50 p-4 rounded-lg border border-gray-200">
+            <div>
+              <label class="block text-xs font-semibold text-gray-700 mb-2">Payment Currency</label>
+              <div class="flex gap-4">
+                <label class="flex items-center text-sm font-medium text-gray-700 cursor-pointer">
+                  <input type="radio" name="currency" value="INR" checked onchange="updatePayableAmount()" class="mr-2"> INR (₹)
+                </label>
+                <label class="flex items-center text-sm font-medium text-gray-700 cursor-pointer">
+                  <input type="radio" name="currency" value="USD" onchange="updatePayableAmount()" class="mr-2"> USD ($ at 83 INR/USD)
+                </label>
+              </div>
+            </div>
+            <div>
+              <p class="text-xs text-gray-500 font-medium">Payable Amount:</p>
+              <p id="payable-display" class="text-xl font-extrabold text-blue-700 mt-0.5">₹0.00</p>
+            </div>
+          </div>
+
+          <button type="submit" id="btn-submit-booking" class="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-md shadow transition-colors text-sm">
+            Confirm Booking & Pay
+          </button>
+        </form>
+      </div>
+
+      <!-- View SQL Expander -->
+      <details class="bg-white border border-gray-200 rounded-lg p-4 shadow-sm text-sm">
+        <summary class="font-bold text-[#1E3A8A] cursor-pointer">🔍 View SQL (Search & Booking Transaction)</summary>
+        <div class="mt-3 space-y-3 sql-font text-xs text-gray-800 bg-gray-900 text-emerald-400 p-4 rounded-lg overflow-x-auto">
+          <p class="text-gray-400">-- 1. Flight Search with AT TIME ZONE Dynamic Expression</p>
+          <pre>SELECT
+    f.flight_id,
+    f.flight_no,
+    f.origin_id,
+    f.destination_id,
+    a1.city AS origin_city,
+    a2.city AS destination_city,
+    f.fare,
+    f.currency,
+    TO_CHAR(f.departure_time AT TIME ZONE :target_tz, 'YYYY-MM-DD HH24:MI:SS') AS local_departure,
+    TO_CHAR(f.arrival_time AT TIME ZONE :target_tz, 'YYYY-MM-DD HH24:MI:SS') AS local_arrival
+FROM Flights f
+JOIN Airports a1 ON f.origin_id = a1.airport_id
+JOIN Airports a2 ON f.destination_id = a2.airport_id
+WHERE (:orig IS NULL OR f.origin_id = :orig)
+  AND (:dest IS NULL OR f.destination_id = :dest)
+ORDER BY f.departure_time ASC;</pre>
+          <p class="text-gray-400 mt-2">-- 2. Atomic Transactional Insert (Bookings + Payments with JSON Metadata)</p>
+          <pre>-- Step 1: Query next primary key IDs
+SELECT NVL(MAX(booking_id), 0) + 1 FROM Bookings;
+SELECT NVL(MAX(payment_id), 0) + 1 FROM Payments;
+
+-- Step 2: Insert into Bookings (status CONFIRMED, metadata as JSON)
+INSERT INTO Bookings (booking_id, passenger_id, flight_id, booking_date, status, metadata)
+VALUES (:next_booking_id, :passenger_id, :flight_id, TRUNC(SYSDATE), 'CONFIRMED', :metadata_json);
+
+-- Step 3: Insert into Payments
+INSERT INTO Payments (payment_id, booking_id, amount, currency, payment_method, status, payment_date)
+VALUES (:next_payment_id, :next_booking_id, :amount, :currency, :method, 'SUCCESS', TRUNC(SYSDATE));
+
+-- Step 4: COMMIT or ROLLBACK
+COMMIT;</pre>
+        </div>
+      </details>
+    </section>
+
+    <!-- ================= PAGE 3: BOOKINGS ================= -->
+    <section id="page-bookings" class="page-content space-y-6 hidden">
+      <div class="bg-white border border-gray-200 rounded-lg p-5 shadow-sm space-y-4">
+        <h3 class="text-lg font-bold text-gray-900">Filter Reservations from View</h3>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div>
+            <label class="block text-xs font-semibold text-gray-700 mb-1">Status Filter</label>
+            <select id="filter-status" onchange="renderBookingsTable()" class="w-full text-sm border-gray-300 rounded-md p-2 bg-gray-50 border">
+              <option value="All">All Statuses</option>
+              <option value="CONFIRMED">CONFIRMED</option>
+              <option value="CANCELLED">CANCELLED</option>
+              <option value="PENDING">PENDING</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-gray-700 mb-1">Route Filter</label>
+            <select id="filter-route" onchange="renderBookingsTable()" class="w-full text-sm border-gray-300 rounded-md p-2 bg-gray-50 border">
+              <option value="All">All Routes</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-gray-700 mb-1">Search Passenger</label>
+            <input type="text" id="filter-passenger" oninput="renderBookingsTable()" placeholder="Passenger name..." class="w-full text-sm border-gray-300 rounded-md p-2 bg-gray-50 border">
+          </div>
+        </div>
+
+        <div class="flex items-center justify-between text-xs text-gray-500 pt-2">
+          <span id="bookings-count-label">Showing all bookings</span>
+        </div>
+
+        <div class="overflow-x-auto border border-gray-200 rounded-lg max-h-96">
+          <table class="min-w-full divide-y divide-gray-200 text-xs">
+            <thead class="bg-gray-50 text-gray-600 uppercase font-semibold">
+              <tr>
+                <th class="px-3 py-2 text-left">Booking ID</th>
+                <th class="px-3 py-2 text-left">Passenger</th>
+                <th class="px-3 py-2 text-left">Flight No</th>
+                <th class="px-3 py-2 text-left">Route</th>
+                <th class="px-3 py-2 text-right">Fare</th>
+                <th class="px-3 py-2 text-center">Status</th>
+                <th class="px-3 py-2 text-left">Date</th>
+              </tr>
+            </thead>
+            <tbody id="table-bookings-body" class="divide-y divide-gray-200 bg-white"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Cancel Action Box -->
+      <div class="bg-white border border-gray-200 rounded-lg p-5 shadow-sm space-y-4">
+        <h3 class="text-lg font-bold text-gray-900">🚫 Cancel a Booking</h3>
+        <p class="text-xs text-gray-500">Cancels a booking by executing <code class="bg-gray-100 px-1 py-0.5 rounded text-blue-700">UPDATE Bookings SET status = 'CANCELLED'</code> and committing</p>
+
+        <div class="flex flex-col sm:flex-row gap-3 items-end">
+          <div class="flex-1 w-full">
+            <label class="block text-xs font-semibold text-gray-700 mb-1">Choose Confirmed Booking to Cancel</label>
+            <select id="cancel-booking-select" class="w-full text-sm border-gray-300 rounded-md p-2 bg-gray-50 border"></select>
+          </div>
+          <button onclick="cancelSelectedBooking()" id="btn-cancel-booking" class="px-6 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-semibold rounded-md shadow transition-colors">
+            Cancel Booking
+          </button>
+        </div>
+      </div>
+
+      <!-- View SQL Expander -->
+      <details class="bg-white border border-gray-200 rounded-lg p-4 shadow-sm text-sm">
+        <summary class="font-bold text-[#1E3A8A] cursor-pointer">🔍 View SQL (Booking Management)</summary>
+        <div class="mt-3 space-y-3 sql-font text-xs text-gray-800 bg-gray-900 text-emerald-400 p-4 rounded-lg overflow-x-auto">
+          <p class="text-gray-400">-- 1. View Definition: BOOKING_DETAILS_V</p>
+          <pre>CREATE OR REPLACE VIEW booking_details_v AS
+SELECT 
+    b.booking_id,
+    p.name AS passenger,
+    f.flight_no,
+    f.origin_id,
+    f.destination_id,
+    f.fare,
+    b.status,
+    b.booking_date
+FROM Bookings b
+JOIN Passengers p ON b.passenger_id = p.passenger_id
+JOIN Flights f ON b.flight_id = f.flight_id;</pre>
+          <p class="text-gray-400 mt-2">-- 2. Screen Query with Status, Route & Date Filters</p>
+          <pre>SELECT
+    booking_id, passenger, flight_no, origin_id, destination_id,
+    origin_id || ' -> ' || destination_id AS route,
+    fare, status, booking_date
+FROM booking_details_v
+WHERE (:status IS NULL OR status = :status)
+  AND (:route IS NULL OR origin_id || ' -> ' || destination_id = :route)
+ORDER BY booking_id DESC;</pre>
+          <p class="text-gray-400 mt-2">-- 3. Cancellation DML</p>
+          <pre>UPDATE Bookings
+SET status = 'CANCELLED'
+WHERE booking_id = :booking_id;
+COMMIT;</pre>
+        </div>
+      </details>
+    </section>
+
+    <!-- ================= PAGE 4: PASSENGERS (JSON) ================= -->
+    <section id="page-passengers" class="page-content space-y-6 hidden">
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+        <div class="bg-white border border-gray-200 rounded-lg p-5 shadow-sm">
+          <div id="chart-meals" class="w-full h-80"></div>
+        </div>
+
+        <div class="bg-white border border-gray-200 rounded-lg p-5 shadow-sm space-y-4">
+          <h3 class="text-lg font-bold text-gray-900">Preferences Breakdown</h3>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <p class="text-xs font-semibold text-gray-500 uppercase mb-2">Meal Preferences</p>
+              <div class="overflow-hidden border border-gray-200 rounded-lg">
+                <table class="min-w-full divide-y divide-gray-200 text-xs">
+                  <thead class="bg-gray-50 text-gray-600 font-semibold uppercase">
+                    <tr><th class="px-3 py-2 text-left">Meal</th><th class="px-3 py-2 text-right">Passengers</th></tr>
+                  </thead>
+                  <tbody id="table-meals-body" class="divide-y divide-gray-200 bg-white"></tbody>
+                </table>
+              </div>
+            </div>
+            <div>
+              <p class="text-xs font-semibold text-gray-500 uppercase mb-2">Seat Selections</p>
+              <div class="overflow-hidden border border-gray-200 rounded-lg">
+                <table class="min-w-full divide-y divide-gray-200 text-xs">
+                  <thead class="bg-gray-50 text-gray-600 font-semibold uppercase">
+                    <tr><th class="px-3 py-2 text-left">Seat</th><th class="px-3 py-2 text-right">Passengers</th></tr>
+                  </thead>
+                  <tbody id="table-seats-body" class="divide-y divide-gray-200 bg-white"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Passengers Table -->
+      <div class="bg-white border border-gray-200 rounded-lg p-5 shadow-sm space-y-4">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <h3 class="text-lg font-bold text-gray-900">All Passengers Directory</h3>
+          <input type="text" id="passenger-search-input" oninput="filterPassengersTable()" placeholder="🔍 Search name, email, phone..." class="text-xs border-gray-300 rounded-md p-2 bg-gray-50 border w-full sm:w-64">
+        </div>
+
+        <div class="overflow-x-auto border border-gray-200 rounded-lg max-h-96">
+          <table class="min-w-full divide-y divide-gray-200 text-xs">
+            <thead class="bg-gray-50 text-gray-600 uppercase font-semibold">
+              <tr>
+                <th class="px-3 py-2 text-left">ID</th>
+                <th class="px-3 py-2 text-left">Full Name</th>
+                <th class="px-3 py-2 text-left">Email</th>
+                <th class="px-3 py-2 text-left">Phone</th>
+                <th class="px-3 py-2 text-left">Meal (JSON)</th>
+                <th class="px-3 py-2 text-left">Seat (JSON)</th>
+                <th class="px-3 py-2 text-right">Baggage (JSON NUMBER)</th>
+              </tr>
+            </thead>
+            <tbody id="table-passengers-body" class="divide-y divide-gray-200 bg-white"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- View SQL Expander -->
+      <details class="bg-white border border-gray-200 rounded-lg p-4 shadow-sm text-sm">
+        <summary class="font-bold text-[#1E3A8A] cursor-pointer">🔍 View SQL (JSON Querying Features)</summary>
+        <div class="mt-3 space-y-3 sql-font text-xs text-gray-800 bg-gray-900 text-emerald-400 p-4 rounded-lg overflow-x-auto">
+          <p class="text-gray-400">-- 1. Extracting JSON Properties using JSON_VALUE</p>
+          <pre>SELECT
+    passenger_id,
+    name,
+    email,
+    phone,
+    JSON_VALUE(preferences, '$.meal') AS meal,
+    JSON_VALUE(preferences, '$.seat') AS seat,
+    JSON_VALUE(preferences, '$.baggage' RETURNING NUMBER) AS baggage
+FROM Passengers
+ORDER BY passenger_id ASC;</pre>
+          <p class="text-gray-400 mt-2">-- 2. Grouping and Aggregating on JSON Property</p>
+          <pre>SELECT
+    NVL(JSON_VALUE(preferences, '$.meal'), 'Not Specified') AS meal_preference,
+    COUNT(*) AS passenger_count
+FROM Passengers
+GROUP BY JSON_VALUE(preferences, '$.meal')
+ORDER BY passenger_count DESC;</pre>
+        </div>
+      </details>
+    </section>
+
+    <!-- ================= PAGE 5: ANALYTICS ================= -->
+    <section id="page-analytics" class="page-content space-y-6 hidden">
+      <!-- Tabs -->
+      <div class="flex border-b border-gray-200 text-sm font-semibold">
+        <button onclick="switchTab('tab-payments')" id="tab-btn-payments" class="tab-btn px-4 py-2 border-b-2 border-blue-600 text-blue-600">
+          💳 Payment Methods (HAVING)
+        </button>
+        <button onclick="switchTab('tab-currencies')" id="tab-btn-currencies" class="tab-btn px-4 py-2 border-b-2 border-transparent text-gray-500 hover:text-gray-700">
+          💱 Multi-Currency Analysis
+        </button>
+        <button onclick="switchTab('tab-fares')" id="tab-btn-fares" class="tab-btn px-4 py-2 border-b-2 border-transparent text-gray-500 hover:text-gray-700">
+          🏷️ Fare Classes (CASE)
+        </button>
+      </div>
+
+      <!-- Tab 1: Payment Methods -->
+      <div id="tab-payments" class="tab-content space-y-4">
+        <div class="bg-white border border-gray-200 rounded-lg p-5 shadow-sm space-y-4">
+          <h3 class="text-lg font-bold text-gray-900">Payment Methods Breakdown</h3>
+          <p class="text-xs text-gray-500">Group functions with <code class="bg-gray-100 px-1 py-0.5 rounded text-blue-700">HAVING COUNT(*) > 10</code> filter</p>
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+            <div id="chart-payment-methods" class="w-full h-80"></div>
+            <div class="overflow-x-auto border border-gray-200 rounded-lg">
+              <table class="min-w-full divide-y divide-gray-200 text-xs">
+                <thead class="bg-gray-50 text-gray-600 font-semibold uppercase">
+                  <tr>
+                    <th class="px-3 py-2 text-left">Method</th>
+                    <th class="px-3 py-2 text-right">Transactions</th>
+                    <th class="px-3 py-2 text-right">Total Revenue</th>
+                    <th class="px-3 py-2 text-right">Avg Transaction</th>
+                  </tr>
+                </thead>
+                <tbody id="table-payment-methods-body" class="divide-y divide-gray-200 bg-white"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <details class="bg-white border border-gray-200 rounded-lg p-4 shadow-sm text-sm">
+          <summary class="font-bold text-[#1E3A8A] cursor-pointer">🔍 View SQL (HAVING Clause)</summary>
+          <div class="mt-3 sql-font text-xs text-gray-800 bg-gray-900 text-emerald-400 p-4 rounded-lg overflow-x-auto">
+            <pre>SELECT
+    payment_method,
+    COUNT(*) AS total_transactions,
+    ROUND(SUM(CASE WHEN currency = 'USD' THEN amount * 83 ELSE amount END), 2) AS total_revenue_inr,
+    ROUND(AVG(CASE WHEN currency = 'USD' THEN amount * 83 ELSE amount END), 2) AS avg_transaction_inr
+FROM Payments
+WHERE status = 'SUCCESS'
+GROUP BY payment_method
+HAVING COUNT(*) > 10
+ORDER BY total_revenue_inr DESC;</pre>
+          </div>
+        </details>
+      </div>
+
+      <!-- Tab 2: Currencies -->
+      <div id="tab-currencies" class="tab-content space-y-4 hidden">
+        <div class="bg-white border border-gray-200 rounded-lg p-5 shadow-sm space-y-4">
+          <h3 class="text-lg font-bold text-gray-900">Multi-Currency Breakdown (INR vs USD)</h3>
+          <p class="text-xs text-gray-500">Handling transactions in multiple currencies with conversion rate of 83 INR per USD</p>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4" id="currency-cards-container"></div>
+
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div id="chart-currency-count" class="w-full h-80"></div>
+            <div id="chart-currency-revenue" class="w-full h-80"></div>
+          </div>
+
+          <div class="overflow-x-auto border border-gray-200 rounded-lg">
+            <table class="min-w-full divide-y divide-gray-200 text-xs">
+              <thead class="bg-gray-50 text-gray-600 font-semibold uppercase">
+                <tr>
+                  <th class="px-3 py-2 text-left">Currency</th>
+                  <th class="px-3 py-2 text-right">Transactions</th>
+                  <th class="px-3 py-2 text-right">Original Currency Total</th>
+                  <th class="px-3 py-2 text-right">Total (INR Normalized)</th>
+                  <th class="px-3 py-2 text-right">Avg Transaction (INR)</th>
+                </tr>
+              </thead>
+              <tbody id="table-currency-body" class="divide-y divide-gray-200 bg-white"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <details class="bg-white border border-gray-200 rounded-lg p-4 shadow-sm text-sm">
+          <summary class="font-bold text-[#1E3A8A] cursor-pointer">🔍 View SQL (Multi-Currency Grouping)</summary>
+          <div class="mt-3 sql-font text-xs text-gray-800 bg-gray-900 text-emerald-400 p-4 rounded-lg overflow-x-auto">
+            <pre>SELECT
+    currency,
+    COUNT(*) AS payment_count,
+    ROUND(SUM(amount), 2) AS original_amount_sum,
+    ROUND(SUM(CASE WHEN currency = 'USD' THEN amount * 83 ELSE amount END), 2) AS inr_equivalent_sum,
+    ROUND(AVG(CASE WHEN currency = 'USD' THEN amount * 83 ELSE amount END), 2) AS avg_inr_equivalent
+FROM Payments
+WHERE status = 'SUCCESS'
+GROUP BY currency
+ORDER BY currency ASC;</pre>
+          </div>
+        </details>
+      </div>
+
+      <!-- Tab 3: Fare Classes -->
+      <div id="tab-fares" class="tab-content space-y-4 hidden">
+        <div class="bg-white border border-gray-200 rounded-lg p-5 shadow-sm space-y-4">
+          <h3 class="text-lg font-bold text-gray-900">Fare Class Classification via Conditional CASE</h3>
+          <p class="text-xs text-gray-500">Segmented into: Budget (&lt; ₹5,000), Standard (₹5,000 - ₹25,000), and Premium (&gt; ₹25,000)</p>
+
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+            <div id="chart-fare-classes" class="w-full h-80"></div>
+            <div class="overflow-x-auto border border-gray-200 rounded-lg">
+              <table class="min-w-full divide-y divide-gray-200 text-xs">
+                <thead class="bg-gray-50 text-gray-600 font-semibold uppercase">
+                  <tr>
+                    <th class="px-3 py-2 text-left">Fare Tier</th>
+                    <th class="px-3 py-2 text-right">Confirmed Bookings</th>
+                    <th class="px-3 py-2 text-right">Total Revenue</th>
+                  </tr>
+                </thead>
+                <tbody id="table-fare-classes-body" class="divide-y divide-gray-200 bg-white"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <details class="bg-white border border-gray-200 rounded-lg p-4 shadow-sm text-sm">
+          <summary class="font-bold text-[#1E3A8A] cursor-pointer">🔍 View SQL (CASE Expression Breakdown)</summary>
+          <div class="mt-3 sql-font text-xs text-gray-800 bg-gray-900 text-emerald-400 p-4 rounded-lg overflow-x-auto">
+            <pre>SELECT
+    fare_class,
+    COUNT(*) AS booking_count,
+    ROUND(SUM(fare_inr), 2) AS total_fare_revenue
+FROM (
+    SELECT
+        b.booking_id,
+        f.fare AS fare_inr,
+        CASE
+            WHEN f.fare &lt; 5000 THEN 'Budget (&lt; ₹5,000)'
+            WHEN f.fare &lt;= 25000 THEN 'Standard (₹5,000 - ₹25,000)'
+            ELSE 'Premium (&gt; ₹25,000)'
+        END AS fare_class
+    FROM Bookings b
+    JOIN Flights f ON b.flight_id = f.flight_id
+    WHERE b.status = 'CONFIRMED'
+)
+GROUP BY fare_class
+ORDER BY total_fare_revenue DESC;</pre>
+          </div>
+        </details>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Client Database & Application Logic -->
+  <script>
+    // Embedded Oracle Database State
+    const DB = {
+  "airports": [
+    {
+      "airport_id": "MAA",
+      "name": "Chennai International",
+      "city": "Chennai",
+      "country": "India",
+      "timezone": "Asia/Kolkata"
+    },
+    {
+      "airport_id": "DEL",
+      "name": "Indira Gandhi International",
+      "city": "Delhi",
+      "country": "India",
+      "timezone": "Asia/Kolkata"
+    },
+    {
+      "airport_id": "BOM",
+      "name": "Chhatrapati Shivaji International",
+      "city": "Mumbai",
+      "country": "India",
+      "timezone": "Asia/Kolkata"
+    },
+    {
+      "airport_id": "BLR",
+      "name": "Kempegowda International",
+      "city": "Bengaluru",
+      "country": "India",
+      "timezone": "Asia/Kolkata"
+    },
+    {
+      "airport_id": "HYD",
+      "name": "Rajiv Gandhi International",
+      "city": "Hyderabad",
+      "country": "India",
+      "timezone": "Asia/Kolkata"
+    },
+    {
+      "airport_id": "CCU",
+      "name": "Netaji Subhas Chandra Bose International",
+      "city": "Kolkata",
+      "country": "India",
+      "timezone": "Asia/Kolkata"
+    },
+    {
+      "airport_id": "DXB",
+      "name": "Dubai International",
+      "city": "Dubai",
+      "country": "UAE",
+      "timezone": "Asia/Dubai"
+    },
+    {
+      "airport_id": "SIN",
+      "name": "Changi",
+      "city": "Singapore",
+      "country": "Singapore",
+      "timezone": "Asia/Singapore"
+    },
+    {
+      "airport_id": "LHR",
+      "name": "Heathrow",
+      "city": "London",
+      "country": "United Kingdom",
+      "timezone": "Europe/London"
+    },
+    {
+      "airport_id": "JFK",
+      "name": "John F. Kennedy International",
+      "city": "New York",
+      "country": "USA",
+      "timezone": "America/New_York"
+    }
+  ],
+  "flights": [
+    {
+      "flight_id": 101,
+      "flight_no": "AI101",
+      "origin_id": "MAA",
+      "destination_id": "DEL",
+      "departure_time": "2026-11-01T06:30:00",
+      "arrival_time": "2026-11-01T09:15:00",
+      "fare": 6500.0,
+      "currency": "INR"
+    },
+    {
+      "flight_id": 102,
+      "flight_no": "AI102",
+      "origin_id": "MAA",
+      "destination_id": "BOM",
+      "departure_time": "2026-11-01T09:00:00",
+      "arrival_time": "2026-11-01T11:00:00",
+      "fare": 5200.0,
+      "currency": "INR"
+    },
+    {
+      "flight_id": 103,
+      "flight_no": "EK103",
+      "origin_id": "MAA",
+      "destination_id": "DXB",
+      "departure_time": "2026-11-02T02:15:00",
+      "arrival_time": "2026-11-02T05:00:00",
+      "fare": 22000.0,
+      "currency": "INR"
+    },
+    {
+      "flight_id": 104,
+      "flight_no": "SQ104",
+      "origin_id": "MAA",
+      "destination_id": "SIN",
+      "departure_time": "2026-11-02T23:45:00",
+      "arrival_time": "2026-11-03T07:00:00",
+      "fare": 18000.0,
+      "currency": "INR"
+    },
+    {
+      "flight_id": 105,
+      "flight_no": "AI105",
+      "origin_id": "DEL",
+      "destination_id": "BOM",
+      "departure_time": "2026-11-03T18:00:00",
+      "arrival_time": "2026-11-03T20:00:00",
+      "fare": 7000.0,
+      "currency": "INR"
+    },
+    {
+      "flight_id": 106,
+      "flight_no": "6E106",
+      "origin_id": "BLR",
+      "destination_id": "MAA",
+      "departure_time": "2026-11-01T07:15:00",
+      "arrival_time": "2026-11-01T08:15:00",
+      "fare": 3200.0,
+      "currency": "INR"
+    },
+    {
+      "flight_id": 107,
+      "flight_no": "6E107",
+      "origin_id": "BLR",
+      "destination_id": "DEL",
+      "departure_time": "2026-11-02T10:00:00",
+      "arrival_time": "2026-11-02T12:45:00",
+      "fare": 6800.0,
+      "currency": "INR"
+    },
+    {
+      "flight_id": 108,
+      "flight_no": "UK108",
+      "origin_id": "HYD",
+      "destination_id": "BOM",
+      "departure_time": "2026-11-02T14:00:00",
+      "arrival_time": "2026-11-02T15:30:00",
+      "fare": 4500.0,
+      "currency": "INR"
+    },
+    {
+      "flight_id": 109,
+      "flight_no": "AI109",
+      "origin_id": "CCU",
+      "destination_id": "DEL",
+      "departure_time": "2026-11-03T05:45:00",
+      "arrival_time": "2026-11-03T08:15:00",
+      "fare": 6100.0,
+      "currency": "INR"
+    },
+    {
+      "flight_id": 110,
+      "flight_no": "6E110",
+      "origin_id": "MAA",
+      "destination_id": "BLR",
+      "departure_time": "2026-11-03T16:30:00",
+      "arrival_time": "2026-11-03T17:30:00",
+      "fare": 3400.0,
+      "currency": "INR"
+    },
+    {
+      "flight_id": 111,
+      "flight_no": "AI111",
+      "origin_id": "BOM",
+      "destination_id": "DXB",
+      "departure_time": "2026-11-04T03:30:00",
+      "arrival_time": "2026-11-04T05:15:00",
+      "fare": 19500.0,
+      "currency": "INR"
+    },
+    {
+      "flight_id": 112,
+      "flight_no": "EK112",
+      "origin_id": "DEL",
+      "destination_id": "DXB",
+      "departure_time": "2026-11-04T09:20:00",
+      "arrival_time": "2026-11-04T11:50:00",
+      "fare": 21000.0,
+      "currency": "INR"
+    },
+    {
+      "flight_id": 113,
+      "flight_no": "BA113",
+      "origin_id": "DEL",
+      "destination_id": "LHR",
+      "departure_time": "2026-11-05T02:10:00",
+      "arrival_time": "2026-11-05T06:40:00",
+      "fare": 62000.0,
+      "currency": "INR"
+    },
+    {
+      "flight_id": 114,
+      "flight_no": "AI114",
+      "origin_id": "BOM",
+      "destination_id": "LHR",
+      "departure_time": "2026-11-05T02:40:00",
+      "arrival_time": "2026-11-05T07:30:00",
+      "fare": 59000.0,
+      "currency": "INR"
+    },
+    {
+      "flight_id": 115,
+      "flight_no": "AI115",
+      "origin_id": "DEL",
+      "destination_id": "JFK",
+      "departure_time": "2026-11-06T01:30:00",
+      "arrival_time": "2026-11-06T06:30:00",
+      "fare": 85000.0,
+      "currency": "INR"
+    },
+    {
+      "flight_id": 116,
+      "flight_no": "SQ116",
+      "origin_id": "SIN",
+      "destination_id": "MAA",
+      "departure_time": "2026-11-04T13:00:00",
+      "arrival_time": "2026-11-04T15:00:00",
+      "fare": 17500.0,
+      "currency": "INR"
+    },
+    {
+      "flight_id": 117,
+      "flight_no": "EK117",
+      "origin_id": "DXB",
+      "destination_id": "MAA",
+      "departure_time": "2026-11-05T22:00:00",
+      "arrival_time": "2026-11-06T03:15:00",
+      "fare": 21500.0,
+      "currency": "INR"
+    },
+    {
+      "flight_id": 118,
+      "flight_no": "6E118",
+      "origin_id": "HYD",
+      "destination_id": "BLR",
+      "departure_time": "2026-11-05T08:00:00",
+      "arrival_time": "2026-11-05T09:15:00",
+      "fare": 2900.0,
+      "currency": "INR"
+    },
+    {
+      "flight_id": 119,
+      "flight_no": "AI119",
+      "origin_id": "BOM",
+      "destination_id": "DEL",
+      "departure_time": "2026-11-06T20:30:00",
+      "arrival_time": "2026-11-06T22:40:00",
+      "fare": 7200.0,
+      "currency": "INR"
+    },
+    {
+      "flight_id": 120,
+      "flight_no": "UK120",
+      "origin_id": "CCU",
+      "destination_id": "BOM",
+      "departure_time": "2026-11-06T11:00:00",
+      "arrival_time": "2026-11-06T13:45:00",
+      "fare": 6900.0,
+      "currency": "INR"
+    }
+  ],
+  "passengers": [
+    {
+      "passenger_id": 1,
+      "name": "Pranav Shabbir",
+      "email": "pranav.shabbir@mail.com",
+      "phone": "9000000001",
+      "meal": "veg",
+      "seat": "aisle",
+      "baggage": 2
+    },
+    {
+      "passenger_id": 2,
+      "name": "Ganessh Shabbir",
+      "email": "ganessh.shabbir@mail.com",
+      "phone": "9000000002",
+      "meal": "jain",
+      "seat": "aisle",
+      "baggage": 1
+    },
+    {
+      "passenger_id": 3,
+      "name": "Aarav Shabbir",
+      "email": "aarav.shabbir@mail.com",
+      "phone": "9000000003",
+      "meal": "vegan",
+      "seat": "middle",
+      "baggage": 0
+    },
+    {
+      "passenger_id": 4,
+      "name": "Priya Shabbir",
+      "email": "priya.shabbir@mail.com",
+      "phone": "9000000004",
+      "meal": "vegan",
+      "seat": "window",
+      "baggage": 3
+    },
+    {
+      "passenger_id": 5,
+      "name": "Kavya Shabbir",
+      "email": "kavya.shabbir@mail.com",
+      "phone": "9000000005",
+      "meal": "vegan",
+      "seat": "middle",
+      "baggage": 2
+    },
+    {
+      "passenger_id": 6,
+      "name": "Rohan Shabbir",
+      "email": "rohan.shabbir@mail.com",
+      "phone": "9000000006",
+      "meal": "vegan",
+      "seat": "middle",
+      "baggage": 1
+    },
+    {
+      "passenger_id": 7,
+      "name": "Sneha Shabbir",
+      "email": "sneha.shabbir@mail.com",
+      "phone": "9000000007",
+      "meal": "non-veg",
+      "seat": "window",
+      "baggage": 2
+    },
+    {
+      "passenger_id": 8,
+      "name": "Arjun Shabbir",
+      "email": "arjun.shabbir@mail.com",
+      "phone": "9000000008",
+      "meal": "jain",
+      "seat": "middle",
+      "baggage": 3
+    },
+    {
+      "passenger_id": 9,
+      "name": "Meera Shabbir",
+      "email": "meera.shabbir@mail.com",
+      "phone": "9000000009",
+      "meal": "vegan",
+      "seat": "middle",
+      "baggage": 0
+    },
+    {
+      "passenger_id": 10,
+      "name": "Juzer Kumar",
+      "email": "juzer.kumar@mail.com",
+      "phone": "9000000010",
+      "meal": "veg",
+      "seat": "aisle",
+      "baggage": 1
+    },
+    {
+      "passenger_id": 11,
+      "name": "Pranav Kumar",
+      "email": "pranav.kumar@mail.com",
+      "phone": "9000000011",
+      "meal": "veg",
+      "seat": "middle",
+      "baggage": 3
+    },
+    {
+      "passenger_id": 12,
+      "name": "Ganessh Kumar",
+      "email": "ganessh.kumar@mail.com",
+      "phone": "9000000012",
+      "meal": "veg",
+      "seat": "middle",
+      "baggage": 2
+    },
+    {
+      "passenger_id": 13,
+      "name": "Aarav Kumar",
+      "email": "aarav.kumar@mail.com",
+      "phone": "9000000013",
+      "meal": "non-veg",
+      "seat": "window",
+      "baggage": 1
+    },
+    {
+      "passenger_id": 14,
+      "name": "Priya Kumar",
+      "email": "priya.kumar@mail.com",
+      "phone": "9000000014",
+      "meal": "veg",
+      "seat": "aisle",
+      "baggage": 3
+    },
+    {
+      "passenger_id": 15,
+      "name": "Kavya Kumar",
+      "email": "kavya.kumar@mail.com",
+      "phone": "9000000015",
+      "meal": "veg",
+      "seat": "middle",
+      "baggage": 0
+    },
+    {
+      "passenger_id": 16,
+      "name": "Rohan Kumar",
+      "email": "rohan.kumar@mail.com",
+      "phone": "9000000016",
+      "meal": "non-veg",
+      "seat": "middle",
+      "baggage": 3
+    },
+    {
+      "passenger_id": 17,
+      "name": "Sneha Kumar",
+      "email": "sneha.kumar@mail.com",
+      "phone": "9000000017",
+      "meal": "veg",
+      "seat": "aisle",
+      "baggage": 1
+    },
+    {
+      "passenger_id": 18,
+      "name": "Arjun Kumar",
+      "email": "arjun.kumar@mail.com",
+      "phone": "9000000018",
+      "meal": "vegan",
+      "seat": "window",
+      "baggage": 1
+    },
+    {
+      "passenger_id": 19,
+      "name": "Meera Kumar",
+      "email": "meera.kumar@mail.com",
+      "phone": "9000000019",
+      "meal": "jain",
+      "seat": "middle",
+      "baggage": 1
+    },
+    {
+      "passenger_id": 20,
+      "name": "Juzer Iyer",
+      "email": "juzer.iyer@mail.com",
+      "phone": "9000000020",
+      "meal": "jain",
+      "seat": "middle",
+      "baggage": 3
+    },
+    {
+      "passenger_id": 21,
+      "name": "Pranav Iyer",
+      "email": "pranav.iyer@mail.com",
+      "phone": "9000000021",
+      "meal": "vegan",
+      "seat": "window",
+      "baggage": 2
+    },
+    {
+      "passenger_id": 22,
+      "name": "Ganessh Iyer",
+      "email": "ganessh.iyer@mail.com",
+      "phone": "9000000022",
+      "meal": "vegan",
+      "seat": "window",
+      "baggage": 0
+    },
+    {
+      "passenger_id": 23,
+      "name": "Aarav Iyer",
+      "email": "aarav.iyer@mail.com",
+      "phone": "9000000023",
+      "meal": "jain",
+      "seat": "window",
+      "baggage": 0
+    },
+    {
+      "passenger_id": 24,
+      "name": "Priya Iyer",
+      "email": "priya.iyer@mail.com",
+      "phone": "9000000024",
+      "meal": "vegan",
+      "seat": "middle",
+      "baggage": 1
+    },
+    {
+      "passenger_id": 25,
+      "name": "Kavya Iyer",
+      "email": "kavya.iyer@mail.com",
+      "phone": "9000000025",
+      "meal": "non-veg",
+      "seat": "aisle",
+      "baggage": 0
+    },
+    {
+      "passenger_id": 26,
+      "name": "Rohan Iyer",
+      "email": "rohan.iyer@mail.com",
+      "phone": "9000000026",
+      "meal": "jain",
+      "seat": "window",
+      "baggage": 3
+    },
+    {
+      "passenger_id": 27,
+      "name": "Sneha Iyer",
+      "email": "sneha.iyer@mail.com",
+      "phone": "9000000027",
+      "meal": "vegan",
+      "seat": "middle",
+      "baggage": 1
+    },
+    {
+      "passenger_id": 28,
+      "name": "Arjun Iyer",
+      "email": "arjun.iyer@mail.com",
+      "phone": "9000000028",
+      "meal": "non-veg",
+      "seat": "middle",
+      "baggage": 3
+    },
+    {
+      "passenger_id": 29,
+      "name": "Meera Iyer",
+      "email": "meera.iyer@mail.com",
+      "phone": "9000000029",
+      "meal": "vegan",
+      "seat": "middle",
+      "baggage": 2
+    },
+    {
+      "passenger_id": 30,
+      "name": "Juzer Reddy",
+      "email": "juzer.reddy@mail.com",
+      "phone": "9000000030",
+      "meal": "non-veg",
+      "seat": "middle",
+      "baggage": 2
+    },
+    {
+      "passenger_id": 31,
+      "name": "Pranav Reddy",
+      "email": "pranav.reddy@mail.com",
+      "phone": "9000000031",
+      "meal": "jain",
+      "seat": "window",
+      "baggage": 1
+    },
+    {
+      "passenger_id": 32,
+      "name": "Ganessh Reddy",
+      "email": "ganessh.reddy@mail.com",
+      "phone": "9000000032",
+      "meal": "vegan",
+      "seat": "middle",
+      "baggage": 2
+    },
+    {
+      "passenger_id": 33,
+      "name": "Aarav Reddy",
+      "email": "aarav.reddy@mail.com",
+      "phone": "9000000033",
+      "meal": "vegan",
+      "seat": "aisle",
+      "baggage": 0
+    },
+    {
+      "passenger_id": 34,
+      "name": "Priya Reddy",
+      "email": "priya.reddy@mail.com",
+      "phone": "9000000034",
+      "meal": "veg",
+      "seat": "aisle",
+      "baggage": 3
+    },
+    {
+      "passenger_id": 35,
+      "name": "Kavya Reddy",
+      "email": "kavya.reddy@mail.com",
+      "phone": "9000000035",
+      "meal": "veg",
+      "seat": "aisle",
+      "baggage": 3
+    },
+    {
+      "passenger_id": 36,
+      "name": "Rohan Reddy",
+      "email": "rohan.reddy@mail.com",
+      "phone": "9000000036",
+      "meal": "non-veg",
+      "seat": "aisle",
+      "baggage": 1
+    },
+    {
+      "passenger_id": 37,
+      "name": "Sneha Reddy",
+      "email": "sneha.reddy@mail.com",
+      "phone": "9000000037",
+      "meal": "non-veg",
+      "seat": "aisle",
+      "baggage": 3
+    },
+    {
+      "passenger_id": 38,
+      "name": "Arjun Reddy",
+      "email": "arjun.reddy@mail.com",
+      "phone": "9000000038",
+      "meal": "vegan",
+      "seat": "window",
+      "baggage": 2
+    },
+    {
+      "passenger_id": 39,
+      "name": "Meera Reddy",
+      "email": "meera.reddy@mail.com",
+      "phone": "9000000039",
+      "meal": "jain",
+      "seat": "middle",
+      "baggage": 0
+    },
+    {
+      "passenger_id": 40,
+      "name": "Juzer Sharma",
+      "email": "juzer.sharma@mail.com",
+      "phone": "9000000040",
+      "meal": "non-veg",
+      "seat": "window",
+      "baggage": 3
+    },
+    {
+      "passenger_id": 41,
+      "name": "Pranav Sharma",
+      "email": "pranav.sharma@mail.com",
+      "phone": "9000000041",
+      "meal": "jain",
+      "seat": "window",
+      "baggage": 1
+    },
+    {
+      "passenger_id": 42,
+      "name": "Ganessh Sharma",
+      "email": "ganessh.sharma@mail.com",
+      "phone": "9000000042",
+      "meal": "jain",
+      "seat": "middle",
+      "baggage": 3
+    },
+    {
+      "passenger_id": 43,
+      "name": "Aarav Sharma",
+      "email": "aarav.sharma@mail.com",
+      "phone": "9000000043",
+      "meal": "veg",
+      "seat": "window",
+      "baggage": 0
+    },
+    {
+      "passenger_id": 44,
+      "name": "Priya Sharma",
+      "email": "priya.sharma@mail.com",
+      "phone": "9000000044",
+      "meal": "non-veg",
+      "seat": "middle",
+      "baggage": 2
+    },
+    {
+      "passenger_id": 45,
+      "name": "Kavya Sharma",
+      "email": "kavya.sharma@mail.com",
+      "phone": "9000000045",
+      "meal": "vegan",
+      "seat": "window",
+      "baggage": 2
+    },
+    {
+      "passenger_id": 46,
+      "name": "Rohan Sharma",
+      "email": "rohan.sharma@mail.com",
+      "phone": "9000000046",
+      "meal": "veg",
+      "seat": "middle",
+      "baggage": 1
+    },
+    {
+      "passenger_id": 47,
+      "name": "Sneha Sharma",
+      "email": "sneha.sharma@mail.com",
+      "phone": "9000000047",
+      "meal": "veg",
+      "seat": "window",
+      "baggage": 1
+    },
+    {
+      "passenger_id": 48,
+      "name": "Arjun Sharma",
+      "email": "arjun.sharma@mail.com",
+      "phone": "9000000048",
+      "meal": "non-veg",
+      "seat": "window",
+      "baggage": 3
+    },
+    {
+      "passenger_id": 49,
+      "name": "Meera Sharma",
+      "email": "meera.sharma@mail.com",
+      "phone": "9000000049",
+      "meal": "non-veg",
+      "seat": "window",
+      "baggage": 0
+    },
+    {
+      "passenger_id": 50,
+      "name": "Juzer Nair",
+      "email": "juzer.nair@mail.com",
+      "phone": "9000000050",
+      "meal": "non-veg",
+      "seat": "window",
+      "baggage": 0
+    },
+    {
+      "passenger_id": 51,
+      "name": "Pranav Nair",
+      "email": "pranav.nair@mail.com",
+      "phone": "9000000051",
+      "meal": "non-veg",
+      "seat": "middle",
+      "baggage": 2
+    },
+    {
+      "passenger_id": 52,
+      "name": "Ganessh Nair",
+      "email": "ganessh.nair@mail.com",
+      "phone": "9000000052",
+      "meal": "jain",
+      "seat": "middle",
+      "baggage": 1
+    },
+    {
+      "passenger_id": 53,
+      "name": "Aarav Nair",
+      "email": "aarav.nair@mail.com",
+      "phone": "9000000053",
+      "meal": "vegan",
+      "seat": "window",
+      "baggage": 3
+    },
+    {
+      "passenger_id": 54,
+      "name": "Priya Nair",
+      "email": "priya.nair@mail.com",
+      "phone": "9000000054",
+      "meal": "vegan",
+      "seat": "middle",
+      "baggage": 1
+    },
+    {
+      "passenger_id": 55,
+      "name": "Kavya Nair",
+      "email": "kavya.nair@mail.com",
+      "phone": "9000000055",
+      "meal": "veg",
+      "seat": "window",
+      "baggage": 2
+    },
+    {
+      "passenger_id": 56,
+      "name": "Rohan Nair",
+      "email": "rohan.nair@mail.com",
+      "phone": "9000000056",
+      "meal": "non-veg",
+      "seat": "window",
+      "baggage": 3
+    },
+    {
+      "passenger_id": 57,
+      "name": "Sneha Nair",
+      "email": "sneha.nair@mail.com",
+      "phone": "9000000057",
+      "meal": "veg",
+      "seat": "middle",
+      "baggage": 0
+    },
+    {
+      "passenger_id": 58,
+      "name": "Arjun Nair",
+      "email": "arjun.nair@mail.com",
+      "phone": "9000000058",
+      "meal": "non-veg",
+      "seat": "middle",
+      "baggage": 1
+    },
+    {
+      "passenger_id": 59,
+      "name": "Meera Nair",
+      "email": "meera.nair@mail.com",
+      "phone": "9000000059",
+      "meal": "jain",
+      "seat": "window",
+      "baggage": 1
+    },
+    {
+      "passenger_id": 60,
+      "name": "Juzer Shabbir",
+      "email": "juzer.shabbir@mail.com",
+      "phone": "9000000060",
+      "meal": "jain",
+      "seat": "window",
+      "baggage": 0
+    }
+  ],
+  "bookings": [
+    {
+      "booking_id": 1,
+      "passenger_id": 4,
+      "flight_id": 117,
+      "booking_date": "2026-10-14",
+      "status": "CANCELLED",
+      "special": "pet carrier"
+    },
+    {
+      "booking_id": 2,
+      "passenger_id": 37,
+      "flight_id": 106,
+      "booking_date": "2026-09-17",
+      "status": "CONFIRMED",
+      "special": "priority boarding"
+    },
+    {
+      "booking_id": 3,
+      "passenger_id": 53,
+      "flight_id": 104,
+      "booking_date": "2026-09-20",
+      "status": "CONFIRMED",
+      "special": "pet carrier"
+    },
+    {
+      "booking_id": 4,
+      "passenger_id": 16,
+      "flight_id": 114,
+      "booking_date": "2026-09-22",
+      "status": "CONFIRMED",
+      "special": "infant"
+    },
+    {
+      "booking_id": 5,
+      "passenger_id": 56,
+      "flight_id": 101,
+      "booking_date": "2026-09-25",
+      "status": "CANCELLED",
+      "special": "extra legroom"
+    },
+    {
+      "booking_id": 6,
+      "passenger_id": 5,
+      "flight_id": 106,
+      "booking_date": "2026-10-06",
+      "status": "CANCELLED",
+      "special": "priority boarding"
+    },
+    {
+      "booking_id": 7,
+      "passenger_id": 49,
+      "flight_id": 119,
+      "booking_date": "2026-10-04",
+      "status": "CONFIRMED",
+      "special": "infant"
+    },
+    {
+      "booking_id": 8,
+      "passenger_id": 60,
+      "flight_id": 116,
+      "booking_date": "2026-10-06",
+      "status": "CONFIRMED",
+      "special": "extra legroom"
+    },
+    {
+      "booking_id": 9,
+      "passenger_id": 32,
+      "flight_id": 120,
+      "booking_date": "2026-10-14",
+      "status": "CONFIRMED",
+      "special": "extra legroom"
+    },
+    {
+      "booking_id": 10,
+      "passenger_id": 35,
+      "flight_id": 114,
+      "booking_date": "2026-09-13",
+      "status": "CONFIRMED",
+      "special": "wheelchair"
+    },
+    {
+      "booking_id": 11,
+      "passenger_id": 57,
+      "flight_id": 120,
+      "booking_date": "2026-09-12",
+      "status": "CONFIRMED",
+      "special": "wheelchair"
+    },
+    {
+      "booking_id": 12,
+      "passenger_id": 55,
+      "flight_id": 118,
+      "booking_date": "2026-09-13",
+      "status": "CONFIRMED",
+      "special": "pet carrier"
+    },
+    {
+      "booking_id": 13,
+      "passenger_id": 26,
+      "flight_id": 102,
+      "booking_date": "2026-09-13",
+      "status": "CONFIRMED",
+      "special": "pet carrier"
+    },
+    {
+      "booking_id": 14,
+      "passenger_id": 4,
+      "flight_id": 104,
+      "booking_date": "2026-09-11",
+      "status": "CONFIRMED",
+      "special": "wheelchair"
+    },
+    {
+      "booking_id": 15,
+      "passenger_id": 31,
+      "flight_id": 105,
+      "booking_date": "2026-09-20",
+      "status": "CONFIRMED",
+      "special": "wheelchair"
+    },
+    {
+      "booking_id": 16,
+      "passenger_id": 22,
+      "flight_id": 113,
+      "booking_date": "2026-09-09",
+      "status": "CANCELLED",
+      "special": "priority boarding"
+    },
+    {
+      "booking_id": 17,
+      "passenger_id": 26,
+      "flight_id": 105,
+      "booking_date": "2026-10-04",
+      "status": "CONFIRMED",
+      "special": "wheelchair"
+    },
+    {
+      "booking_id": 18,
+      "passenger_id": 26,
+      "flight_id": 117,
+      "booking_date": "2026-09-29",
+      "status": "CONFIRMED",
+      "special": "wheelchair"
+    },
+    {
+      "booking_id": 19,
+      "passenger_id": 34,
+      "flight_id": 105,
+      "booking_date": "2026-10-11",
+      "status": "CANCELLED",
+      "special": "infant"
+    },
+    {
+      "booking_id": 20,
+      "passenger_id": 59,
+      "flight_id": 101,
+      "booking_date": "2026-09-07",
+      "status": "CONFIRMED",
+      "special": "extra legroom"
+    },
+    {
+      "booking_id": 21,
+      "passenger_id": 4,
+      "flight_id": 104,
+      "booking_date": "2026-09-22",
+      "status": "CONFIRMED",
+      "special": "extra legroom"
+    },
+    {
+      "booking_id": 22,
+      "passenger_id": 52,
+      "flight_id": 107,
+      "booking_date": "2026-10-10",
+      "status": "CANCELLED",
+      "special": "wheelchair"
+    },
+    {
+      "booking_id": 23,
+      "passenger_id": 23,
+      "flight_id": 107,
+      "booking_date": "2026-09-24",
+      "status": "CONFIRMED",
+      "special": "none"
+    },
+    {
+      "booking_id": 24,
+      "passenger_id": 49,
+      "flight_id": 111,
+      "booking_date": "2026-09-06",
+      "status": "CONFIRMED",
+      "special": "wheelchair"
+    },
+    {
+      "booking_id": 25,
+      "passenger_id": 47,
+      "flight_id": 115,
+      "booking_date": "2026-09-20",
+      "status": "CONFIRMED",
+      "special": "pet carrier"
+    },
+    {
+      "booking_id": 26,
+      "passenger_id": 43,
+      "flight_id": 104,
+      "booking_date": "2026-09-21",
+      "status": "CONFIRMED",
+      "special": "wheelchair"
+    },
+    {
+      "booking_id": 27,
+      "passenger_id": 32,
+      "flight_id": 114,
+      "booking_date": "2026-09-16",
+      "status": "PENDING",
+      "special": "infant"
+    },
+    {
+      "booking_id": 28,
+      "passenger_id": 47,
+      "flight_id": 102,
+      "booking_date": "2026-09-04",
+      "status": "CONFIRMED",
+      "special": "pet carrier"
+    },
+    {
+      "booking_id": 29,
+      "passenger_id": 27,
+      "flight_id": 105,
+      "booking_date": "2026-10-12",
+      "status": "CONFIRMED",
+      "special": "none"
+    },
+    {
+      "booking_id": 30,
+      "passenger_id": 58,
+      "flight_id": 101,
+      "booking_date": "2026-09-20",
+      "status": "CONFIRMED",
+      "special": "none"
+    },
+    {
+      "booking_id": 31,
+      "passenger_id": 32,
+      "flight_id": 117,
+      "booking_date": "2026-10-08",
+      "status": "CANCELLED",
+      "special": "infant"
+    },
+    {
+      "booking_id": 32,
+      "passenger_id": 31,
+      "flight_id": 118,
+      "booking_date": "2026-09-30",
+      "status": "CONFIRMED",
+      "special": "priority boarding"
+    },
+    {
+      "booking_id": 33,
+      "passenger_id": 38,
+      "flight_id": 117,
+      "booking_date": "2026-09-26",
+      "status": "CONFIRMED",
+      "special": "pet carrier"
+    },
+    {
+      "booking_id": 34,
+      "passenger_id": 54,
+      "flight_id": 102,
+      "booking_date": "2026-09-27",
+      "status": "CANCELLED",
+      "special": "priority boarding"
+    },
+    {
+      "booking_id": 35,
+      "passenger_id": 57,
+      "flight_id": 120,
+      "booking_date": "2026-09-15",
+      "status": "CONFIRMED",
+      "special": "none"
+    },
+    {
+      "booking_id": 36,
+      "passenger_id": 50,
+      "flight_id": 114,
+      "booking_date": "2026-09-20",
+      "status": "CONFIRMED",
+      "special": "extra legroom"
+    },
+    {
+      "booking_id": 37,
+      "passenger_id": 30,
+      "flight_id": 114,
+      "booking_date": "2026-09-12",
+      "status": "CANCELLED",
+      "special": "pet carrier"
+    },
+    {
+      "booking_id": 38,
+      "passenger_id": 23,
+      "flight_id": 105,
+      "booking_date": "2026-09-10",
+      "status": "CONFIRMED",
+      "special": "none"
+    },
+    {
+      "booking_id": 39,
+      "passenger_id": 17,
+      "flight_id": 115,
+      "booking_date": "2026-10-10",
+      "status": "CONFIRMED",
+      "special": "none"
+    },
+    {
+      "booking_id": 40,
+      "passenger_id": 22,
+      "flight_id": 103,
+      "booking_date": "2026-09-01",
+      "status": "CONFIRMED",
+      "special": "extra legroom"
+    },
+    {
+      "booking_id": 41,
+      "passenger_id": 7,
+      "flight_id": 120,
+      "booking_date": "2026-09-18",
+      "status": "CONFIRMED",
+      "special": "wheelchair"
+    },
+    {
+      "booking_id": 42,
+      "passenger_id": 43,
+      "flight_id": 113,
+      "booking_date": "2026-09-24",
+      "status": "CONFIRMED",
+      "special": "extra legroom"
+    },
+    {
+      "booking_id": 43,
+      "passenger_id": 4,
+      "flight_id": 108,
+      "booking_date": "2026-09-17",
+      "status": "CONFIRMED",
+      "special": "priority boarding"
+    },
+    {
+      "booking_id": 44,
+      "passenger_id": 40,
+      "flight_id": 105,
+      "booking_date": "2026-10-05",
+      "status": "CONFIRMED",
+      "special": "wheelchair"
+    },
+    {
+      "booking_id": 45,
+      "passenger_id": 57,
+      "flight_id": 108,
+      "booking_date": "2026-09-15",
+      "status": "CONFIRMED",
+      "special": "wheelchair"
+    },
+    {
+      "booking_id": 46,
+      "passenger_id": 13,
+      "flight_id": 107,
+      "booking_date": "2026-09-20",
+      "status": "CONFIRMED",
+      "special": "wheelchair"
+    },
+    {
+      "booking_id": 47,
+      "passenger_id": 16,
+      "flight_id": 116,
+      "booking_date": "2026-09-19",
+      "status": "CONFIRMED",
+      "special": "wheelchair"
+    },
+    {
+      "booking_id": 48,
+      "passenger_id": 48,
+      "flight_id": 108,
+      "booking_date": "2026-10-10",
+      "status": "CONFIRMED",
+      "special": "priority boarding"
+    },
+    {
+      "booking_id": 49,
+      "passenger_id": 20,
+      "flight_id": 106,
+      "booking_date": "2026-09-26",
+      "status": "CONFIRMED",
+      "special": "infant"
+    },
+    {
+      "booking_id": 50,
+      "passenger_id": 47,
+      "flight_id": 108,
+      "booking_date": "2026-09-06",
+      "status": "CONFIRMED",
+      "special": "priority boarding"
+    },
+    {
+      "booking_id": 51,
+      "passenger_id": 51,
+      "flight_id": 101,
+      "booking_date": "2026-09-17",
+      "status": "CANCELLED",
+      "special": "pet carrier"
+    },
+    {
+      "booking_id": 52,
+      "passenger_id": 35,
+      "flight_id": 104,
+      "booking_date": "2026-10-03",
+      "status": "CONFIRMED",
+      "special": "infant"
+    },
+    {
+      "booking_id": 53,
+      "passenger_id": 8,
+      "flight_id": 118,
+      "booking_date": "2026-09-14",
+      "status": "CONFIRMED",
+      "special": "priority boarding"
+    },
+    {
+      "booking_id": 54,
+      "passenger_id": 3,
+      "flight_id": 103,
+      "booking_date": "2026-10-04",
+      "status": "PENDING",
+      "special": "wheelchair"
+    },
+    {
+      "booking_id": 55,
+      "passenger_id": 26,
+      "flight_id": 111,
+      "booking_date": "2026-09-03",
+      "status": "CONFIRMED",
+      "special": "none"
+    },
+    {
+      "booking_id": 56,
+      "passenger_id": 47,
+      "flight_id": 103,
+      "booking_date": "2026-10-01",
+      "status": "CONFIRMED",
+      "special": "wheelchair"
+    },
+    {
+      "booking_id": 57,
+      "passenger_id": 49,
+      "flight_id": 104,
+      "booking_date": "2026-09-22",
+      "status": "CONFIRMED",
+      "special": "pet carrier"
+    },
+    {
+      "booking_id": 58,
+      "passenger_id": 60,
+      "flight_id": 108,
+      "booking_date": "2026-09-26",
+      "status": "CONFIRMED",
+      "special": "priority boarding"
+    },
+    {
+      "booking_id": 59,
+      "passenger_id": 38,
+      "flight_id": 111,
+      "booking_date": "2026-10-05",
+      "status": "CONFIRMED",
+      "special": "priority boarding"
+    },
+    {
+      "booking_id": 60,
+      "passenger_id": 47,
+      "flight_id": 107,
+      "booking_date": "2026-10-02",
+      "status": "CONFIRMED",
+      "special": "priority boarding"
+    },
+    {
+      "booking_id": 61,
+      "passenger_id": 48,
+      "flight_id": 116,
+      "booking_date": "2026-09-29",
+      "status": "CONFIRMED",
+      "special": "pet carrier"
+    },
+    {
+      "booking_id": 62,
+      "passenger_id": 16,
+      "flight_id": 117,
+      "booking_date": "2026-09-23",
+      "status": "PENDING",
+      "special": "pet carrier"
+    },
+    {
+      "booking_id": 63,
+      "passenger_id": 8,
+      "flight_id": 120,
+      "booking_date": "2026-10-10",
+      "status": "CONFIRMED",
+      "special": "none"
+    },
+    {
+      "booking_id": 64,
+      "passenger_id": 7,
+      "flight_id": 118,
+      "booking_date": "2026-09-30",
+      "status": "CONFIRMED",
+      "special": "infant"
+    },
+    {
+      "booking_id": 65,
+      "passenger_id": 55,
+      "flight_id": 116,
+      "booking_date": "2026-09-13",
+      "status": "CONFIRMED",
+      "special": "infant"
+    },
+    {
+      "booking_id": 66,
+      "passenger_id": 21,
+      "flight_id": 107,
+      "booking_date": "2026-09-16",
+      "status": "CONFIRMED",
+      "special": "priority boarding"
+    },
+    {
+      "booking_id": 133,
+      "passenger_id": 14,
+      "flight_id": 104,
+      "booking_date": "2026-10-07",
+      "status": "CANCELLED",
+      "special": "wheelchair"
+    },
+    {
+      "booking_id": 134,
+      "passenger_id": 14,
+      "flight_id": 111,
+      "booking_date": "2026-09-26",
+      "status": "CONFIRMED",
+      "special": "extra legroom"
+    },
+    {
+      "booking_id": 135,
+      "passenger_id": 19,
+      "flight_id": 113,
+      "booking_date": "2026-09-29",
+      "status": "CONFIRMED",
+      "special": "none"
+    },
+    {
+      "booking_id": 136,
+      "passenger_id": 38,
+      "flight_id": 110,
+      "booking_date": "2026-09-02",
+      "status": "CONFIRMED",
+      "special": "infant"
+    },
+    {
+      "booking_id": 137,
+      "passenger_id": 7,
+      "flight_id": 117,
+      "booking_date": "2026-10-04",
+      "status": "CONFIRMED",
+      "special": "none"
+    },
+    {
+      "booking_id": 138,
+      "passenger_id": 5,
+      "flight_id": 115,
+      "booking_date": "2026-09-25",
+      "status": "CONFIRMED",
+      "special": "none"
+    },
+    {
+      "booking_id": 139,
+      "passenger_id": 24,
+      "flight_id": 108,
+      "booking_date": "2026-10-11",
+      "status": "CANCELLED",
+      "special": "infant"
+    },
+    {
+      "booking_id": 140,
+      "passenger_id": 17,
+      "flight_id": 113,
+      "booking_date": "2026-10-01",
+      "status": "CONFIRMED",
+      "special": "wheelchair"
+    },
+    {
+      "booking_id": 141,
+      "passenger_id": 10,
+      "flight_id": 118,
+      "booking_date": "2026-10-11",
+      "status": "CONFIRMED",
+      "special": "wheelchair"
+    },
+    {
+      "booking_id": 142,
+      "passenger_id": 27,
+      "flight_id": 108,
+      "booking_date": "2026-09-09",
+      "status": "CONFIRMED",
+      "special": "none"
+    },
+    {
+      "booking_id": 143,
+      "passenger_id": 5,
+      "flight_id": 117,
+      "booking_date": "2026-09-05",
+      "status": "CONFIRMED",
+      "special": "wheelchair"
+    },
+    {
+      "booking_id": 144,
+      "passenger_id": 15,
+      "flight_id": 105,
+      "booking_date": "2026-09-24",
+      "status": "CONFIRMED",
+      "special": "infant"
+    },
+    {
+      "booking_id": 145,
+      "passenger_id": 59,
+      "flight_id": 118,
+      "booking_date": "2026-10-13",
+      "status": "CONFIRMED",
+      "special": "wheelchair"
+    },
+    {
+      "booking_id": 146,
+      "passenger_id": 44,
+      "flight_id": 119,
+      "booking_date": "2026-09-12",
+      "status": "CONFIRMED",
+      "special": "wheelchair"
+    },
+    {
+      "booking_id": 147,
+      "passenger_id": 6,
+      "flight_id": 113,
+      "booking_date": "2026-10-10",
+      "status": "PENDING",
+      "special": "pet carrier"
+    },
+    {
+      "booking_id": 148,
+      "passenger_id": 13,
+      "flight_id": 106,
+      "booking_date": "2026-09-07",
+      "status": "CANCELLED",
+      "special": "none"
+    },
+    {
+      "booking_id": 149,
+      "passenger_id": 32,
+      "flight_id": 116,
+      "booking_date": "2026-09-18",
+      "status": "CONFIRMED",
+      "special": "pet carrier"
+    },
+    {
+      "booking_id": 150,
+      "passenger_id": 8,
+      "flight_id": 113,
+      "booking_date": "2026-09-08",
+      "status": "CONFIRMED",
+      "special": "pet carrier"
+    },
+    {
+      "booking_id": 151,
+      "passenger_id": 43,
+      "flight_id": 113,
+      "booking_date": "2026-09-27",
+      "status": "CONFIRMED",
+      "special": "wheelchair"
+    },
+    {
+      "booking_id": 152,
+      "passenger_id": 36,
+      "flight_id": 112,
+      "booking_date": "2026-10-08",
+      "status": "CONFIRMED",
+      "special": "wheelchair"
+    },
+    {
+      "booking_id": 153,
+      "passenger_id": 57,
+      "flight_id": 110,
+      "booking_date": "2026-10-06",
+      "status": "CONFIRMED",
+      "special": "extra legroom"
+    },
+    {
+      "booking_id": 154,
+      "passenger_id": 10,
+      "flight_id": 101,
+      "booking_date": "2026-09-17",
+      "status": "CONFIRMED",
+      "special": "pet carrier"
+    },
+    {
+      "booking_id": 155,
+      "passenger_id": 48,
+      "flight_id": 116,
+      "booking_date": "2026-09-15",
+      "status": "CONFIRMED",
+      "special": "none"
+    },
+    {
+      "booking_id": 156,
+      "passenger_id": 30,
+      "flight_id": 101,
+      "booking_date": "2026-09-27",
+      "status": "CONFIRMED",
+      "special": "pet carrier"
+    },
+    {
+      "booking_id": 157,
+      "passenger_id": 9,
+      "flight_id": 113,
+      "booking_date": "2026-10-09",
+      "status": "CANCELLED",
+      "special": "extra legroom"
+    },
+    {
+      "booking_id": 158,
+      "passenger_id": 27,
+      "flight_id": 105,
+      "booking_date": "2026-09-21",
+      "status": "CONFIRMED",
+      "special": "extra legroom"
+    },
+    {
+      "booking_id": 159,
+      "passenger_id": 27,
+      "flight_id": 105,
+      "booking_date": "2026-09-28",
+      "status": "CONFIRMED",
+      "special": "wheelchair"
+    },
+    {
+      "booking_id": 160,
+      "passenger_id": 6,
+      "flight_id": 120,
+      "booking_date": "2026-09-20",
+      "status": "CONFIRMED",
+      "special": "priority boarding"
+    },
+    {
+      "booking_id": 161,
+      "passenger_id": 16,
+      "flight_id": 109,
+      "booking_date": "2026-10-12",
+      "status": "CONFIRMED",
+      "special": "wheelchair"
+    },
+    {
+      "booking_id": 162,
+      "passenger_id": 21,
+      "flight_id": 103,
+      "booking_date": "2026-09-28",
+      "status": "CONFIRMED",
+      "special": "infant"
+    },
+    {
+      "booking_id": 163,
+      "passenger_id": 53,
+      "flight_id": 115,
+      "booking_date": "2026-09-22",
+      "status": "CONFIRMED",
+      "special": "wheelchair"
+    },
+    {
+      "booking_id": 164,
+      "passenger_id": 10,
+      "flight_id": 119,
+      "booking_date": "2026-09-01",
+      "status": "PENDING",
+      "special": "priority boarding"
+    },
+    {
+      "booking_id": 165,
+      "passenger_id": 32,
+      "flight_id": 110,
+      "booking_date": "2026-09-26",
+      "status": "CONFIRMED",
+      "special": "pet carrier"
+    },
+    {
+      "booking_id": 166,
+      "passenger_id": 45,
+      "flight_id": 118,
+      "booking_date": "2026-09-13",
+      "status": "CONFIRMED",
+      "special": "wheelchair"
+    },
+    {
+      "booking_id": 167,
+      "passenger_id": 56,
+      "flight_id": 106,
+      "booking_date": "2026-09-01",
+      "status": "CONFIRMED",
+      "special": "extra legroom"
+    },
+    {
+      "booking_id": 168,
+      "passenger_id": 55,
+      "flight_id": 120,
+      "booking_date": "2026-10-13",
+      "status": "CANCELLED",
+      "special": "wheelchair"
+    },
+    {
+      "booking_id": 169,
+      "passenger_id": 52,
+      "flight_id": 102,
+      "booking_date": "2026-09-09",
+      "status": "CONFIRMED",
+      "special": "pet carrier"
+    },
+    {
+      "booking_id": 170,
+      "passenger_id": 27,
+      "flight_id": 108,
+      "booking_date": "2026-09-25",
+      "status": "CONFIRMED",
+      "special": "pet carrier"
+    },
+    {
+      "booking_id": 171,
+      "passenger_id": 37,
+      "flight_id": 110,
+      "booking_date": "2026-10-11",
+      "status": "CONFIRMED",
+      "special": "priority boarding"
+    },
+    {
+      "booking_id": 172,
+      "passenger_id": 38,
+      "flight_id": 103,
+      "booking_date": "2026-10-06",
+      "status": "CONFIRMED",
+      "special": "priority boarding"
+    },
+    {
+      "booking_id": 173,
+      "passenger_id": 35,
+      "flight_id": 101,
+      "booking_date": "2026-10-10",
+      "status": "CONFIRMED",
+      "special": "pet carrier"
+    },
+    {
+      "booking_id": 174,
+      "passenger_id": 20,
+      "flight_id": 113,
+      "booking_date": "2026-09-21",
+      "status": "CONFIRMED",
+      "special": "wheelchair"
+    },
+    {
+      "booking_id": 175,
+      "passenger_id": 44,
+      "flight_id": 116,
+      "booking_date": "2026-09-04",
+      "status": "CANCELLED",
+      "special": "wheelchair"
+    },
+    {
+      "booking_id": 176,
+      "passenger_id": 2,
+      "flight_id": 119,
+      "booking_date": "2026-10-12",
+      "status": "CANCELLED",
+      "special": "priority boarding"
+    },
+    {
+      "booking_id": 177,
+      "passenger_id": 35,
+      "flight_id": 110,
+      "booking_date": "2026-10-05",
+      "status": "CANCELLED",
+      "special": "pet carrier"
+    },
+    {
+      "booking_id": 178,
+      "passenger_id": 55,
+      "flight_id": 119,
+      "booking_date": "2026-09-08",
+      "status": "CONFIRMED",
+      "special": "wheelchair"
+    },
+    {
+      "booking_id": 179,
+      "passenger_id": 31,
+      "flight_id": 112,
+      "booking_date": "2026-09-01",
+      "status": "CONFIRMED",
+      "special": "priority boarding"
+    },
+    {
+      "booking_id": 180,
+      "passenger_id": 17,
+      "flight_id": 109,
+      "booking_date": "2026-10-07",
+      "status": "CONFIRMED",
+      "special": "priority boarding"
+    },
+    {
+      "booking_id": 181,
+      "passenger_id": 49,
+      "flight_id": 102,
+      "booking_date": "2026-09-16",
+      "status": "CONFIRMED",
+      "special": "pet carrier"
+    },
+    {
+      "booking_id": 182,
+      "passenger_id": 35,
+      "flight_id": 111,
+      "booking_date": "2026-10-08",
+      "status": "CONFIRMED",
+      "special": "priority boarding"
+    },
+    {
+      "booking_id": 183,
+      "passenger_id": 13,
+      "flight_id": 115,
+      "booking_date": "2026-09-13",
+      "status": "CANCELLED",
+      "special": "none"
+    },
+    {
+      "booking_id": 184,
+      "passenger_id": 60,
+      "flight_id": 119,
+      "booking_date": "2026-10-07",
+      "status": "CONFIRMED",
+      "special": "extra legroom"
+    },
+    {
+      "booking_id": 185,
+      "passenger_id": 16,
+      "flight_id": 103,
+      "booking_date": "2026-09-01",
+      "status": "CONFIRMED",
+      "special": "extra legroom"
+    },
+    {
+      "booking_id": 186,
+      "passenger_id": 37,
+      "flight_id": 102,
+      "booking_date": "2026-09-22",
+      "status": "PENDING",
+      "special": "pet carrier"
+    },
+    {
+      "booking_id": 187,
+      "passenger_id": 39,
+      "flight_id": 115,
+      "booking_date": "2026-09-02",
+      "status": "CONFIRMED",
+      "special": "priority boarding"
+    },
+    {
+      "booking_id": 188,
+      "passenger_id": 29,
+      "flight_id": 102,
+      "booking_date": "2026-09-13",
+      "status": "CONFIRMED",
+      "special": "priority boarding"
+    },
+    {
+      "booking_id": 189,
+      "passenger_id": 60,
+      "flight_id": 103,
+      "booking_date": "2026-10-09",
+      "status": "CONFIRMED",
+      "special": "pet carrier"
+    },
+    {
+      "booking_id": 190,
+      "passenger_id": 51,
+      "flight_id": 111,
+      "booking_date": "2026-10-12",
+      "status": "CANCELLED",
+      "special": "none"
+    },
+    {
+      "booking_id": 191,
+      "passenger_id": 30,
+      "flight_id": 114,
+      "booking_date": "2026-10-13",
+      "status": "CANCELLED",
+      "special": "wheelchair"
+    },
+    {
+      "booking_id": 192,
+      "passenger_id": 28,
+      "flight_id": 115,
+      "booking_date": "2026-09-18",
+      "status": "CONFIRMED",
+      "special": "infant"
+    },
+    {
+      "booking_id": 193,
+      "passenger_id": 28,
+      "flight_id": 103,
+      "booking_date": "2026-09-27",
+      "status": "CONFIRMED",
+      "special": "infant"
+    },
+    {
+      "booking_id": 194,
+      "passenger_id": 7,
+      "flight_id": 105,
+      "booking_date": "2026-09-15",
+      "status": "PENDING",
+      "special": "pet carrier"
+    },
+    {
+      "booking_id": 195,
+      "passenger_id": 31,
+      "flight_id": 119,
+      "booking_date": "2026-10-12",
+      "status": "CONFIRMED",
+      "special": "priority boarding"
+    },
+    {
+      "booking_id": 196,
+      "passenger_id": 25,
+      "flight_id": 120,
+      "booking_date": "2026-09-26",
+      "status": "CONFIRMED",
+      "special": "extra legroom"
+    },
+    {
+      "booking_id": 197,
+      "passenger_id": 1,
+      "flight_id": 112,
+      "booking_date": "2026-09-07",
+      "status": "CANCELLED",
+      "special": "infant"
+    },
+    {
+      "booking_id": 198,
+      "passenger_id": 23,
+      "flight_id": 104,
+      "booking_date": "2026-10-03",
+      "status": "CONFIRMED",
+      "special": "infant"
+    },
+    {
+      "booking_id": 199,
+      "passenger_id": 19,
+      "flight_id": 111,
+      "booking_date": "2026-09-19",
+      "status": "CONFIRMED",
+      "special": "infant"
+    },
+    {
+      "booking_id": 200,
+      "passenger_id": 32,
+      "flight_id": 105,
+      "booking_date": "2026-09-04",
+      "status": "CONFIRMED",
+      "special": "infant"
+    },
+    {
+      "booking_id": 201,
+      "passenger_id": 46,
+      "flight_id": 102,
+      "booking_date": "2026-10-09",
+      "status": "CONFIRMED",
+      "special": "infant"
+    },
+    {
+      "booking_id": 202,
+      "passenger_id": 48,
+      "flight_id": 102,
+      "booking_date": "2026-10-12",
+      "status": "CANCELLED",
+      "special": "infant"
+    },
+    {
+      "booking_id": 203,
+      "passenger_id": 12,
+      "flight_id": 115,
+      "booking_date": "2026-10-12",
+      "status": "CONFIRMED",
+      "special": "infant"
+    },
+    {
+      "booking_id": 204,
+      "passenger_id": 15,
+      "flight_id": 111,
+      "booking_date": "2026-10-06",
+      "status": "CONFIRMED",
+      "special": "infant"
+    },
+    {
+      "booking_id": 205,
+      "passenger_id": 50,
+      "flight_id": 111,
+      "booking_date": "2026-10-07",
+      "status": "CONFIRMED",
+      "special": "wheelchair"
+    },
+    {
+      "booking_id": 206,
+      "passenger_id": 12,
+      "flight_id": 110,
+      "booking_date": "2026-09-09",
+      "status": "CONFIRMED",
+      "special": "none"
+    },
+    {
+      "booking_id": 207,
+      "passenger_id": 6,
+      "flight_id": 115,
+      "booking_date": "2026-09-28",
+      "status": "CONFIRMED",
+      "special": "infant"
+    },
+    {
+      "booking_id": 208,
+      "passenger_id": 47,
+      "flight_id": 107,
+      "booking_date": "2026-09-11",
+      "status": "CONFIRMED",
+      "special": "infant"
+    },
+    {
+      "booking_id": 209,
+      "passenger_id": 11,
+      "flight_id": 108,
+      "booking_date": "2026-09-20",
+      "status": "CONFIRMED",
+      "special": "extra legroom"
+    },
+    {
+      "booking_id": 210,
+      "passenger_id": 1,
+      "flight_id": 116,
+      "booking_date": "2026-10-13",
+      "status": "CONFIRMED",
+      "special": "infant"
+    },
+    {
+      "booking_id": 211,
+      "passenger_id": 56,
+      "flight_id": 102,
+      "booking_date": "2026-09-26",
+      "status": "CONFIRMED",
+      "special": "pet carrier"
+    },
+    {
+      "booking_id": 212,
+      "passenger_id": 54,
+      "flight_id": 106,
+      "booking_date": "2026-09-15",
+      "status": "CONFIRMED",
+      "special": "pet carrier"
+    },
+    {
+      "booking_id": 213,
+      "passenger_id": 31,
+      "flight_id": 104,
+      "booking_date": "2026-10-01",
+      "status": "CONFIRMED",
+      "special": "extra legroom"
+    },
+    {
+      "booking_id": 214,
+      "passenger_id": 58,
+      "flight_id": 110,
+      "booking_date": "2026-09-14",
+      "status": "PENDING",
+      "special": "infant"
+    },
+    {
+      "booking_id": 215,
+      "passenger_id": 33,
+      "flight_id": 115,
+      "booking_date": "2026-09-08",
+      "status": "CONFIRMED",
+      "special": "pet carrier"
+    },
+    {
+      "booking_id": 216,
+      "passenger_id": 31,
+      "flight_id": 111,
+      "booking_date": "2026-09-26",
+      "status": "CONFIRMED",
+      "special": "extra legroom"
+    },
+    {
+      "booking_id": 217,
+      "passenger_id": 47,
+      "flight_id": 108,
+      "booking_date": "2026-09-12",
+      "status": "CONFIRMED",
+      "special": "none"
+    },
+    {
+      "booking_id": 218,
+      "passenger_id": 45,
+      "flight_id": 113,
+      "booking_date": "2026-10-10",
+      "status": "CANCELLED",
+      "special": "priority boarding"
+    },
+    {
+      "booking_id": 219,
+      "passenger_id": 1,
+      "flight_id": 117,
+      "booking_date": "2026-09-18",
+      "status": "CONFIRMED",
+      "special": "none"
+    },
+    {
+      "booking_id": 220,
+      "passenger_id": 55,
+      "flight_id": 107,
+      "booking_date": "2026-10-12",
+      "status": "CONFIRMED",
+      "special": "wheelchair"
+    },
+    {
+      "booking_id": 221,
+      "passenger_id": 33,
+      "flight_id": 106,
+      "booking_date": "2026-09-30",
+      "status": "CANCELLED",
+      "special": "priority boarding"
+    },
+    {
+      "booking_id": 222,
+      "passenger_id": 9,
+      "flight_id": 112,
+      "booking_date": "2026-09-05",
+      "status": "PENDING",
+      "special": "priority boarding"
+    },
+    {
+      "booking_id": 223,
+      "passenger_id": 60,
+      "flight_id": 101,
+      "booking_date": "2026-10-02",
+      "status": "CONFIRMED",
+      "special": "pet carrier"
+    },
+    {
+      "booking_id": 224,
+      "passenger_id": 27,
+      "flight_id": 119,
+      "booking_date": "2026-09-15",
+      "status": "CONFIRMED",
+      "special": "extra legroom"
+    },
+    {
+      "booking_id": 225,
+      "passenger_id": 58,
+      "flight_id": 110,
+      "booking_date": "2026-09-07",
+      "status": "CANCELLED",
+      "special": "priority boarding"
+    },
+    {
+      "booking_id": 226,
+      "passenger_id": 59,
+      "flight_id": 113,
+      "booking_date": "2026-09-23",
+      "status": "CONFIRMED",
+      "special": "none"
+    },
+    {
+      "booking_id": 227,
+      "passenger_id": 23,
+      "flight_id": 101,
+      "booking_date": "2026-10-09",
+      "status": "CONFIRMED",
+      "special": "extra legroom"
+    },
+    {
+      "booking_id": 228,
+      "passenger_id": 42,
+      "flight_id": 111,
+      "booking_date": "2026-10-07",
+      "status": "CONFIRMED",
+      "special": "extra legroom"
+    },
+    {
+      "booking_id": 229,
+      "passenger_id": 17,
+      "flight_id": 113,
+      "booking_date": "2026-10-11",
+      "status": "PENDING",
+      "special": "infant"
+    },
+    {
+      "booking_id": 230,
+      "passenger_id": 17,
+      "flight_id": 106,
+      "booking_date": "2026-09-14",
+      "status": "CONFIRMED",
+      "special": "wheelchair"
+    },
+    {
+      "booking_id": 231,
+      "passenger_id": 53,
+      "flight_id": 107,
+      "booking_date": "2026-09-20",
+      "status": "CONFIRMED",
+      "special": "wheelchair"
+    },
+    {
+      "booking_id": 232,
+      "passenger_id": 37,
+      "flight_id": 106,
+      "booking_date": "2026-09-12",
+      "status": "CONFIRMED",
+      "special": "wheelchair"
+    },
+    {
+      "booking_id": 233,
+      "passenger_id": 28,
+      "flight_id": 120,
+      "booking_date": "2026-09-07",
+      "status": "CONFIRMED",
+      "special": "extra legroom"
+    },
+    {
+      "booking_id": 234,
+      "passenger_id": 17,
+      "flight_id": 115,
+      "booking_date": "2026-09-11",
+      "status": "CONFIRMED",
+      "special": "none"
+    },
+    {
+      "booking_id": 235,
+      "passenger_id": 14,
+      "flight_id": 104,
+      "booking_date": "2026-10-12",
+      "status": "CONFIRMED",
+      "special": "wheelchair"
+    },
+    {
+      "booking_id": 236,
+      "passenger_id": 28,
+      "flight_id": 116,
+      "booking_date": "2026-09-20",
+      "status": "CONFIRMED",
+      "special": "priority boarding"
+    },
+    {
+      "booking_id": 237,
+      "passenger_id": 26,
+      "flight_id": 110,
+      "booking_date": "2026-10-06",
+      "status": "CONFIRMED",
+      "special": "priority boarding"
+    },
+    {
+      "booking_id": 238,
+      "passenger_id": 52,
+      "flight_id": 113,
+      "booking_date": "2026-09-07",
+      "status": "CONFIRMED",
+      "special": "pet carrier"
+    },
+    {
+      "booking_id": 239,
+      "passenger_id": 55,
+      "flight_id": 120,
+      "booking_date": "2026-10-05",
+      "status": "CONFIRMED",
+      "special": "priority boarding"
+    },
+    {
+      "booking_id": 240,
+      "passenger_id": 23,
+      "flight_id": 118,
+      "booking_date": "2026-09-28",
+      "status": "CONFIRMED",
+      "special": "wheelchair"
+    },
+    {
+      "booking_id": 241,
+      "passenger_id": 42,
+      "flight_id": 111,
+      "booking_date": "2026-09-22",
+      "status": "CONFIRMED",
+      "special": "infant"
+    },
+    {
+      "booking_id": 242,
+      "passenger_id": 50,
+      "flight_id": 116,
+      "booking_date": "2026-09-10",
+      "status": "CONFIRMED",
+      "special": "wheelchair"
+    },
+    {
+      "booking_id": 243,
+      "passenger_id": 32,
+      "flight_id": 114,
+      "booking_date": "2026-10-04",
+      "status": "CONFIRMED",
+      "special": "wheelchair"
+    },
+    {
+      "booking_id": 244,
+      "passenger_id": 3,
+      "flight_id": 117,
+      "booking_date": "2026-10-05",
+      "status": "CONFIRMED",
+      "special": "priority boarding"
+    },
+    {
+      "booking_id": 245,
+      "passenger_id": 14,
+      "flight_id": 113,
+      "booking_date": "2026-09-11",
+      "status": "CONFIRMED",
+      "special": "priority boarding"
+    },
+    {
+      "booking_id": 246,
+      "passenger_id": 43,
+      "flight_id": 112,
+      "booking_date": "2026-10-07",
+      "status": "PENDING",
+      "special": "infant"
+    },
+    {
+      "booking_id": 247,
+      "passenger_id": 18,
+      "flight_id": 110,
+      "booking_date": "2026-10-13",
+      "status": "CONFIRMED",
+      "special": "none"
+    },
+    {
+      "booking_id": 248,
+      "passenger_id": 49,
+      "flight_id": 107,
+      "booking_date": "2026-09-26",
+      "status": "CONFIRMED",
+      "special": "infant"
+    },
+    {
+      "booking_id": 249,
+      "passenger_id": 15,
+      "flight_id": 104,
+      "booking_date": "2026-10-08",
+      "status": "CONFIRMED",
+      "special": "extra legroom"
+    },
+    {
+      "booking_id": 250,
+      "passenger_id": 52,
+      "flight_id": 101,
+      "booking_date": "2026-09-27",
+      "status": "CONFIRMED",
+      "special": "wheelchair"
+    },
+    {
+      "booking_id": 251,
+      "passenger_id": 20,
+      "flight_id": 103,
+      "booking_date": "2026-09-12",
+      "status": "CANCELLED",
+      "special": "wheelchair"
+    },
+    {
+      "booking_id": 252,
+      "passenger_id": 23,
+      "flight_id": 105,
+      "booking_date": "2026-09-03",
+      "status": "CONFIRMED",
+      "special": "priority boarding"
+    },
+    {
+      "booking_id": 253,
+      "passenger_id": 58,
+      "flight_id": 102,
+      "booking_date": "2026-10-01",
+      "status": "CONFIRMED",
+      "special": "priority boarding"
+    },
+    {
+      "booking_id": 254,
+      "passenger_id": 15,
+      "flight_id": 111,
+      "booking_date": "2026-09-03",
+      "status": "CONFIRMED",
+      "special": "infant"
+    },
+    {
+      "booking_id": 255,
+      "passenger_id": 21,
+      "flight_id": 101,
+      "booking_date": "2026-10-12",
+      "status": "CANCELLED",
+      "special": "priority boarding"
+    },
+    {
+      "booking_id": 256,
+      "passenger_id": 41,
+      "flight_id": 110,
+      "booking_date": "2026-09-13",
+      "status": "CONFIRMED",
+      "special": "pet carrier"
+    },
+    {
+      "booking_id": 257,
+      "passenger_id": 4,
+      "flight_id": 118,
+      "booking_date": "2026-10-12",
+      "status": "CONFIRMED",
+      "special": "infant"
+    },
+    {
+      "booking_id": 258,
+      "passenger_id": 15,
+      "flight_id": 118,
+      "booking_date": "2026-09-09",
+      "status": "CONFIRMED",
+      "special": "pet carrier"
+    },
+    {
+      "booking_id": 259,
+      "passenger_id": 47,
+      "flight_id": 106,
+      "booking_date": "2026-09-29",
+      "status": "CONFIRMED",
+      "special": "wheelchair"
+    },
+    {
+      "booking_id": 260,
+      "passenger_id": 1,
+      "flight_id": 109,
+      "booking_date": "2026-09-16",
+      "status": "CONFIRMED",
+      "special": "priority boarding"
+    },
+    {
+      "booking_id": 261,
+      "passenger_id": 47,
+      "flight_id": 108,
+      "booking_date": "2026-09-29",
+      "status": "CONFIRMED",
+      "special": "pet carrier"
+    },
+    {
+      "booking_id": 262,
+      "passenger_id": 52,
+      "flight_id": 116,
+      "booking_date": "2026-10-04",
+      "status": "CANCELLED",
+      "special": "none"
+    },
+    {
+      "booking_id": 263,
+      "passenger_id": 8,
+      "flight_id": 106,
+      "booking_date": "2026-10-12",
+      "status": "CONFIRMED",
+      "special": "infant"
+    },
+    {
+      "booking_id": 264,
+      "passenger_id": 32,
+      "flight_id": 107,
+      "booking_date": "2026-09-25",
+      "status": "CONFIRMED",
+      "special": "infant"
+    },
+    {
+      "booking_id": 301,
+      "passenger_id": 13,
+      "flight_id": 110,
+      "booking_date": "2026-10-30",
+      "status": "CONFIRMED",
+      "special": "extra legroom"
+    },
+    {
+      "booking_id": 302,
+      "passenger_id": 13,
+      "flight_id": 110,
+      "booking_date": "2026-10-30",
+      "status": "CONFIRMED",
+      "special": "extra legroom"
+    },
+    {
+      "booking_id": 265,
+      "passenger_id": 37,
+      "flight_id": 106,
+      "booking_date": "2026-09-15",
+      "status": "CONFIRMED",
+      "special": "extra legroom"
+    },
+    {
+      "booking_id": 266,
+      "passenger_id": 20,
+      "flight_id": 102,
+      "booking_date": "2026-09-16",
+      "status": "CONFIRMED",
+      "special": "pet carrier"
+    },
+    {
+      "booking_id": 267,
+      "passenger_id": 12,
+      "flight_id": 106,
+      "booking_date": "2026-09-30",
+      "status": "CANCELLED",
+      "special": "extra legroom"
+    },
+    {
+      "booking_id": 268,
+      "passenger_id": 7,
+      "flight_id": 116,
+      "booking_date": "2026-10-03",
+      "status": "CONFIRMED",
+      "special": "infant"
+    },
+    {
+      "booking_id": 269,
+      "passenger_id": 56,
+      "flight_id": 120,
+      "booking_date": "2026-09-21",
+      "status": "CONFIRMED",
+      "special": "extra legroom"
+    },
+    {
+      "booking_id": 270,
+      "passenger_id": 35,
+      "flight_id": 116,
+      "booking_date": "2026-10-12",
+      "status": "CONFIRMED",
+      "special": "priority boarding"
+    },
+    {
+      "booking_id": 271,
+      "passenger_id": 16,
+      "flight_id": 101,
+      "booking_date": "2026-09-28",
+      "status": "CONFIRMED",
+      "special": "priority boarding"
+    },
+    {
+      "booking_id": 272,
+      "passenger_id": 22,
+      "flight_id": 115,
+      "booking_date": "2026-10-01",
+      "status": "CONFIRMED",
+      "special": "extra legroom"
+    },
+    {
+      "booking_id": 273,
+      "passenger_id": 4,
+      "flight_id": 120,
+      "booking_date": "2026-09-02",
+      "status": "CONFIRMED",
+      "special": "none"
+    },
+    {
+      "booking_id": 274,
+      "passenger_id": 53,
+      "flight_id": 108,
+      "booking_date": "2026-10-01",
+      "status": "CONFIRMED",
+      "special": "none"
+    },
+    {
+      "booking_id": 275,
+      "passenger_id": 50,
+      "flight_id": 105,
+      "booking_date": "2026-09-24",
+      "status": "CONFIRMED",
+      "special": "wheelchair"
+    },
+    {
+      "booking_id": 276,
+      "passenger_id": 35,
+      "flight_id": 118,
+      "booking_date": "2026-09-06",
+      "status": "CONFIRMED",
+      "special": "pet carrier"
+    },
+    {
+      "booking_id": 277,
+      "passenger_id": 11,
+      "flight_id": 107,
+      "booking_date": "2026-09-17",
+      "status": "CONFIRMED",
+      "special": "infant"
+    },
+    {
+      "booking_id": 278,
+      "passenger_id": 27,
+      "flight_id": 113,
+      "booking_date": "2026-09-17",
+      "status": "CONFIRMED",
+      "special": "extra legroom"
+    },
+    {
+      "booking_id": 279,
+      "passenger_id": 13,
+      "flight_id": 117,
+      "booking_date": "2026-10-02",
+      "status": "CANCELLED",
+      "special": "none"
+    },
+    {
+      "booking_id": 280,
+      "passenger_id": 60,
+      "flight_id": 118,
+      "booking_date": "2026-10-08",
+      "status": "CONFIRMED",
+      "special": "pet carrier"
+    },
+    {
+      "booking_id": 281,
+      "passenger_id": 59,
+      "flight_id": 113,
+      "booking_date": "2026-09-08",
+      "status": "CANCELLED",
+      "special": "extra legroom"
+    },
+    {
+      "booking_id": 282,
+      "passenger_id": 54,
+      "flight_id": 112,
+      "booking_date": "2026-09-22",
+      "status": "CONFIRMED",
+      "special": "extra legroom"
+    },
+    {
+      "booking_id": 283,
+      "passenger_id": 10,
+      "flight_id": 118,
+      "booking_date": "2026-09-01",
+      "status": "CANCELLED",
+      "special": "priority boarding"
+    },
+    {
+      "booking_id": 284,
+      "passenger_id": 14,
+      "flight_id": 109,
+      "booking_date": "2026-09-30",
+      "status": "CONFIRMED",
+      "special": "infant"
+    },
+    {
+      "booking_id": 285,
+      "passenger_id": 1,
+      "flight_id": 112,
+      "booking_date": "2026-09-23",
+      "status": "CONFIRMED",
+      "special": "none"
+    },
+    {
+      "booking_id": 286,
+      "passenger_id": 29,
+      "flight_id": 105,
+      "booking_date": "2026-09-19",
+      "status": "CANCELLED",
+      "special": "none"
+    },
+    {
+      "booking_id": 287,
+      "passenger_id": 53,
+      "flight_id": 117,
+      "booking_date": "2026-10-03",
+      "status": "CONFIRMED",
+      "special": "infant"
+    },
+    {
+      "booking_id": 288,
+      "passenger_id": 24,
+      "flight_id": 105,
+      "booking_date": "2026-10-13",
+      "status": "CONFIRMED",
+      "special": "pet carrier"
+    },
+    {
+      "booking_id": 289,
+      "passenger_id": 20,
+      "flight_id": 117,
+      "booking_date": "2026-09-11",
+      "status": "PENDING",
+      "special": "extra legroom"
+    },
+    {
+      "booking_id": 290,
+      "passenger_id": 1,
+      "flight_id": 101,
+      "booking_date": "2026-09-07",
+      "status": "CANCELLED",
+      "special": "priority boarding"
+    },
+    {
+      "booking_id": 291,
+      "passenger_id": 7,
+      "flight_id": 118,
+      "booking_date": "2026-09-20",
+      "status": "CONFIRMED",
+      "special": "wheelchair"
+    },
+    {
+      "booking_id": 292,
+      "passenger_id": 60,
+      "flight_id": 102,
+      "booking_date": "2026-09-18",
+      "status": "CONFIRMED",
+      "special": "wheelchair"
+    },
+    {
+      "booking_id": 293,
+      "passenger_id": 39,
+      "flight_id": 110,
+      "booking_date": "2026-09-14",
+      "status": "CONFIRMED",
+      "special": "wheelchair"
+    },
+    {
+      "booking_id": 294,
+      "passenger_id": 45,
+      "flight_id": 106,
+      "booking_date": "2026-09-10",
+      "status": "CONFIRMED",
+      "special": "infant"
+    },
+    {
+      "booking_id": 295,
+      "passenger_id": 30,
+      "flight_id": 116,
+      "booking_date": "2026-09-21",
+      "status": "CONFIRMED",
+      "special": "priority boarding"
+    },
+    {
+      "booking_id": 296,
+      "passenger_id": 52,
+      "flight_id": 112,
+      "booking_date": "2026-09-24",
+      "status": "CONFIRMED",
+      "special": "extra legroom"
+    },
+    {
+      "booking_id": 297,
+      "passenger_id": 53,
+      "flight_id": 107,
+      "booking_date": "2026-09-13",
+      "status": "CONFIRMED",
+      "special": "extra legroom"
+    },
+    {
+      "booking_id": 298,
+      "passenger_id": 14,
+      "flight_id": 117,
+      "booking_date": "2026-10-06",
+      "status": "CONFIRMED",
+      "special": "wheelchair"
+    },
+    {
+      "booking_id": 299,
+      "passenger_id": 49,
+      "flight_id": 118,
+      "booking_date": "2026-09-20",
+      "status": "CONFIRMED",
+      "special": "infant"
+    },
+    {
+      "booking_id": 300,
+      "passenger_id": 4,
+      "flight_id": 111,
+      "booking_date": "2026-09-23",
+      "status": "CONFIRMED",
+      "special": "none"
+    },
+    {
+      "booking_id": 67,
+      "passenger_id": 19,
+      "flight_id": 119,
+      "booking_date": "2026-09-22",
+      "status": "CONFIRMED",
+      "special": "none"
+    },
+    {
+      "booking_id": 68,
+      "passenger_id": 20,
+      "flight_id": 109,
+      "booking_date": "2026-09-15",
+      "status": "CANCELLED",
+      "special": "infant"
+    },
+    {
+      "booking_id": 69,
+      "passenger_id": 9,
+      "flight_id": 110,
+      "booking_date": "2026-09-25",
+      "status": "CONFIRMED",
+      "special": "extra legroom"
+    },
+    {
+      "booking_id": 70,
+      "passenger_id": 23,
+      "flight_id": 113,
+      "booking_date": "2026-09-30",
+      "status": "PENDING",
+      "special": "extra legroom"
+    },
+    {
+      "booking_id": 71,
+      "passenger_id": 29,
+      "flight_id": 105,
+      "booking_date": "2026-09-22",
+      "status": "CONFIRMED",
+      "special": "pet carrier"
+    },
+    {
+      "booking_id": 72,
+      "passenger_id": 40,
+      "flight_id": 103,
+      "booking_date": "2026-10-12",
+      "status": "CONFIRMED",
+      "special": "none"
+    },
+    {
+      "booking_id": 73,
+      "passenger_id": 22,
+      "flight_id": 103,
+      "booking_date": "2026-09-20",
+      "status": "CONFIRMED",
+      "special": "none"
+    },
+    {
+      "booking_id": 74,
+      "passenger_id": 49,
+      "flight_id": 106,
+      "booking_date": "2026-09-14",
+      "status": "CONFIRMED",
+      "special": "extra legroom"
+    },
+    {
+      "booking_id": 75,
+      "passenger_id": 22,
+      "flight_id": 101,
+      "booking_date": "2026-09-08",
+      "status": "CONFIRMED",
+      "special": "extra legroom"
+    },
+    {
+      "booking_id": 76,
+      "passenger_id": 10,
+      "flight_id": 103,
+      "booking_date": "2026-10-11",
+      "status": "CONFIRMED",
+      "special": "priority boarding"
+    },
+    {
+      "booking_id": 77,
+      "passenger_id": 59,
+      "flight_id": 116,
+      "booking_date": "2026-09-26",
+      "status": "PENDING",
+      "special": "wheelchair"
+    },
+    {
+      "booking_id": 78,
+      "passenger_id": 19,
+      "flight_id": 112,
+      "booking_date": "2026-09-28",
+      "status": "CANCELLED",
+      "special": "none"
+    },
+    {
+      "booking_id": 79,
+      "passenger_id": 29,
+      "flight_id": 116,
+      "booking_date": "2026-09-20",
+      "status": "CANCELLED",
+      "special": "extra legroom"
+    },
+    {
+      "booking_id": 80,
+      "passenger_id": 21,
+      "flight_id": 107,
+      "booking_date": "2026-10-08",
+      "status": "CONFIRMED",
+      "special": "priority boarding"
+    },
+    {
+      "booking_id": 81,
+      "passenger_id": 34,
+      "flight_id": 120,
+      "booking_date": "2026-09-30",
+      "status": "CONFIRMED",
+      "special": "priority boarding"
+    },
+    {
+      "booking_id": 82,
+      "passenger_id": 19,
+      "flight_id": 108,
+      "booking_date": "2026-09-28",
+      "status": "CONFIRMED",
+      "special": "priority boarding"
+    },
+    {
+      "booking_id": 83,
+      "passenger_id": 3,
+      "flight_id": 103,
+      "booking_date": "2026-10-02",
+      "status": "CONFIRMED",
+      "special": "none"
+    },
+    {
+      "booking_id": 84,
+      "passenger_id": 26,
+      "flight_id": 109,
+      "booking_date": "2026-09-01",
+      "status": "CANCELLED",
+      "special": "extra legroom"
+    },
+    {
+      "booking_id": 85,
+      "passenger_id": 1,
+      "flight_id": 116,
+      "booking_date": "2026-09-04",
+      "status": "CONFIRMED",
+      "special": "extra legroom"
+    },
+    {
+      "booking_id": 86,
+      "passenger_id": 20,
+      "flight_id": 107,
+      "booking_date": "2026-09-21",
+      "status": "PENDING",
+      "special": "none"
+    },
+    {
+      "booking_id": 87,
+      "passenger_id": 7,
+      "flight_id": 115,
+      "booking_date": "2026-10-10",
+      "status": "PENDING",
+      "special": "extra legroom"
+    },
+    {
+      "booking_id": 88,
+      "passenger_id": 52,
+      "flight_id": 102,
+      "booking_date": "2026-10-13",
+      "status": "CONFIRMED",
+      "special": "none"
+    },
+    {
+      "booking_id": 89,
+      "passenger_id": 27,
+      "flight_id": 113,
+      "booking_date": "2026-10-03",
+      "status": "CONFIRMED",
+      "special": "priority boarding"
+    },
+    {
+      "booking_id": 90,
+      "passenger_id": 44,
+      "flight_id": 104,
+      "booking_date": "2026-10-08",
+      "status": "CONFIRMED",
+      "special": "extra legroom"
+    },
+    {
+      "booking_id": 91,
+      "passenger_id": 33,
+      "flight_id": 107,
+      "booking_date": "2026-09-28",
+      "status": "CONFIRMED",
+      "special": "wheelchair"
+    },
+    {
+      "booking_id": 92,
+      "passenger_id": 35,
+      "flight_id": 107,
+      "booking_date": "2026-09-02",
+      "status": "CONFIRMED",
+      "special": "none"
+    },
+    {
+      "booking_id": 93,
+      "passenger_id": 37,
+      "flight_id": 110,
+      "booking_date": "2026-09-15",
+      "status": "PENDING",
+      "special": "none"
+    },
+    {
+      "booking_id": 94,
+      "passenger_id": 6,
+      "flight_id": 120,
+      "booking_date": "2026-10-05",
+      "status": "CONFIRMED",
+      "special": "priority boarding"
+    },
+    {
+      "booking_id": 95,
+      "passenger_id": 23,
+      "flight_id": 118,
+      "booking_date": "2026-09-29",
+      "status": "CANCELLED",
+      "special": "priority boarding"
+    },
+    {
+      "booking_id": 96,
+      "passenger_id": 18,
+      "flight_id": 110,
+      "booking_date": "2026-09-13",
+      "status": "CANCELLED",
+      "special": "priority boarding"
+    },
+    {
+      "booking_id": 97,
+      "passenger_id": 40,
+      "flight_id": 118,
+      "booking_date": "2026-10-05",
+      "status": "CANCELLED",
+      "special": "priority boarding"
+    },
+    {
+      "booking_id": 98,
+      "passenger_id": 13,
+      "flight_id": 106,
+      "booking_date": "2026-09-10",
+      "status": "CONFIRMED",
+      "special": "priority boarding"
+    },
+    {
+      "booking_id": 99,
+      "passenger_id": 53,
+      "flight_id": 114,
+      "booking_date": "2026-09-21",
+      "status": "CONFIRMED",
+      "special": "extra legroom"
+    },
+    {
+      "booking_id": 100,
+      "passenger_id": 24,
+      "flight_id": 115,
+      "booking_date": "2026-10-02",
+      "status": "CANCELLED",
+      "special": "infant"
+    },
+    {
+      "booking_id": 101,
+      "passenger_id": 43,
+      "flight_id": 112,
+      "booking_date": "2026-10-03",
+      "status": "CONFIRMED",
+      "special": "extra legroom"
+    },
+    {
+      "booking_id": 102,
+      "passenger_id": 28,
+      "flight_id": 113,
+      "booking_date": "2026-09-05",
+      "status": "CONFIRMED",
+      "special": "wheelchair"
+    },
+    {
+      "booking_id": 103,
+      "passenger_id": 29,
+      "flight_id": 120,
+      "booking_date": "2026-10-11",
+      "status": "CONFIRMED",
+      "special": "none"
+    },
+    {
+      "booking_id": 104,
+      "passenger_id": 27,
+      "flight_id": 114,
+      "booking_date": "2026-09-27",
+      "status": "CONFIRMED",
+      "special": "infant"
+    },
+    {
+      "booking_id": 105,
+      "passenger_id": 18,
+      "flight_id": 118,
+      "booking_date": "2026-09-21",
+      "status": "CANCELLED",
+      "special": "infant"
+    },
+    {
+      "booking_id": 106,
+      "passenger_id": 9,
+      "flight_id": 106,
+      "booking_date": "2026-09-16",
+      "status": "CONFIRMED",
+      "special": "none"
+    },
+    {
+      "booking_id": 107,
+      "passenger_id": 38,
+      "flight_id": 104,
+      "booking_date": "2026-10-08",
+      "status": "CONFIRMED",
+      "special": "wheelchair"
+    },
+    {
+      "booking_id": 108,
+      "passenger_id": 7,
+      "flight_id": 107,
+      "booking_date": "2026-09-17",
+      "status": "CONFIRMED",
+      "special": "wheelchair"
+    },
+    {
+      "booking_id": 109,
+      "passenger_id": 18,
+      "flight_id": 116,
+      "booking_date": "2026-09-10",
+      "status": "CONFIRMED",
+      "special": "infant"
+    },
+    {
+      "booking_id": 110,
+      "passenger_id": 39,
+      "flight_id": 103,
+      "booking_date": "2026-09-07",
+      "status": "CONFIRMED",
+      "special": "none"
+    },
+    {
+      "booking_id": 111,
+      "passenger_id": 11,
+      "flight_id": 101,
+      "booking_date": "2026-09-26",
+      "status": "CONFIRMED",
+      "special": "infant"
+    },
+    {
+      "booking_id": 112,
+      "passenger_id": 46,
+      "flight_id": 115,
+      "booking_date": "2026-10-14",
+      "status": "CONFIRMED",
+      "special": "priority boarding"
+    },
+    {
+      "booking_id": 113,
+      "passenger_id": 54,
+      "flight_id": 105,
+      "booking_date": "2026-09-13",
+      "status": "CONFIRMED",
+      "special": "extra legroom"
+    },
+    {
+      "booking_id": 114,
+      "passenger_id": 53,
+      "flight_id": 102,
+      "booking_date": "2026-09-12",
+      "status": "CONFIRMED",
+      "special": "infant"
+    },
+    {
+      "booking_id": 115,
+      "passenger_id": 8,
+      "flight_id": 120,
+      "booking_date": "2026-09-16",
+      "status": "CONFIRMED",
+      "special": "pet carrier"
+    },
+    {
+      "booking_id": 116,
+      "passenger_id": 24,
+      "flight_id": 111,
+      "booking_date": "2026-09-27",
+      "status": "CONFIRMED",
+      "special": "pet carrier"
+    },
+    {
+      "booking_id": 117,
+      "passenger_id": 55,
+      "flight_id": 109,
+      "booking_date": "2026-09-16",
+      "status": "CONFIRMED",
+      "special": "infant"
+    },
+    {
+      "booking_id": 118,
+      "passenger_id": 28,
+      "flight_id": 119,
+      "booking_date": "2026-09-26",
+      "status": "CONFIRMED",
+      "special": "wheelchair"
+    },
+    {
+      "booking_id": 119,
+      "passenger_id": 22,
+      "flight_id": 105,
+      "booking_date": "2026-09-27",
+      "status": "CONFIRMED",
+      "special": "extra legroom"
+    },
+    {
+      "booking_id": 120,
+      "passenger_id": 8,
+      "flight_id": 113,
+      "booking_date": "2026-09-13",
+      "status": "PENDING",
+      "special": "wheelchair"
+    },
+    {
+      "booking_id": 121,
+      "passenger_id": 15,
+      "flight_id": 105,
+      "booking_date": "2026-09-07",
+      "status": "CONFIRMED",
+      "special": "wheelchair"
+    },
+    {
+      "booking_id": 122,
+      "passenger_id": 43,
+      "flight_id": 108,
+      "booking_date": "2026-09-04",
+      "status": "CANCELLED",
+      "special": "priority boarding"
+    },
+    {
+      "booking_id": 123,
+      "passenger_id": 29,
+      "flight_id": 113,
+      "booking_date": "2026-09-20",
+      "status": "CONFIRMED",
+      "special": "pet carrier"
+    },
+    {
+      "booking_id": 124,
+      "passenger_id": 19,
+      "flight_id": 114,
+      "booking_date": "2026-09-11",
+      "status": "CONFIRMED",
+      "special": "pet carrier"
+    },
+    {
+      "booking_id": 125,
+      "passenger_id": 9,
+      "flight_id": 109,
+      "booking_date": "2026-09-22",
+      "status": "CONFIRMED",
+      "special": "pet carrier"
+    },
+    {
+      "booking_id": 126,
+      "passenger_id": 29,
+      "flight_id": 103,
+      "booking_date": "2026-10-14",
+      "status": "CONFIRMED",
+      "special": "infant"
+    },
+    {
+      "booking_id": 127,
+      "passenger_id": 48,
+      "flight_id": 115,
+      "booking_date": "2026-10-07",
+      "status": "CONFIRMED",
+      "special": "pet carrier"
+    },
+    {
+      "booking_id": 128,
+      "passenger_id": 54,
+      "flight_id": 103,
+      "booking_date": "2026-10-03",
+      "status": "CONFIRMED",
+      "special": "infant"
+    },
+    {
+      "booking_id": 129,
+      "passenger_id": 58,
+      "flight_id": 109,
+      "booking_date": "2026-09-09",
+      "status": "CONFIRMED",
+      "special": "none"
+    },
+    {
+      "booking_id": 130,
+      "passenger_id": 2,
+      "flight_id": 111,
+      "booking_date": "2026-09-13",
+      "status": "CONFIRMED",
+      "special": "wheelchair"
+    },
+    {
+      "booking_id": 131,
+      "passenger_id": 42,
+      "flight_id": 116,
+      "booking_date": "2026-10-02",
+      "status": "CONFIRMED",
+      "special": "pet carrier"
+    },
+    {
+      "booking_id": 132,
+      "passenger_id": 59,
+      "flight_id": 115,
+      "booking_date": "2026-09-13",
+      "status": "CONFIRMED",
+      "special": "extra legroom"
+    }
+  ],
+  "payments": [
+    {
+      "payment_id": 1,
+      "booking_id": 2,
+      "amount": 3200.0,
+      "currency": "INR",
+      "payment_method": "NETBANKING",
+      "status": "SUCCESS",
+      "payment_date": "2026-09-17"
+    },
+    {
+      "payment_id": 2,
+      "booking_id": 3,
+      "amount": 18000.0,
+      "currency": "INR",
+      "payment_method": "WALLET",
+      "status": "SUCCESS",
+      "payment_date": "2026-09-20"
+    },
+    {
+      "payment_id": 3,
+      "booking_id": 4,
+      "amount": 59000.0,
+      "currency": "INR",
+      "payment_method": "UPI",
+      "status": "SUCCESS",
+      "payment_date": "2026-09-22"
+    },
+    {
+      "payment_id": 4,
+      "booking_id": 7,
+      "amount": 86.75,
+      "currency": "USD",
+      "payment_method": "WALLET",
+      "status": "SUCCESS",
+      "payment_date": "2026-10-04"
+    },
+    {
+      "payment_id": 5,
+      "booking_id": 8,
+      "amount": 17500.0,
+      "currency": "INR",
+      "payment_method": "UPI",
+      "status": "SUCCESS",
+      "payment_date": "2026-10-06"
+    },
+    {
+      "payment_id": 6,
+      "booking_id": 9,
+      "amount": 6900.0,
+      "currency": "INR",
+      "payment_method": "CARD",
+      "status": "SUCCESS",
+      "payment_date": "2026-10-14"
+    },
+    {
+      "payment_id": 7,
+      "booking_id": 10,
+      "amount": 59000.0,
+      "currency": "INR",
+      "payment_method": "NETBANKING",
+      "status": "SUCCESS",
+      "payment_date": "2026-09-13"
+    },
+    {
+      "payment_id": 8,
+      "booking_id": 11,
+      "amount": 6900.0,
+      "currency": "INR",
+      "payment_method": "WALLET",
+      "status": "SUCCESS",
+      "payment_date": "2026-09-12"
+    },
+    {
+      "payment_id": 9,
+      "booking_id": 12,
+      "amount": 2900.0,
+      "currency": "INR",
+      "payment_method": "UPI",
+      "status": "SUCCESS",
+      "payment_date": "2026-09-13"
+    },
+    {
+      "payment_id": 10,
+      "booking_id": 13,
+      "amount": 5200.0,
+      "currency": "INR",
+      "payment_method": "CARD",
+      "status": "SUCCESS",
+      "payment_date": "2026-09-13"
+    },
+    {
+      "payment_id": 11,
+      "booking_id": 14,
+      "amount": 216.87,
+      "currency": "USD",
+      "payment_method": "NETBANKING",
+      "status": "SUCCESS",
+      "payment_date": "2026-09-11"
+    },
+    {
+      "payment_id": 12,
+      "booking_id": 15,
+      "amount": 7000.0,
+      "currency": "INR",
+      "payment_method": "WALLET",
+      "status": "SUCCESS",
+      "payment_date": "2026-09-20"
+    },
+    {
+      "payment_id": 13,
+      "booking_id": 17,
+      "amount": 7000.0,
+      "currency": "INR",
+      "payment_method": "CARD",
+      "status": "SUCCESS",
+      "payment_date": "2026-10-04"
+    },
+    {
+      "payment_id": 14,
+      "booking_id": 18,
+      "amount": 21500.0,
+      "currency": "INR",
+      "payment_method": "NETBANKING",
+      "status": "SUCCESS",
+      "payment_date": "2026-09-29"
+    },
+    {
+      "payment_id": 15,
+      "booking_id": 20,
+      "amount": 6500.0,
+      "currency": "INR",
+      "payment_method": "UPI",
+      "status": "SUCCESS",
+      "payment_date": "2026-09-07"
+    },
+    {
+      "payment_id": 16,
+      "booking_id": 21,
+      "amount": 216.87,
+      "currency": "USD",
+      "payment_method": "CARD",
+      "status": "SUCCESS",
+      "payment_date": "2026-09-22"
+    },
+    {
+      "payment_id": 17,
+      "booking_id": 23,
+      "amount": 6800.0,
+      "currency": "INR",
+      "payment_method": "WALLET",
+      "status": "SUCCESS",
+      "payment_date": "2026-09-24"
+    },
+    {
+      "payment_id": 18,
+      "booking_id": 24,
+      "amount": 19500.0,
+      "currency": "INR",
+      "payment_method": "UPI",
+      "status": "SUCCESS",
+      "payment_date": "2026-09-06"
+    },
+    {
+      "payment_id": 19,
+      "booking_id": 25,
+      "amount": 85000.0,
+      "currency": "INR",
+      "payment_method": "CARD",
+      "status": "SUCCESS",
+      "payment_date": "2026-09-20"
+    },
+    {
+      "payment_id": 20,
+      "booking_id": 26,
+      "amount": 18000.0,
+      "currency": "INR",
+      "payment_method": "NETBANKING",
+      "status": "SUCCESS",
+      "payment_date": "2026-09-21"
+    },
+    {
+      "payment_id": 21,
+      "booking_id": 28,
+      "amount": 62.65,
+      "currency": "USD",
+      "payment_method": "UPI",
+      "status": "SUCCESS",
+      "payment_date": "2026-09-04"
+    },
+    {
+      "payment_id": 22,
+      "booking_id": 29,
+      "amount": 7000.0,
+      "currency": "INR",
+      "payment_method": "CARD",
+      "status": "SUCCESS",
+      "payment_date": "2026-10-12"
+    },
+    {
+      "payment_id": 23,
+      "booking_id": 30,
+      "amount": 6500.0,
+      "currency": "INR",
+      "payment_method": "NETBANKING",
+      "status": "SUCCESS",
+      "payment_date": "2026-09-20"
+    },
+    {
+      "payment_id": 24,
+      "booking_id": 32,
+      "amount": 2900.0,
+      "currency": "INR",
+      "payment_method": "UPI",
+      "status": "SUCCESS",
+      "payment_date": "2026-09-30"
+    },
+    {
+      "payment_id": 25,
+      "booking_id": 33,
+      "amount": 21500.0,
+      "currency": "INR",
+      "payment_method": "CARD",
+      "status": "SUCCESS",
+      "payment_date": "2026-09-26"
+    },
+    {
+      "payment_id": 26,
+      "booking_id": 35,
+      "amount": 83.13,
+      "currency": "USD",
+      "payment_method": "WALLET",
+      "status": "SUCCESS",
+      "payment_date": "2026-09-15"
+    },
+    {
+      "payment_id": 27,
+      "booking_id": 36,
+      "amount": 59000.0,
+      "currency": "INR",
+      "payment_method": "UPI",
+      "status": "SUCCESS",
+      "payment_date": "2026-09-20"
+    },
+    {
+      "payment_id": 28,
+      "booking_id": 38,
+      "amount": 7000.0,
+      "currency": "INR",
+      "payment_method": "NETBANKING",
+      "status": "SUCCESS",
+      "payment_date": "2026-09-10"
+    },
+    {
+      "payment_id": 29,
+      "booking_id": 39,
+      "amount": 85000.0,
+      "currency": "INR",
+      "payment_method": "WALLET",
+      "status": "SUCCESS",
+      "payment_date": "2026-10-10"
+    },
+    {
+      "payment_id": 30,
+      "booking_id": 40,
+      "amount": 22000.0,
+      "currency": "INR",
+      "payment_method": "UPI",
+      "status": "SUCCESS",
+      "payment_date": "2026-09-01"
+    },
+    {
+      "payment_id": 31,
+      "booking_id": 41,
+      "amount": 6900.0,
+      "currency": "INR",
+      "payment_method": "CARD",
+      "status": "SUCCESS",
+      "payment_date": "2026-09-18"
+    },
+    {
+      "payment_id": 32,
+      "booking_id": 42,
+      "amount": 746.99,
+      "currency": "USD",
+      "payment_method": "NETBANKING",
+      "status": "SUCCESS",
+      "payment_date": "2026-09-24"
+    },
+    {
+      "payment_id": 33,
+      "booking_id": 43,
+      "amount": 4500.0,
+      "currency": "INR",
+      "payment_method": "WALLET",
+      "status": "SUCCESS",
+      "payment_date": "2026-09-17"
+    },
+    {
+      "payment_id": 34,
+      "booking_id": 44,
+      "amount": 7000.0,
+      "currency": "INR",
+      "payment_method": "UPI",
+      "status": "SUCCESS",
+      "payment_date": "2026-10-05"
+    },
+    {
+      "payment_id": 35,
+      "booking_id": 45,
+      "amount": 4500.0,
+      "currency": "INR",
+      "payment_method": "CARD",
+      "status": "SUCCESS",
+      "payment_date": "2026-09-15"
+    },
+    {
+      "payment_id": 36,
+      "booking_id": 46,
+      "amount": 6800.0,
+      "currency": "INR",
+      "payment_method": "NETBANKING",
+      "status": "SUCCESS",
+      "payment_date": "2026-09-20"
+    },
+    {
+      "payment_id": 37,
+      "booking_id": 47,
+      "amount": 17500.0,
+      "currency": "INR",
+      "payment_method": "WALLET",
+      "status": "SUCCESS",
+      "payment_date": "2026-09-19"
+    },
+    {
+      "payment_id": 38,
+      "booking_id": 48,
+      "amount": 4500.0,
+      "currency": "INR",
+      "payment_method": "UPI",
+      "status": "SUCCESS",
+      "payment_date": "2026-10-10"
+    },
+    {
+      "payment_id": 39,
+      "booking_id": 49,
+      "amount": 38.55,
+      "currency": "USD",
+      "payment_method": "CARD",
+      "status": "SUCCESS",
+      "payment_date": "2026-09-26"
+    },
+    {
+      "payment_id": 40,
+      "booking_id": 50,
+      "amount": 4500.0,
+      "currency": "INR",
+      "payment_method": "NETBANKING",
+      "status": "SUCCESS",
+      "payment_date": "2026-09-06"
+    },
+    {
+      "payment_id": 41,
+      "booking_id": 52,
+      "amount": 18000.0,
+      "currency": "INR",
+      "payment_method": "UPI",
+      "status": "SUCCESS",
+      "payment_date": "2026-10-03"
+    },
+    {
+      "payment_id": 42,
+      "booking_id": 53,
+      "amount": 2900.0,
+      "currency": "INR",
+      "payment_method": "CARD",
+      "status": "SUCCESS",
+      "payment_date": "2026-09-14"
+    },
+    {
+      "payment_id": 43,
+      "booking_id": 55,
+      "amount": 19500.0,
+      "currency": "INR",
+      "payment_method": "WALLET",
+      "status": "SUCCESS",
+      "payment_date": "2026-09-03"
+    },
+    {
+      "payment_id": 44,
+      "booking_id": 56,
+      "amount": 265.06,
+      "currency": "USD",
+      "payment_method": "UPI",
+      "status": "SUCCESS",
+      "payment_date": "2026-10-01"
+    },
+    {
+      "payment_id": 45,
+      "booking_id": 57,
+      "amount": 18000.0,
+      "currency": "INR",
+      "payment_method": "CARD",
+      "status": "SUCCESS",
+      "payment_date": "2026-09-22"
+    },
+    {
+      "payment_id": 46,
+      "booking_id": 58,
+      "amount": 4500.0,
+      "currency": "INR",
+      "payment_method": "NETBANKING",
+      "status": "SUCCESS",
+      "payment_date": "2026-09-26"
+    },
+    {
+      "payment_id": 47,
+      "booking_id": 59,
+      "amount": 19500.0,
+      "currency": "INR",
+      "payment_method": "WALLET",
+      "status": "SUCCESS",
+      "payment_date": "2026-10-05"
+    },
+    {
+      "payment_id": 48,
+      "booking_id": 60,
+      "amount": 6800.0,
+      "currency": "INR",
+      "payment_method": "UPI",
+      "status": "SUCCESS",
+      "payment_date": "2026-10-02"
+    },
+    {
+      "payment_id": 49,
+      "booking_id": 61,
+      "amount": 17500.0,
+      "currency": "INR",
+      "payment_method": "CARD",
+      "status": "SUCCESS",
+      "payment_date": "2026-09-29"
+    },
+    {
+      "payment_id": 50,
+      "booking_id": 63,
+      "amount": 83.13,
+      "currency": "USD",
+      "payment_method": "WALLET",
+      "status": "SUCCESS",
+      "payment_date": "2026-10-10"
+    },
+    {
+      "payment_id": 51,
+      "booking_id": 64,
+      "amount": 2900.0,
+      "currency": "INR",
+      "payment_method": "UPI",
+      "status": "SUCCESS",
+      "payment_date": "2026-09-30"
+    },
+    {
+      "payment_id": 52,
+      "booking_id": 65,
+      "amount": 17500.0,
+      "currency": "INR",
+      "payment_method": "CARD",
+      "status": "SUCCESS",
+      "payment_date": "2026-09-13"
+    },
+    {
+      "payment_id": 53,
+      "booking_id": 66,
+      "amount": 6800.0,
+      "currency": "INR",
+      "payment_method": "NETBANKING",
+      "status": "SUCCESS",
+      "payment_date": "2026-09-16"
+    },
+    {
+      "payment_id": 54,
+      "booking_id": 67,
+      "amount": 7200.0,
+      "currency": "INR",
+      "payment_method": "WALLET",
+      "status": "SUCCESS",
+      "payment_date": "2026-09-22"
+    },
+    {
+      "payment_id": 55,
+      "booking_id": 69,
+      "amount": 3400.0,
+      "currency": "INR",
+      "payment_method": "CARD",
+      "status": "SUCCESS",
+      "payment_date": "2026-09-25"
+    },
+    {
+      "payment_id": 56,
+      "booking_id": 71,
+      "amount": 7000.0,
+      "currency": "INR",
+      "payment_method": "WALLET",
+      "status": "SUCCESS",
+      "payment_date": "2026-09-22"
+    },
+    {
+      "payment_id": 57,
+      "booking_id": 72,
+      "amount": 22000.0,
+      "currency": "INR",
+      "payment_method": "UPI",
+      "status": "SUCCESS",
+      "payment_date": "2026-10-12"
+    },
+    {
+      "payment_id": 58,
+      "booking_id": 73,
+      "amount": 22000.0,
+      "currency": "INR",
+      "payment_method": "CARD",
+      "status": "SUCCESS",
+      "payment_date": "2026-09-20"
+    },
+    {
+      "payment_id": 59,
+      "booking_id": 74,
+      "amount": 3200.0,
+      "currency": "INR",
+      "payment_method": "NETBANKING",
+      "status": "SUCCESS",
+      "payment_date": "2026-09-14"
+    },
+    {
+      "payment_id": 60,
+      "booking_id": 75,
+      "amount": 6500.0,
+      "currency": "INR",
+      "payment_method": "WALLET",
+      "status": "SUCCESS",
+      "payment_date": "2026-09-08"
+    },
+    {
+      "payment_id": 61,
+      "booking_id": 76,
+      "amount": 22000.0,
+      "currency": "INR",
+      "payment_method": "UPI",
+      "status": "SUCCESS",
+      "payment_date": "2026-10-11"
+    },
+    {
+      "payment_id": 62,
+      "booking_id": 80,
+      "amount": 6800.0,
+      "currency": "INR",
+      "payment_method": "UPI",
+      "status": "SUCCESS",
+      "payment_date": "2026-10-08"
+    },
+    {
+      "payment_id": 63,
+      "booking_id": 81,
+      "amount": 6900.0,
+      "currency": "INR",
+      "payment_method": "CARD",
+      "status": "SUCCESS",
+      "payment_date": "2026-09-30"
+    },
+    {
+      "payment_id": 64,
+      "booking_id": 82,
+      "amount": 4500.0,
+      "currency": "INR",
+      "payment_method": "NETBANKING",
+      "status": "SUCCESS",
+      "payment_date": "2026-09-28"
+    },
+    {
+      "payment_id": 65,
+      "booking_id": 83,
+      "amount": 22000.0,
+      "currency": "INR",
+      "payment_method": "WALLET",
+      "status": "SUCCESS",
+      "payment_date": "2026-10-02"
+    },
+    {
+      "payment_id": 66,
+      "booking_id": 85,
+      "amount": 17500.0,
+      "currency": "INR",
+      "payment_method": "CARD",
+      "status": "SUCCESS",
+      "payment_date": "2026-09-04"
+    },
+    {
+      "payment_id": 67,
+      "booking_id": 88,
+      "amount": 5200.0,
+      "currency": "INR",
+      "payment_method": "UPI",
+      "status": "SUCCESS",
+      "payment_date": "2026-10-13"
+    },
+    {
+      "payment_id": 68,
+      "booking_id": 89,
+      "amount": 62000.0,
+      "currency": "INR",
+      "payment_method": "CARD",
+      "status": "SUCCESS",
+      "payment_date": "2026-10-03"
+    },
+    {
+      "payment_id": 69,
+      "booking_id": 90,
+      "amount": 18000.0,
+      "currency": "INR",
+      "payment_method": "NETBANKING",
+      "status": "SUCCESS",
+      "payment_date": "2026-10-08"
+    },
+    {
+      "payment_id": 70,
+      "booking_id": 91,
+      "amount": 81.93,
+      "currency": "USD",
+      "payment_method": "WALLET",
+      "status": "SUCCESS",
+      "payment_date": "2026-09-28"
+    },
+    {
+      "payment_id": 71,
+      "booking_id": 92,
+      "amount": 6800.0,
+      "currency": "INR",
+      "payment_method": "UPI",
+      "status": "SUCCESS",
+      "payment_date": "2026-09-02"
+    },
+    {
+      "payment_id": 72,
+      "booking_id": 94,
+      "amount": 6900.0,
+      "currency": "INR",
+      "payment_method": "NETBANKING",
+      "status": "SUCCESS",
+      "payment_date": "2026-10-05"
+    },
+    {
+      "payment_id": 73,
+      "booking_id": 98,
+      "amount": 38.55,
+      "currency": "USD",
+      "payment_method": "NETBANKING",
+      "status": "SUCCESS",
+      "payment_date": "2026-09-10"
+    },
+    {
+      "payment_id": 74,
+      "booking_id": 99,
+      "amount": 59000.0,
+      "currency": "INR",
+      "payment_method": "WALLET",
+      "status": "SUCCESS",
+      "payment_date": "2026-09-21"
+    },
+    {
+      "payment_id": 75,
+      "booking_id": 101,
+      "amount": 21000.0,
+      "currency": "INR",
+      "payment_method": "CARD",
+      "status": "SUCCESS",
+      "payment_date": "2026-10-03"
+    },
+    {
+      "payment_id": 76,
+      "booking_id": 102,
+      "amount": 62000.0,
+      "currency": "INR",
+      "payment_method": "NETBANKING",
+      "status": "SUCCESS",
+      "payment_date": "2026-09-05"
+    },
+    {
+      "payment_id": 77,
+      "booking_id": 103,
+      "amount": 6900.0,
+      "currency": "INR",
+      "payment_method": "WALLET",
+      "status": "SUCCESS",
+      "payment_date": "2026-10-11"
+    },
+    {
+      "payment_id": 78,
+      "booking_id": 104,
+      "amount": 59000.0,
+      "currency": "INR",
+      "payment_method": "UPI",
+      "status": "SUCCESS",
+      "payment_date": "2026-09-27"
+    },
+    {
+      "payment_id": 79,
+      "booking_id": 106,
+      "amount": 3200.0,
+      "currency": "INR",
+      "payment_method": "NETBANKING",
+      "status": "SUCCESS",
+      "payment_date": "2026-09-16"
+    },
+    {
+      "payment_id": 80,
+      "booking_id": 107,
+      "amount": 18000.0,
+      "currency": "INR",
+      "payment_method": "WALLET",
+      "status": "SUCCESS",
+      "payment_date": "2026-10-08"
+    },
+    {
+      "payment_id": 81,
+      "booking_id": 108,
+      "amount": 6800.0,
+      "currency": "INR",
+      "payment_method": "UPI",
+      "status": "SUCCESS",
+      "payment_date": "2026-09-17"
+    },
+    {
+      "payment_id": 82,
+      "booking_id": 109,
+      "amount": 17500.0,
+      "currency": "INR",
+      "payment_method": "CARD",
+      "status": "SUCCESS",
+      "payment_date": "2026-09-10"
+    },
+    {
+      "payment_id": 83,
+      "booking_id": 110,
+      "amount": 22000.0,
+      "currency": "INR",
+      "payment_method": "NETBANKING",
+      "status": "SUCCESS",
+      "payment_date": "2026-09-07"
+    },
+    {
+      "payment_id": 84,
+      "booking_id": 111,
+      "amount": 6500.0,
+      "currency": "INR",
+      "payment_method": "WALLET",
+      "status": "SUCCESS",
+      "payment_date": "2026-09-26"
+    },
+    {
+      "payment_id": 85,
+      "booking_id": 112,
+      "amount": 1024.1,
+      "currency": "USD",
+      "payment_method": "UPI",
+      "status": "SUCCESS",
+      "payment_date": "2026-10-14"
+    },
+    {
+      "payment_id": 86,
+      "booking_id": 113,
+      "amount": 7000.0,
+      "currency": "INR",
+      "payment_method": "CARD",
+      "status": "SUCCESS",
+      "payment_date": "2026-09-13"
+    },
+    {
+      "payment_id": 87,
+      "booking_id": 114,
+      "amount": 5200.0,
+      "currency": "INR",
+      "payment_method": "NETBANKING",
+      "status": "SUCCESS",
+      "payment_date": "2026-09-12"
+    },
+    {
+      "payment_id": 88,
+      "booking_id": 115,
+      "amount": 6900.0,
+      "currency": "INR",
+      "payment_method": "WALLET",
+      "status": "SUCCESS",
+      "payment_date": "2026-09-16"
+    },
+    {
+      "payment_id": 89,
+      "booking_id": 116,
+      "amount": 19500.0,
+      "currency": "INR",
+      "payment_method": "UPI",
+      "status": "SUCCESS",
+      "payment_date": "2026-09-27"
+    },
+    {
+      "payment_id": 90,
+      "booking_id": 117,
+      "amount": 6100.0,
+      "currency": "INR",
+      "payment_method": "CARD",
+      "status": "SUCCESS",
+      "payment_date": "2026-09-16"
+    },
+    {
+      "payment_id": 91,
+      "booking_id": 118,
+      "amount": 7200.0,
+      "currency": "INR",
+      "payment_method": "NETBANKING",
+      "status": "SUCCESS",
+      "payment_date": "2026-09-26"
+    },
+    {
+      "payment_id": 92,
+      "booking_id": 119,
+      "amount": 84.34,
+      "currency": "USD",
+      "payment_method": "WALLET",
+      "status": "SUCCESS",
+      "payment_date": "2026-09-27"
+    },
+    {
+      "payment_id": 93,
+      "booking_id": 121,
+      "amount": 7000.0,
+      "currency": "INR",
+      "payment_method": "CARD",
+      "status": "SUCCESS",
+      "payment_date": "2026-09-07"
+    },
+    {
+      "payment_id": 94,
+      "booking_id": 123,
+      "amount": 62000.0,
+      "currency": "INR",
+      "payment_method": "WALLET",
+      "status": "SUCCESS",
+      "payment_date": "2026-09-20"
+    },
+    {
+      "payment_id": 95,
+      "booking_id": 124,
+      "amount": 59000.0,
+      "currency": "INR",
+      "payment_method": "UPI",
+      "status": "SUCCESS",
+      "payment_date": "2026-09-11"
+    },
+    {
+      "payment_id": 96,
+      "booking_id": 125,
+      "amount": 6100.0,
+      "currency": "INR",
+      "payment_method": "CARD",
+      "status": "SUCCESS",
+      "payment_date": "2026-09-22"
+    },
+    {
+      "payment_id": 97,
+      "booking_id": 126,
+      "amount": 265.06,
+      "currency": "USD",
+      "payment_method": "NETBANKING",
+      "status": "SUCCESS",
+      "payment_date": "2026-10-14"
+    },
+    {
+      "payment_id": 98,
+      "booking_id": 127,
+      "amount": 85000.0,
+      "currency": "INR",
+      "payment_method": "WALLET",
+      "status": "SUCCESS",
+      "payment_date": "2026-10-07"
+    },
+    {
+      "payment_id": 99,
+      "booking_id": 128,
+      "amount": 22000.0,
+      "currency": "INR",
+      "payment_method": "UPI",
+      "status": "SUCCESS",
+      "payment_date": "2026-10-03"
+    },
+    {
+      "payment_id": 100,
+      "booking_id": 129,
+      "amount": 6100.0,
+      "currency": "INR",
+      "payment_method": "CARD",
+      "status": "SUCCESS",
+      "payment_date": "2026-09-09"
+    },
+    {
+      "payment_id": 101,
+      "booking_id": 130,
+      "amount": 19500.0,
+      "currency": "INR",
+      "payment_method": "NETBANKING",
+      "status": "SUCCESS",
+      "payment_date": "2026-09-13"
+    },
+    {
+      "payment_id": 102,
+      "booking_id": 131,
+      "amount": 17500.0,
+      "currency": "INR",
+      "payment_method": "WALLET",
+      "status": "SUCCESS",
+      "payment_date": "2026-10-02"
+    },
+    {
+      "payment_id": 103,
+      "booking_id": 132,
+      "amount": 85000.0,
+      "currency": "INR",
+      "payment_method": "UPI",
+      "status": "SUCCESS",
+      "payment_date": "2026-09-13"
+    },
+    {
+      "payment_id": 104,
+      "booking_id": 134,
+      "amount": 19500.0,
+      "currency": "INR",
+      "payment_method": "NETBANKING",
+      "status": "SUCCESS",
+      "payment_date": "2026-09-26"
+    },
+    {
+      "payment_id": 105,
+      "booking_id": 135,
+      "amount": 62000.0,
+      "currency": "INR",
+      "payment_method": "WALLET",
+      "status": "SUCCESS",
+      "payment_date": "2026-09-29"
+    },
+    {
+      "payment_id": 106,
+      "booking_id": 136,
+      "amount": 3400.0,
+      "currency": "INR",
+      "payment_method": "UPI",
+      "status": "SUCCESS",
+      "payment_date": "2026-09-02"
+    },
+    {
+      "payment_id": 107,
+      "booking_id": 137,
+      "amount": 21500.0,
+      "currency": "INR",
+      "payment_method": "CARD",
+      "status": "SUCCESS",
+      "payment_date": "2026-10-04"
+    },
+    {
+      "payment_id": 108,
+      "booking_id": 138,
+      "amount": 85000.0,
+      "currency": "INR",
+      "payment_method": "NETBANKING",
+      "status": "SUCCESS",
+      "payment_date": "2026-09-25"
+    },
+    {
+      "payment_id": 109,
+      "booking_id": 140,
+      "amount": 746.99,
+      "currency": "USD",
+      "payment_method": "UPI",
+      "status": "SUCCESS",
+      "payment_date": "2026-10-01"
+    },
+    {
+      "payment_id": 110,
+      "booking_id": 141,
+      "amount": 2900.0,
+      "currency": "INR",
+      "payment_method": "CARD",
+      "status": "SUCCESS",
+      "payment_date": "2026-10-11"
+    },
+    {
+      "payment_id": 111,
+      "booking_id": 142,
+      "amount": 4500.0,
+      "currency": "INR",
+      "payment_method": "NETBANKING",
+      "status": "SUCCESS",
+      "payment_date": "2026-09-09"
+    },
+    {
+      "payment_id": 112,
+      "booking_id": 143,
+      "amount": 21500.0,
+      "currency": "INR",
+      "payment_method": "WALLET",
+      "status": "SUCCESS",
+      "payment_date": "2026-09-05"
+    },
+    {
+      "payment_id": 113,
+      "booking_id": 144,
+      "amount": 7000.0,
+      "currency": "INR",
+      "payment_method": "UPI",
+      "status": "SUCCESS",
+      "payment_date": "2026-09-24"
+    },
+    {
+      "payment_id": 114,
+      "booking_id": 145,
+      "amount": 2900.0,
+      "currency": "INR",
+      "payment_method": "CARD",
+      "status": "SUCCESS",
+      "payment_date": "2026-10-13"
+    },
+    {
+      "payment_id": 115,
+      "booking_id": 146,
+      "amount": 7200.0,
+      "currency": "INR",
+      "payment_method": "NETBANKING",
+      "status": "SUCCESS",
+      "payment_date": "2026-09-12"
+    },
+    {
+      "payment_id": 116,
+      "booking_id": 149,
+      "amount": 17500.0,
+      "currency": "INR",
+      "payment_method": "CARD",
+      "status": "SUCCESS",
+      "payment_date": "2026-09-18"
+    },
+    {
+      "payment_id": 117,
+      "booking_id": 150,
+      "amount": 62000.0,
+      "currency": "INR",
+      "payment_method": "NETBANKING",
+      "status": "SUCCESS",
+      "payment_date": "2026-09-08"
+    },
+    {
+      "payment_id": 118,
+      "booking_id": 151,
+      "amount": 62000.0,
+      "currency": "INR",
+      "payment_method": "WALLET",
+      "status": "SUCCESS",
+      "payment_date": "2026-09-27"
+    },
+    {
+      "payment_id": 119,
+      "booking_id": 152,
+      "amount": 21000.0,
+      "currency": "INR",
+      "payment_method": "UPI",
+      "status": "SUCCESS",
+      "payment_date": "2026-10-08"
+    },
+    {
+      "payment_id": 120,
+      "booking_id": 153,
+      "amount": 3400.0,
+      "currency": "INR",
+      "payment_method": "CARD",
+      "status": "SUCCESS",
+      "payment_date": "2026-10-06"
+    },
+    {
+      "payment_id": 121,
+      "booking_id": 154,
+      "amount": 78.31,
+      "currency": "USD",
+      "payment_method": "NETBANKING",
+      "status": "SUCCESS",
+      "payment_date": "2026-09-17"
+    },
+    {
+      "payment_id": 122,
+      "booking_id": 155,
+      "amount": 17500.0,
+      "currency": "INR",
+      "payment_method": "WALLET",
+      "status": "SUCCESS",
+      "payment_date": "2026-09-15"
+    },
+    {
+      "payment_id": 123,
+      "booking_id": 156,
+      "amount": 6500.0,
+      "currency": "INR",
+      "payment_method": "UPI",
+      "status": "SUCCESS",
+      "payment_date": "2026-09-27"
+    },
+    {
+      "payment_id": 124,
+      "booking_id": 158,
+      "amount": 7000.0,
+      "currency": "INR",
+      "payment_method": "NETBANKING",
+      "status": "SUCCESS",
+      "payment_date": "2026-09-21"
+    },
+    {
+      "payment_id": 125,
+      "booking_id": 159,
+      "amount": 7000.0,
+      "currency": "INR",
+      "payment_method": "WALLET",
+      "status": "SUCCESS",
+      "payment_date": "2026-09-28"
+    },
+    {
+      "payment_id": 126,
+      "booking_id": 160,
+      "amount": 6900.0,
+      "currency": "INR",
+      "payment_method": "UPI",
+      "status": "SUCCESS",
+      "payment_date": "2026-09-20"
+    },
+    {
+      "payment_id": 127,
+      "booking_id": 161,
+      "amount": 73.49,
+      "currency": "USD",
+      "payment_method": "CARD",
+      "status": "SUCCESS",
+      "payment_date": "2026-10-12"
+    },
+    {
+      "payment_id": 128,
+      "booking_id": 162,
+      "amount": 22000.0,
+      "currency": "INR",
+      "payment_method": "NETBANKING",
+      "status": "SUCCESS",
+      "payment_date": "2026-09-28"
+    },
+    {
+      "payment_id": 129,
+      "booking_id": 163,
+      "amount": 85000.0,
+      "currency": "INR",
+      "payment_method": "WALLET",
+      "status": "SUCCESS",
+      "payment_date": "2026-09-22"
+    },
+    {
+      "payment_id": 130,
+      "booking_id": 165,
+      "amount": 3400.0,
+      "currency": "INR",
+      "payment_method": "CARD",
+      "status": "SUCCESS",
+      "payment_date": "2026-09-26"
+    },
+    {
+      "payment_id": 131,
+      "booking_id": 166,
+      "amount": 2900.0,
+      "currency": "INR",
+      "payment_method": "NETBANKING",
+      "status": "SUCCESS",
+      "payment_date": "2026-09-13"
+    },
+    {
+      "payment_id": 132,
+      "booking_id": 167,
+      "amount": 3200.0,
+      "currency": "INR",
+      "payment_method": "WALLET",
+      "status": "SUCCESS",
+      "payment_date": "2026-09-01"
+    },
+    {
+      "payment_id": 133,
+      "booking_id": 169,
+      "amount": 5200.0,
+      "currency": "INR",
+      "payment_method": "CARD",
+      "status": "SUCCESS",
+      "payment_date": "2026-09-09"
+    },
+    {
+      "payment_id": 134,
+      "booking_id": 170,
+      "amount": 4500.0,
+      "currency": "INR",
+      "payment_method": "NETBANKING",
+      "status": "SUCCESS",
+      "payment_date": "2026-09-25"
+    },
+    {
+      "payment_id": 135,
+      "booking_id": 171,
+      "amount": 3400.0,
+      "currency": "INR",
+      "payment_method": "WALLET",
+      "status": "SUCCESS",
+      "payment_date": "2026-10-11"
+    },
+    {
+      "payment_id": 136,
+      "booking_id": 172,
+      "amount": 22000.0,
+      "currency": "INR",
+      "payment_method": "UPI",
+      "status": "SUCCESS",
+      "payment_date": "2026-10-06"
+    },
+    {
+      "payment_id": 137,
+      "booking_id": 173,
+      "amount": 6500.0,
+      "currency": "INR",
+      "payment_method": "CARD",
+      "status": "SUCCESS",
+      "payment_date": "2026-10-10"
+    },
+    {
+      "payment_id": 138,
+      "booking_id": 174,
+      "amount": 62000.0,
+      "currency": "INR",
+      "payment_method": "NETBANKING",
+      "status": "SUCCESS",
+      "payment_date": "2026-09-21"
+    },
+    {
+      "payment_id": 139,
+      "booking_id": 178,
+      "amount": 7200.0,
+      "currency": "INR",
+      "payment_method": "NETBANKING",
+      "status": "SUCCESS",
+      "payment_date": "2026-09-08"
+    },
+    {
+      "payment_id": 140,
+      "booking_id": 179,
+      "amount": 21000.0,
+      "currency": "INR",
+      "payment_method": "WALLET",
+      "status": "SUCCESS",
+      "payment_date": "2026-09-01"
+    },
+    {
+      "payment_id": 141,
+      "booking_id": 180,
+      "amount": 6100.0,
+      "currency": "INR",
+      "payment_method": "UPI",
+      "status": "SUCCESS",
+      "payment_date": "2026-10-07"
+    },
+    {
+      "payment_id": 142,
+      "booking_id": 181,
+      "amount": 5200.0,
+      "currency": "INR",
+      "payment_method": "CARD",
+      "status": "SUCCESS",
+      "payment_date": "2026-09-16"
+    },
+    {
+      "payment_id": 143,
+      "booking_id": 182,
+      "amount": 234.94,
+      "currency": "USD",
+      "payment_method": "NETBANKING",
+      "status": "SUCCESS",
+      "payment_date": "2026-10-08"
+    },
+    {
+      "payment_id": 144,
+      "booking_id": 184,
+      "amount": 7200.0,
+      "currency": "INR",
+      "payment_method": "UPI",
+      "status": "SUCCESS",
+      "payment_date": "2026-10-07"
+    },
+    {
+      "payment_id": 145,
+      "booking_id": 185,
+      "amount": 22000.0,
+      "currency": "INR",
+      "payment_method": "CARD",
+      "status": "SUCCESS",
+      "payment_date": "2026-09-01"
+    },
+    {
+      "payment_id": 146,
+      "booking_id": 187,
+      "amount": 85000.0,
+      "currency": "INR",
+      "payment_method": "WALLET",
+      "status": "SUCCESS",
+      "payment_date": "2026-09-02"
+    },
+    {
+      "payment_id": 147,
+      "booking_id": 188,
+      "amount": 5200.0,
+      "currency": "INR",
+      "payment_method": "UPI",
+      "status": "SUCCESS",
+      "payment_date": "2026-09-13"
+    },
+    {
+      "payment_id": 148,
+      "booking_id": 189,
+      "amount": 265.06,
+      "currency": "USD",
+      "payment_method": "CARD",
+      "status": "SUCCESS",
+      "payment_date": "2026-10-09"
+    },
+    {
+      "payment_id": 149,
+      "booking_id": 192,
+      "amount": 85000.0,
+      "currency": "INR",
+      "payment_method": "UPI",
+      "status": "SUCCESS",
+      "payment_date": "2026-09-18"
+    },
+    {
+      "payment_id": 150,
+      "booking_id": 193,
+      "amount": 22000.0,
+      "currency": "INR",
+      "payment_method": "CARD",
+      "status": "SUCCESS",
+      "payment_date": "2026-09-27"
+    },
+    {
+      "payment_id": 151,
+      "booking_id": 195,
+      "amount": 7200.0,
+      "currency": "INR",
+      "payment_method": "WALLET",
+      "status": "SUCCESS",
+      "payment_date": "2026-10-12"
+    },
+    {
+      "payment_id": 152,
+      "booking_id": 196,
+      "amount": 83.13,
+      "currency": "USD",
+      "payment_method": "UPI",
+      "status": "SUCCESS",
+      "payment_date": "2026-09-26"
+    },
+    {
+      "payment_id": 153,
+      "booking_id": 198,
+      "amount": 18000.0,
+      "currency": "INR",
+      "payment_method": "NETBANKING",
+      "status": "SUCCESS",
+      "payment_date": "2026-10-03"
+    },
+    {
+      "payment_id": 154,
+      "booking_id": 199,
+      "amount": 19500.0,
+      "currency": "INR",
+      "payment_method": "WALLET",
+      "status": "SUCCESS",
+      "payment_date": "2026-09-19"
+    },
+    {
+      "payment_id": 155,
+      "booking_id": 200,
+      "amount": 7000.0,
+      "currency": "INR",
+      "payment_method": "UPI",
+      "status": "SUCCESS",
+      "payment_date": "2026-09-04"
+    },
+    {
+      "payment_id": 156,
+      "booking_id": 201,
+      "amount": 5200.0,
+      "currency": "INR",
+      "payment_method": "CARD",
+      "status": "SUCCESS",
+      "payment_date": "2026-10-09"
+    },
+    {
+      "payment_id": 157,
+      "booking_id": 203,
+      "amount": 1024.1,
+      "currency": "USD",
+      "payment_method": "WALLET",
+      "status": "SUCCESS",
+      "payment_date": "2026-10-12"
+    },
+    {
+      "payment_id": 158,
+      "booking_id": 204,
+      "amount": 19500.0,
+      "currency": "INR",
+      "payment_method": "UPI",
+      "status": "SUCCESS",
+      "payment_date": "2026-10-06"
+    },
+    {
+      "payment_id": 159,
+      "booking_id": 205,
+      "amount": 19500.0,
+      "currency": "INR",
+      "payment_method": "CARD",
+      "status": "SUCCESS",
+      "payment_date": "2026-10-07"
+    },
+    {
+      "payment_id": 160,
+      "booking_id": 206,
+      "amount": 3400.0,
+      "currency": "INR",
+      "payment_method": "NETBANKING",
+      "status": "SUCCESS",
+      "payment_date": "2026-09-09"
+    },
+    {
+      "payment_id": 161,
+      "booking_id": 207,
+      "amount": 85000.0,
+      "currency": "INR",
+      "payment_method": "WALLET",
+      "status": "SUCCESS",
+      "payment_date": "2026-09-28"
+    },
+    {
+      "payment_id": 162,
+      "booking_id": 208,
+      "amount": 6800.0,
+      "currency": "INR",
+      "payment_method": "UPI",
+      "status": "SUCCESS",
+      "payment_date": "2026-09-11"
+    },
+    {
+      "payment_id": 163,
+      "booking_id": 209,
+      "amount": 4500.0,
+      "currency": "INR",
+      "payment_method": "CARD",
+      "status": "SUCCESS",
+      "payment_date": "2026-09-20"
+    },
+    {
+      "payment_id": 164,
+      "booking_id": 210,
+      "amount": 210.84,
+      "currency": "USD",
+      "payment_method": "NETBANKING",
+      "status": "SUCCESS",
+      "payment_date": "2026-10-13"
+    },
+    {
+      "payment_id": 165,
+      "booking_id": 211,
+      "amount": 5200.0,
+      "currency": "INR",
+      "payment_method": "WALLET",
+      "status": "SUCCESS",
+      "payment_date": "2026-09-26"
+    },
+    {
+      "payment_id": 166,
+      "booking_id": 212,
+      "amount": 3200.0,
+      "currency": "INR",
+      "payment_method": "UPI",
+      "status": "SUCCESS",
+      "payment_date": "2026-09-15"
+    },
+    {
+      "payment_id": 167,
+      "booking_id": 213,
+      "amount": 18000.0,
+      "currency": "INR",
+      "payment_method": "CARD",
+      "status": "SUCCESS",
+      "payment_date": "2026-10-01"
+    },
+    {
+      "payment_id": 168,
+      "booking_id": 215,
+      "amount": 85000.0,
+      "currency": "INR",
+      "payment_method": "WALLET",
+      "status": "SUCCESS",
+      "payment_date": "2026-09-08"
+    },
+    {
+      "payment_id": 169,
+      "booking_id": 216,
+      "amount": 19500.0,
+      "currency": "INR",
+      "payment_method": "UPI",
+      "status": "SUCCESS",
+      "payment_date": "2026-09-26"
+    },
+    {
+      "payment_id": 170,
+      "booking_id": 217,
+      "amount": 54.22,
+      "currency": "USD",
+      "payment_method": "CARD",
+      "status": "SUCCESS",
+      "payment_date": "2026-09-12"
+    },
+    {
+      "payment_id": 171,
+      "booking_id": 219,
+      "amount": 21500.0,
+      "currency": "INR",
+      "payment_method": "WALLET",
+      "status": "SUCCESS",
+      "payment_date": "2026-09-18"
+    },
+    {
+      "payment_id": 172,
+      "booking_id": 220,
+      "amount": 6800.0,
+      "currency": "INR",
+      "payment_method": "UPI",
+      "status": "SUCCESS",
+      "payment_date": "2026-10-12"
+    },
+    {
+      "payment_id": 173,
+      "booking_id": 223,
+      "amount": 6500.0,
+      "currency": "INR",
+      "payment_method": "WALLET",
+      "status": "SUCCESS",
+      "payment_date": "2026-10-02"
+    },
+    {
+      "payment_id": 174,
+      "booking_id": 224,
+      "amount": 86.75,
+      "currency": "USD",
+      "payment_method": "UPI",
+      "status": "SUCCESS",
+      "payment_date": "2026-09-15"
+    },
+    {
+      "payment_id": 175,
+      "booking_id": 226,
+      "amount": 62000.0,
+      "currency": "INR",
+      "payment_method": "NETBANKING",
+      "status": "SUCCESS",
+      "payment_date": "2026-09-23"
+    },
+    {
+      "payment_id": 176,
+      "booking_id": 227,
+      "amount": 6500.0,
+      "currency": "INR",
+      "payment_method": "WALLET",
+      "status": "SUCCESS",
+      "payment_date": "2026-10-09"
+    },
+    {
+      "payment_id": 177,
+      "booking_id": 228,
+      "amount": 19500.0,
+      "currency": "INR",
+      "payment_method": "UPI",
+      "status": "SUCCESS",
+      "payment_date": "2026-10-07"
+    },
+    {
+      "payment_id": 178,
+      "booking_id": 230,
+      "amount": 3200.0,
+      "currency": "INR",
+      "payment_method": "NETBANKING",
+      "status": "SUCCESS",
+      "payment_date": "2026-09-14"
+    },
+    {
+      "payment_id": 179,
+      "booking_id": 231,
+      "amount": 81.93,
+      "currency": "USD",
+      "payment_method": "WALLET",
+      "status": "SUCCESS",
+      "payment_date": "2026-09-20"
+    },
+    {
+      "payment_id": 180,
+      "booking_id": 232,
+      "amount": 3200.0,
+      "currency": "INR",
+      "payment_method": "UPI",
+      "status": "SUCCESS",
+      "payment_date": "2026-09-12"
+    },
+    {
+      "payment_id": 181,
+      "booking_id": 233,
+      "amount": 6900.0,
+      "currency": "INR",
+      "payment_method": "CARD",
+      "status": "SUCCESS",
+      "payment_date": "2026-09-07"
+    },
+    {
+      "payment_id": 182,
+      "booking_id": 234,
+      "amount": 85000.0,
+      "currency": "INR",
+      "payment_method": "NETBANKING",
+      "status": "SUCCESS",
+      "payment_date": "2026-09-11"
+    },
+    {
+      "payment_id": 183,
+      "booking_id": 235,
+      "amount": 18000.0,
+      "currency": "INR",
+      "payment_method": "WALLET",
+      "status": "SUCCESS",
+      "payment_date": "2026-10-12"
+    },
+    {
+      "payment_id": 184,
+      "booking_id": 236,
+      "amount": 17500.0,
+      "currency": "INR",
+      "payment_method": "UPI",
+      "status": "SUCCESS",
+      "payment_date": "2026-09-20"
+    },
+    {
+      "payment_id": 185,
+      "booking_id": 237,
+      "amount": 3400.0,
+      "currency": "INR",
+      "payment_method": "CARD",
+      "status": "SUCCESS",
+      "payment_date": "2026-10-06"
+    },
+    {
+      "payment_id": 186,
+      "booking_id": 238,
+      "amount": 746.99,
+      "currency": "USD",
+      "payment_method": "NETBANKING",
+      "status": "SUCCESS",
+      "payment_date": "2026-09-07"
+    },
+    {
+      "payment_id": 187,
+      "booking_id": 239,
+      "amount": 6900.0,
+      "currency": "INR",
+      "payment_method": "WALLET",
+      "status": "SUCCESS",
+      "payment_date": "2026-10-05"
+    },
+    {
+      "payment_id": 188,
+      "booking_id": 240,
+      "amount": 2900.0,
+      "currency": "INR",
+      "payment_method": "UPI",
+      "status": "SUCCESS",
+      "payment_date": "2026-09-28"
+    },
+    {
+      "payment_id": 189,
+      "booking_id": 241,
+      "amount": 19500.0,
+      "currency": "INR",
+      "payment_method": "CARD",
+      "status": "SUCCESS",
+      "payment_date": "2026-09-22"
+    },
+    {
+      "payment_id": 190,
+      "booking_id": 242,
+      "amount": 17500.0,
+      "currency": "INR",
+      "payment_method": "NETBANKING",
+      "status": "SUCCESS",
+      "payment_date": "2026-09-10"
+    },
+    {
+      "payment_id": 191,
+      "booking_id": 243,
+      "amount": 59000.0,
+      "currency": "INR",
+      "payment_method": "WALLET",
+      "status": "SUCCESS",
+      "payment_date": "2026-10-04"
+    },
+    {
+      "payment_id": 192,
+      "booking_id": 244,
+      "amount": 21500.0,
+      "currency": "INR",
+      "payment_method": "UPI",
+      "status": "SUCCESS",
+      "payment_date": "2026-10-05"
+    },
+    {
+      "payment_id": 193,
+      "booking_id": 245,
+      "amount": 746.99,
+      "currency": "USD",
+      "payment_method": "CARD",
+      "status": "SUCCESS",
+      "payment_date": "2026-09-11"
+    },
+    {
+      "payment_id": 194,
+      "booking_id": 247,
+      "amount": 3400.0,
+      "currency": "INR",
+      "payment_method": "WALLET",
+      "status": "SUCCESS",
+      "payment_date": "2026-10-13"
+    },
+    {
+      "payment_id": 195,
+      "booking_id": 248,
+      "amount": 6800.0,
+      "currency": "INR",
+      "payment_method": "UPI",
+      "status": "SUCCESS",
+      "payment_date": "2026-09-26"
+    },
+    {
+      "payment_id": 196,
+      "booking_id": 249,
+      "amount": 18000.0,
+      "currency": "INR",
+      "payment_method": "CARD",
+      "status": "SUCCESS",
+      "payment_date": "2026-10-08"
+    },
+    {
+      "payment_id": 197,
+      "booking_id": 250,
+      "amount": 6500.0,
+      "currency": "INR",
+      "payment_method": "NETBANKING",
+      "status": "SUCCESS",
+      "payment_date": "2026-09-27"
+    },
+    {
+      "payment_id": 198,
+      "booking_id": 252,
+      "amount": 84.34,
+      "currency": "USD",
+      "payment_method": "UPI",
+      "status": "SUCCESS",
+      "payment_date": "2026-09-03"
+    },
+    {
+      "payment_id": 199,
+      "booking_id": 253,
+      "amount": 5200.0,
+      "currency": "INR",
+      "payment_method": "CARD",
+      "status": "SUCCESS",
+      "payment_date": "2026-10-01"
+    },
+    {
+      "payment_id": 200,
+      "booking_id": 254,
+      "amount": 19500.0,
+      "currency": "INR",
+      "payment_method": "NETBANKING",
+      "status": "SUCCESS",
+      "payment_date": "2026-09-03"
+    },
+    {
+      "payment_id": 201,
+      "booking_id": 256,
+      "amount": 3400.0,
+      "currency": "INR",
+      "payment_method": "UPI",
+      "status": "SUCCESS",
+      "payment_date": "2026-09-13"
+    },
+    {
+      "payment_id": 202,
+      "booking_id": 257,
+      "amount": 2900.0,
+      "currency": "INR",
+      "payment_method": "CARD",
+      "status": "SUCCESS",
+      "payment_date": "2026-10-12"
+    },
+    {
+      "payment_id": 203,
+      "booking_id": 258,
+      "amount": 2900.0,
+      "currency": "INR",
+      "payment_method": "NETBANKING",
+      "status": "SUCCESS",
+      "payment_date": "2026-09-09"
+    },
+    {
+      "payment_id": 204,
+      "booking_id": 259,
+      "amount": 38.55,
+      "currency": "USD",
+      "payment_method": "WALLET",
+      "status": "SUCCESS",
+      "payment_date": "2026-09-29"
+    },
+    {
+      "payment_id": 205,
+      "booking_id": 260,
+      "amount": 6100.0,
+      "currency": "INR",
+      "payment_method": "UPI",
+      "status": "SUCCESS",
+      "payment_date": "2026-09-16"
+    },
+    {
+      "payment_id": 206,
+      "booking_id": 261,
+      "amount": 4500.0,
+      "currency": "INR",
+      "payment_method": "CARD",
+      "status": "SUCCESS",
+      "payment_date": "2026-09-29"
+    },
+    {
+      "payment_id": 207,
+      "booking_id": 263,
+      "amount": 3200.0,
+      "currency": "INR",
+      "payment_method": "WALLET",
+      "status": "SUCCESS",
+      "payment_date": "2026-10-12"
+    },
+    {
+      "payment_id": 208,
+      "booking_id": 264,
+      "amount": 6800.0,
+      "currency": "INR",
+      "payment_method": "UPI",
+      "status": "SUCCESS",
+      "payment_date": "2026-09-25"
+    },
+    {
+      "payment_id": 209,
+      "booking_id": 265,
+      "amount": 3200.0,
+      "currency": "INR",
+      "payment_method": "CARD",
+      "status": "SUCCESS",
+      "payment_date": "2026-09-15"
+    },
+    {
+      "payment_id": 210,
+      "booking_id": 266,
+      "amount": 62.65,
+      "currency": "USD",
+      "payment_method": "NETBANKING",
+      "status": "SUCCESS",
+      "payment_date": "2026-09-16"
+    },
+    {
+      "payment_id": 211,
+      "booking_id": 268,
+      "amount": 17500.0,
+      "currency": "INR",
+      "payment_method": "UPI",
+      "status": "SUCCESS",
+      "payment_date": "2026-10-03"
+    },
+    {
+      "payment_id": 212,
+      "booking_id": 269,
+      "amount": 6900.0,
+      "currency": "INR",
+      "payment_method": "CARD",
+      "status": "SUCCESS",
+      "payment_date": "2026-09-21"
+    },
+    {
+      "payment_id": 213,
+      "booking_id": 270,
+      "amount": 17500.0,
+      "currency": "INR",
+      "payment_method": "NETBANKING",
+      "status": "SUCCESS",
+      "payment_date": "2026-10-12"
+    },
+    {
+      "payment_id": 214,
+      "booking_id": 271,
+      "amount": 6500.0,
+      "currency": "INR",
+      "payment_method": "WALLET",
+      "status": "SUCCESS",
+      "payment_date": "2026-09-28"
+    },
+    {
+      "payment_id": 215,
+      "booking_id": 272,
+      "amount": 85000.0,
+      "currency": "INR",
+      "payment_method": "UPI",
+      "status": "SUCCESS",
+      "payment_date": "2026-10-01"
+    },
+    {
+      "payment_id": 216,
+      "booking_id": 273,
+      "amount": 83.13,
+      "currency": "USD",
+      "payment_method": "CARD",
+      "status": "SUCCESS",
+      "payment_date": "2026-09-02"
+    },
+    {
+      "payment_id": 217,
+      "booking_id": 274,
+      "amount": 4500.0,
+      "currency": "INR",
+      "payment_method": "NETBANKING",
+      "status": "SUCCESS",
+      "payment_date": "2026-10-01"
+    },
+    {
+      "payment_id": 218,
+      "booking_id": 275,
+      "amount": 7000.0,
+      "currency": "INR",
+      "payment_method": "WALLET",
+      "status": "SUCCESS",
+      "payment_date": "2026-09-24"
+    },
+    {
+      "payment_id": 219,
+      "booking_id": 276,
+      "amount": 2900.0,
+      "currency": "INR",
+      "payment_method": "UPI",
+      "status": "SUCCESS",
+      "payment_date": "2026-09-06"
+    },
+    {
+      "payment_id": 220,
+      "booking_id": 277,
+      "amount": 6800.0,
+      "currency": "INR",
+      "payment_method": "CARD",
+      "status": "SUCCESS",
+      "payment_date": "2026-09-17"
+    },
+    {
+      "payment_id": 221,
+      "booking_id": 278,
+      "amount": 62000.0,
+      "currency": "INR",
+      "payment_method": "NETBANKING",
+      "status": "SUCCESS",
+      "payment_date": "2026-09-17"
+    },
+    {
+      "payment_id": 222,
+      "booking_id": 280,
+      "amount": 34.94,
+      "currency": "USD",
+      "payment_method": "UPI",
+      "status": "SUCCESS",
+      "payment_date": "2026-10-08"
+    },
+    {
+      "payment_id": 223,
+      "booking_id": 282,
+      "amount": 21000.0,
+      "currency": "INR",
+      "payment_method": "NETBANKING",
+      "status": "SUCCESS",
+      "payment_date": "2026-09-22"
+    },
+    {
+      "payment_id": 224,
+      "booking_id": 284,
+      "amount": 6100.0,
+      "currency": "INR",
+      "payment_method": "UPI",
+      "status": "SUCCESS",
+      "payment_date": "2026-09-30"
+    },
+    {
+      "payment_id": 225,
+      "booking_id": 285,
+      "amount": 21000.0,
+      "currency": "INR",
+      "payment_method": "CARD",
+      "status": "SUCCESS",
+      "payment_date": "2026-09-23"
+    },
+    {
+      "payment_id": 226,
+      "booking_id": 287,
+      "amount": 259.04,
+      "currency": "USD",
+      "payment_method": "WALLET",
+      "status": "SUCCESS",
+      "payment_date": "2026-10-03"
+    },
+    {
+      "payment_id": 227,
+      "booking_id": 288,
+      "amount": 7000.0,
+      "currency": "INR",
+      "payment_method": "UPI",
+      "status": "SUCCESS",
+      "payment_date": "2026-10-13"
+    },
+    {
+      "payment_id": 228,
+      "booking_id": 291,
+      "amount": 2900.0,
+      "currency": "INR",
+      "payment_method": "WALLET",
+      "status": "SUCCESS",
+      "payment_date": "2026-09-20"
+    },
+    {
+      "payment_id": 229,
+      "booking_id": 292,
+      "amount": 5200.0,
+      "currency": "INR",
+      "payment_method": "UPI",
+      "status": "SUCCESS",
+      "payment_date": "2026-09-18"
+    },
+    {
+      "payment_id": 230,
+      "booking_id": 293,
+      "amount": 3400.0,
+      "currency": "INR",
+      "payment_method": "CARD",
+      "status": "SUCCESS",
+      "payment_date": "2026-09-14"
+    },
+    {
+      "payment_id": 231,
+      "booking_id": 294,
+      "amount": 38.55,
+      "currency": "USD",
+      "payment_method": "NETBANKING",
+      "status": "SUCCESS",
+      "payment_date": "2026-09-10"
+    },
+    {
+      "payment_id": 232,
+      "booking_id": 295,
+      "amount": 17500.0,
+      "currency": "INR",
+      "payment_method": "WALLET",
+      "status": "SUCCESS",
+      "payment_date": "2026-09-21"
+    },
+    {
+      "payment_id": 233,
+      "booking_id": 296,
+      "amount": 21000.0,
+      "currency": "INR",
+      "payment_method": "UPI",
+      "status": "SUCCESS",
+      "payment_date": "2026-09-24"
+    },
+    {
+      "payment_id": 234,
+      "booking_id": 297,
+      "amount": 6800.0,
+      "currency": "INR",
+      "payment_method": "CARD",
+      "status": "SUCCESS",
+      "payment_date": "2026-09-13"
+    },
+    {
+      "payment_id": 235,
+      "booking_id": 298,
+      "amount": 21500.0,
+      "currency": "INR",
+      "payment_method": "NETBANKING",
+      "status": "SUCCESS",
+      "payment_date": "2026-10-06"
+    },
+    {
+      "payment_id": 236,
+      "booking_id": 299,
+      "amount": 2900.0,
+      "currency": "INR",
+      "payment_method": "WALLET",
+      "status": "SUCCESS",
+      "payment_date": "2026-09-20"
+    },
+    {
+      "payment_id": 237,
+      "booking_id": 300,
+      "amount": 19500.0,
+      "currency": "INR",
+      "payment_method": "UPI",
+      "status": "SUCCESS",
+      "payment_date": "2026-09-23"
+    },
+    {
+      "payment_id": 238,
+      "booking_id": 301,
+      "amount": 3400.0,
+      "currency": "INR",
+      "payment_method": "UPI",
+      "status": "SUCCESS",
+      "payment_date": "2026-10-30"
+    },
+    {
+      "payment_id": 239,
+      "booking_id": 302,
+      "amount": 40.96,
+      "currency": "USD",
+      "payment_method": "CARD",
+      "status": "SUCCESS",
+      "payment_date": "2026-10-30"
+    }
+  ]
+};
+
+    function formatINR(val) {
+      if (val === null || val === undefined || isNaN(val)) return '₹0.00';
+      return '₹' + Number(val).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+
+    function showAlert(msg, isError = false) {
+      const banner = document.getElementById('alert-banner');
+      const text = document.getElementById('alert-message');
+      text.innerText = msg;
+      banner.className = isError 
+        ? 'mb-6 p-4 rounded-lg text-sm font-medium flex items-center justify-between bg-red-50 text-red-700 border border-red-200'
+        : 'mb-6 p-4 rounded-lg text-sm font-medium flex items-center justify-between bg-green-50 text-green-700 border border-green-200';
+      banner.classList.remove('hidden');
+    }
+
+    function hideAlert() {
+      document.getElementById('alert-banner').classList.add('hidden');
+    }
+
+    // Navigation
+    function navigate(pageId) {
+      document.querySelectorAll('.page-content').forEach(el => el.classList.add('hidden'));
+      document.querySelectorAll('.nav-btn').forEach(btn => {
+        btn.className = 'nav-btn w-full flex items-center gap-2.5 px-3 py-2 text-sm font-medium rounded-lg text-left transition-colors text-gray-700 hover:bg-gray-200';
+      });
+
+      const activePage = document.getElementById('page-' + pageId);
+      const activeNav = document.getElementById('nav-' + pageId);
+      if (activePage) activePage.classList.remove('hidden');
+      if (activeNav) activeNav.className = 'nav-btn w-full flex items-center gap-2.5 px-3 py-2 text-sm font-medium rounded-lg text-left transition-colors bg-white text-blue-800 shadow-sm border border-gray-200';
+
+      const subtitles = {
+        dashboard: 'Real-time overview of bookings, revenue performance, and route popularity',
+        search: 'Explore schedules across time zones and create instant bookings with automated payments',
+        bookings: 'Query the booking_details_v database view, filter reservations, and cancel bookings',
+        passengers: 'Demonstrating Oracle 23ai JSON_VALUE extraction of meal, seat, and numeric baggage preferences',
+        analytics: 'Deep-dive financial reports demonstrating HAVING, multi-currency conversion, and conditional CASE logic'
+      };
+      document.getElementById('page-subtitle').innerText = subtitles[pageId] || '';
+
+      if (pageId === 'dashboard') loadDashboard();
+      if (pageId === 'search') loadSearchPage();
+      if (pageId === 'bookings') loadBookings();
+      if (pageId === 'passengers') loadPassengers();
+      if (pageId === 'analytics') loadAnalytics();
+    }
+
+    function switchTab(tabId) {
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+      document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.className = 'tab-btn px-4 py-2 border-b-2 border-transparent text-gray-500 hover:text-gray-700';
+      });
+
+      document.getElementById(tabId).classList.remove('hidden');
+      const btnId = tabId === 'tab-payments' ? 'tab-btn-payments' : (tabId === 'tab-currencies' ? 'tab-btn-currencies' : 'tab-btn-fares');
+      document.getElementById(btnId).className = 'tab-btn px-4 py-2 border-b-2 border-blue-600 text-blue-600';
+    }
+
+    // 1. Dashboard Logic
+    function loadDashboard() {
+      // Confirmed & Cancelled Bookings
+      const confirmed = DB.bookings.filter(b => b.status === 'CONFIRMED').length;
+      const cancelled = DB.bookings.filter(b => b.status === 'CANCELLED').length;
+
+      // Revenue Calculation
+      let totalRev = 0;
+      DB.payments.forEach(p => {
+        if (p.status === 'SUCCESS') {
+          totalRev += p.currency === 'USD' ? p.amount * 83 : p.amount;
+        }
+      });
+
+      // Routes count
+      const uniqueRoutes = new Set(DB.flights.map(f => f.origin_id + '-' + f.destination_id));
+
+      document.getElementById('kpi-confirmed').innerText = Number(confirmed).toLocaleString();
+      document.getElementById('kpi-revenue').innerText = formatINR(totalRev);
+      document.getElementById('kpi-cancelled').innerText = Number(cancelled).toLocaleString();
+      document.getElementById('kpi-routes').innerText = uniqueRoutes.size;
+
+      // Route Revenue (Materialized View calculation with RANK)
+      const flightMap = {};
+      DB.flights.forEach(f => flightMap[f.flight_id] = f);
+
+      const routeRevMap = {};
+      DB.bookings.forEach(b => {
+        if (b.status === 'CONFIRMED') {
+          const f = flightMap[b.flight_id];
+          if (f) {
+            const key = f.origin_id + ' -> ' + f.destination_id;
+            if (!routeRevMap[key]) {
+              routeRevMap[key] = { route: key, origin_id: f.origin_id, destination_id: f.destination_id, bookings: 0, total_revenue: 0 };
+            }
+            routeRevMap[key].bookings += 1;
+            // Find payment
+            const pay = DB.payments.find(p => p.booking_id === b.booking_id && p.status === 'SUCCESS');
+            if (pay) {
+              routeRevMap[key].total_revenue += (pay.currency === 'USD' ? pay.amount * 83 : pay.amount);
+            }
+          }
+        }
+      });
+
+      const routeList = Object.values(routeRevMap).sort((a,b) => b.total_revenue - a.total_revenue);
+      routeList.forEach((r, idx) => r.revenue_rank = idx + 1);
+
+      // Plot horizontal bar chart
+      const sortedRoutes = [...routeList].sort((a,b) => a.total_revenue - b.total_revenue);
+      Plotly.newPlot('chart-routes', [{
+        type: 'bar',
+        orientation: 'h',
+        x: sortedRoutes.map(r => r.total_revenue),
+        y: sortedRoutes.map(r => r.route),
+        marker: { color: sortedRoutes.map(r => r.total_revenue), colorscale: 'Blues' },
+      }], {
+        title: 'Revenue by Flight Route (INR)',
+        margin: { l: 80, r: 20, t: 30, b: 30 },
+        paper_bgcolor: 'transparent',
+        plot_bgcolor: 'transparent',
+      }, { responsive: true, displayModeBar: false });
+
+      document.getElementById('table-routes-body').innerHTML = routeList.map(r => `
+        <tr class="hover:bg-gray-50">
+          <td class="px-3 py-2 font-bold text-gray-700">#${r.revenue_rank}</td>
+          <td class="px-3 py-2 font-medium text-gray-900">${r.route}</td>
+          <td class="px-3 py-2 text-right">${r.bookings}</td>
+          <td class="px-3 py-2 text-right font-semibold text-green-700">${formatINR(r.total_revenue)}</td>
+        </tr>
+      `).join('');
+
+      // Daily Revenue Trends (daily_revenue_v with LAG and SUM OVER)
+      const dayMap = {};
+      DB.payments.forEach(p => {
+        if (p.status === 'SUCCESS') {
+          const d = p.payment_date;
+          const amt = p.currency === 'USD' ? p.amount * 83 : p.amount;
+          dayMap[d] = (dayMap[d] || 0) + amt;
+        }
+      });
+
+      const sortedDays = Object.keys(dayMap).sort();
+      let running = 0;
+      const dailyData = sortedDays.map((day, idx) => {
+        const rev = dayMap[day];
+        const prevRev = idx > 0 ? dayMap[sortedDays[idx - 1]] : null;
+        const change = prevRev !== null ? rev - prevRev : null;
+        running += rev;
+        return {
+          day_str: day,
+          daily_revenue: rev,
+          prev_day_revenue: prevRev,
+          daily_change: change,
+          running_revenue: running
+        };
+      });
+
+      Plotly.newPlot('chart-daily', [
+        {
+          type: 'bar',
+          name: 'Daily Revenue',
+          x: dailyData.map(d => d.day_str),
+          y: dailyData.map(d => d.daily_revenue),
+          marker: { color: '#3B82F6', opacity: 0.7 }
+        },
+        {
+          type: 'scatter',
+          mode: 'lines+markers',
+          name: 'Cumulative Running Total',
+          x: dailyData.map(d => d.day_str),
+          y: dailyData.map(d => d.running_revenue),
+          yaxis: 'y2',
+          line: { color: '#10B981', width: 3 }
+        }
+      ], {
+        title: 'Daily Revenue & Running Total Over Time',
+        yaxis: { title: 'Daily Revenue (₹)' },
+        yaxis2: { title: 'Running Total (₹)', overlaying: 'y', side: 'right' },
+        legend: { orientation: 'h', y: 1.15, x: 0.7 },
+        margin: { l: 60, r: 60, t: 40, b: 30 },
+        paper_bgcolor: 'transparent',
+        plot_bgcolor: 'transparent',
+      }, { responsive: true, displayModeBar: false });
+
+      document.getElementById('table-daily-body').innerHTML = dailyData.map(d => `
+        <tr class="hover:bg-gray-50">
+          <td class="px-3 py-2 font-medium text-gray-800">${d.day_str}</td>
+          <td class="px-3 py-2 text-right font-semibold text-gray-900">${formatINR(d.daily_revenue)}</td>
+          <td class="px-3 py-2 text-right text-gray-600">${formatINR(d.prev_day_revenue)}</td>
+          <td class="px-3 py-2 text-right font-medium ${d.daily_change !== null && d.daily_change >= 0 ? 'text-green-600' : 'text-red-600'}">
+            ${d.daily_change !== null ? (d.daily_change >= 0 ? '+' : '') + formatINR(d.daily_change) : '--'}
+          </td>
+          <td class="px-3 py-2 text-right font-bold text-emerald-700">${formatINR(d.running_revenue)}</td>
+        </tr>
+      `).join('');
+    }
+
+    function refreshMaterializedView() {
+      const btn = document.getElementById('btn-refresh-mv');
+      btn.innerText = 'Refreshing...';
+      btn.disabled = true;
+      setTimeout(() => {
+        loadDashboard();
+        showAlert('Refreshed ROUTE_REVENUE_MV via DBMS_MVIEW.REFRESH!');
+        btn.innerText = '🔄 Refresh Materialized View';
+        btn.disabled = false;
+      }, 500);
+    }
+
+    // 2. Search and Book Logic
+    let flightDict = {};
+
+    function loadSearchPage() {
+      const origSelect = document.getElementById('search-origin');
+      const destSelect = document.getElementById('search-dest');
+      if (origSelect.children.length <= 1) {
+        DB.airports.forEach(a => {
+          const opt = `<option value="${a.airport_id}">${a.airport_id} - ${a.city} (${a.name})</option>`;
+          origSelect.innerHTML += opt;
+          destSelect.innerHTML += opt;
+        });
+      }
+
+      const pSelect = document.getElementById('book-passenger');
+      if (pSelect.children.length === 0) {
+        pSelect.innerHTML = DB.passengers.map(p => `
+          <option value="${p.passenger_id}">#${p.passenger_id}: ${p.name} (${p.email})</option>
+        `).join('');
+      }
+
+      const fSelect = document.getElementById('book-flight');
+      if (fSelect.children.length === 0) {
+        flightDict = {};
+        const airportMap = {};
+        DB.airports.forEach(a => airportMap[a.airport_id] = a);
+
+        fSelect.innerHTML = DB.flights.map(f => {
+          flightDict[f.flight_id] = f;
+          const orig = airportMap[f.origin_id]?.city || f.origin_id;
+          const dest = airportMap[f.destination_id]?.city || f.destination_id;
+          return `<option value="${f.flight_id}">Flight ${f.flight_no} (${orig} to ${dest}) - ${formatINR(f.fare)}</option>`;
+        }).join('');
+
+        updatePayableAmount();
+      }
+
+      loadMatchingFlights();
+    }
+
+    function loadMatchingFlights() {
+      const orig = document.getElementById('search-origin').value;
+      const dest = document.getElementById('search-dest').value;
+      const tz = document.getElementById('search-tz').value;
+
+      const airportMap = {};
+      DB.airports.forEach(a => airportMap[a.airport_id] = a);
+
+      let matched = DB.flights.filter(f => {
+        if (orig !== 'All' && f.origin_id !== orig) return false;
+        if (dest !== 'All' && f.destination_id !== dest) return false;
+        return true;
+      });
+
+      document.getElementById('matched-count-label').innerText = `Matching Flights (${matched.length} found)`;
+      const tbody = document.getElementById('table-flights-body');
+
+      if (matched.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" class="px-3 py-4 text-center text-gray-500">No flights found matching the selected route.</td></tr>';
+        return;
+      }
+
+      function formatTZ(isoStr, targetTz) {
+        try {
+          const d = new Date(isoStr + "+05:30");
+          return d.toLocaleString('en-US', {
+            timeZone: targetTz,
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit',
+            hour12: false
+          }).replace(',', '');
+        } catch {
+          return isoStr;
+        }
+      }
+
+      tbody.innerHTML = matched.map(f => `
+        <tr class="hover:bg-gray-50">
+          <td class="px-3 py-2 font-bold text-gray-700">#${f.flight_id}</td>
+          <td class="px-3 py-2 font-semibold text-blue-700">${f.flight_no}</td>
+          <td class="px-3 py-2 font-medium text-gray-900">${f.origin_id} (${airportMap[f.origin_id]?.city}) &rarr; ${f.destination_id} (${airportMap[f.destination_id]?.city})</td>
+          <td class="px-3 py-2 text-gray-700">${formatTZ(f.departure_time, tz)}</td>
+          <td class="px-3 py-2 text-gray-700">${formatTZ(f.arrival_time, tz)}</td>
+          <td class="px-3 py-2 text-right font-bold text-green-700">${formatINR(f.fare)}</td>
+        </tr>
+      `).join('');
+    }
+
+    function updatePayableAmount() {
+      const flightId = document.getElementById('book-flight').value;
+      const currency = document.querySelector('input[name="currency"]:checked').value;
+      const flight = flightDict[flightId];
+      if (!flight) return;
+
+      const display = document.getElementById('payable-display');
+      if (currency === 'USD') {
+        const usdVal = (flight.fare / 83.0).toFixed(2);
+        display.innerHTML = `$${Number(usdVal).toLocaleString()} USD <span class="text-xs text-gray-500 font-normal">(Converted from ${formatINR(flight.fare)} at 83 INR/USD)</span>`;
+      } else {
+        display.innerHTML = `${formatINR(flight.fare)} INR`;
+      }
+    }
+
+    function submitBooking(e) {
+      e.preventDefault();
+      const btn = document.getElementById('btn-submit-booking');
+      btn.innerText = 'Processing Transaction...';
+      btn.disabled = true;
+
+      setTimeout(() => {
+        const flightId = Number(document.getElementById('book-flight').value);
+        const passengerId = Number(document.getElementById('book-passenger').value);
+        const special = document.getElementById('book-special').value;
+        const method = document.getElementById('book-method').value;
+        const currency = document.querySelector('input[name="currency"]:checked').value;
+        const flight = flightDict[flightId];
+
+        const nextBookingId = Math.max(...DB.bookings.map(b => b.booking_id)) + 1;
+        const nextPaymentId = Math.max(...DB.payments.map(p => p.payment_id)) + 1;
+        const payableAmount = currency === 'USD' ? Number((flight.fare / 83.0).toFixed(2)) : flight.fare;
+        const todayStr = new Date().toISOString().split('T')[0];
+
+        // Insert into Bookings
+        DB.bookings.unshift({
+          booking_id: nextBookingId,
+          passenger_id: passengerId,
+          flight_id: flightId,
+          booking_date: todayStr,
+          status: 'CONFIRMED',
+          special: special
+        });
+
+        // Insert into Payments
+        DB.payments.unshift({
+          payment_id: nextPaymentId,
+          booking_id: nextBookingId,
+          amount: payableAmount,
+          currency: currency,
+          payment_method: method,
+          status: 'SUCCESS',
+          payment_date: todayStr
+        });
+
+        showAlert(`🎉 Booking Confirmed Successfully! Booking ID: #${nextBookingId}, Payment ID: #${nextPaymentId}, Amount: ${currency} ${payableAmount}`);
+        btn.innerText = 'Confirm Booking & Pay';
+        btn.disabled = false;
+      }, 400);
+    }
+
+    // 3. Bookings Page Logic
+    function loadBookings() {
+      const routeFilter = document.getElementById('filter-route');
+      const airportMap = {};
+      DB.airports.forEach(a => airportMap[a.airport_id] = a);
+
+      const uniqueRoutes = [...new Set(DB.flights.map(f => f.origin_id + ' -> ' + f.destination_id))].sort();
+      routeFilter.innerHTML = '<option value="All">All Routes</option>' + uniqueRoutes.map(r => `<option value="${r}">${r}</option>`).join('');
+
+      renderBookingsTable();
+    }
+
+    function renderBookingsTable() {
+      const status = document.getElementById('filter-status').value;
+      const route = document.getElementById('filter-route').value;
+      const search = document.getElementById('filter-passenger').value.toLowerCase();
+
+      const passMap = {};
+      DB.passengers.forEach(p => passMap[p.passenger_id] = p.name);
+      const flightMap = {};
+      DB.flights.forEach(f => flightMap[f.flight_id] = f);
+
+      const tableData = DB.bookings.map(b => {
+        const f = flightMap[b.flight_id] || {};
+        const pName = passMap[b.passenger_id] || ('Passenger #' + b.passenger_id);
+        const r = (f.origin_id && f.destination_id) ? (f.origin_id + ' -> ' + f.destination_id) : 'Unknown';
+        return {
+          booking_id: b.booking_id,
+          passenger: pName,
+          flight_no: f.flight_no || '--',
+          route: r,
+          fare: f.fare || 0,
+          status: b.status,
+          booking_date: b.booking_date
+        };
+      });
+
+      let filtered = tableData.filter(b => {
+        if (status !== 'All' && b.status !== status) return false;
+        if (route !== 'All' && b.route !== route) return false;
+        if (search && !b.passenger.toLowerCase().includes(search)) return false;
+        return true;
+      });
+
+      document.getElementById('bookings-count-label').innerText = `Showing ${filtered.length} of ${tableData.length} bookings`;
+
+      const tbody = document.getElementById('table-bookings-body');
+      tbody.innerHTML = filtered.map(b => {
+        const statusColors = {
+          CONFIRMED: 'bg-green-100 text-green-800',
+          CANCELLED: 'bg-red-100 text-red-800',
+          PENDING: 'bg-yellow-100 text-yellow-800'
+        };
+        return `
+          <tr class="hover:bg-gray-50">
+            <td class="px-3 py-2 font-bold text-gray-800">#${b.booking_id}</td>
+            <td class="px-3 py-2 font-semibold text-gray-900">${b.passenger}</td>
+            <td class="px-3 py-2 text-blue-700 font-medium">${b.flight_no}</td>
+            <td class="px-3 py-2 text-gray-700">${b.route}</td>
+            <td class="px-3 py-2 text-right font-bold text-gray-900">${formatINR(b.fare)}</td>
+            <td class="px-3 py-2 text-center">
+              <span class="px-2 py-0.5 rounded-full text-xs font-semibold ${statusColors[b.status] || 'bg-gray-100'}">${b.status}</span>
+            </td>
+            <td class="px-3 py-2 text-gray-600">${b.booking_date}</td>
+          </tr>
+        `;
+      }).join('');
+
+      const cancelSelect = document.getElementById('cancel-booking-select');
+      const confirmed = tableData.filter(b => b.status === 'CONFIRMED');
+      cancelSelect.innerHTML = confirmed.map(b => `
+        <option value="${b.booking_id}">Booking #${b.booking_id} - ${b.passenger} (${b.flight_no} ${b.route})</option>
+      `).join('');
+    }
+
+    function cancelSelectedBooking() {
+      const select = document.getElementById('cancel-booking-select');
+      const bookingId = Number(select.value);
+      if (!bookingId) {
+        showAlert('Please select a booking to cancel.', true);
+        return;
+      }
+
+      const booking = DB.bookings.find(b => b.booking_id === bookingId);
+      if (booking) {
+        booking.status = 'CANCELLED';
+        showAlert(`Booking #${bookingId} has been marked as CANCELLED.`);
+        renderBookingsTable();
+      }
+    }
+
+    // 4. Passengers Page Logic
+    function loadPassengers() {
+      // Meal counts
+      const mealCounts = {};
+      DB.passengers.forEach(p => {
+        mealCounts[p.meal] = (mealCounts[p.meal] || 0) + 1;
+      });
+
+      const meals = Object.entries(mealCounts).map(([k, v]) => ({ meal: k, count: v }));
+
+      Plotly.newPlot('chart-meals', [{
+        type: 'bar',
+        x: meals.map(m => m.meal),
+        y: meals.map(m => m.count),
+        marker: { color: ['#3B82F6', '#10B981', '#F59E0B', '#EF4444'] },
+      }], {
+        title: 'Passenger Count by Meal Preference',
+        margin: { l: 40, r: 20, t: 40, b: 30 },
+        paper_bgcolor: 'transparent',
+        plot_bgcolor: 'transparent',
+      }, { responsive: true, displayModeBar: false });
+
+      document.getElementById('table-meals-body').innerHTML = meals.map(m => `
+        <tr>
+          <td class="px-3 py-2 font-medium capitalize text-gray-800">${m.meal}</td>
+          <td class="px-3 py-2 text-right font-bold text-blue-700">${m.count}</td>
+        </tr>
+      `).join('');
+
+      const seatCounts = {};
+      DB.passengers.forEach(p => {
+        seatCounts[p.seat] = (seatCounts[p.seat] || 0) + 1;
+      });
+      document.getElementById('table-seats-body').innerHTML = Object.entries(seatCounts).map(([seat, count]) => `
+        <tr>
+          <td class="px-3 py-2 font-medium capitalize text-gray-800">${seat}</td>
+          <td class="px-3 py-2 text-right font-bold text-blue-700">${count}</td>
+        </tr>
+      `).join('');
+
+      filterPassengersTable();
+    }
+
+    function filterPassengersTable() {
+      const q = (document.getElementById('passenger-search-input').value || '').toLowerCase();
+      const filtered = DB.passengers.filter(p => {
+        return !q || p.name.toLowerCase().includes(q) || p.email.toLowerCase().includes(q) || p.phone.includes(q);
+      });
+
+      document.getElementById('table-passengers-body').innerHTML = filtered.map(p => `
+        <tr class="hover:bg-gray-50">
+          <td class="px-3 py-2 font-bold text-gray-700">#${p.passenger_id}</td>
+          <td class="px-3 py-2 font-semibold text-gray-900">${p.name}</td>
+          <td class="px-3 py-2 text-gray-600">${p.email}</td>
+          <td class="px-3 py-2 text-gray-600 font-mono">${p.phone}</td>
+          <td class="px-3 py-2 capitalize font-medium text-emerald-700">${p.meal}</td>
+          <td class="px-3 py-2 capitalize font-medium text-blue-700">${p.seat}</td>
+          <td class="px-3 py-2 text-right font-bold text-gray-800">${p.baggage}</td>
+        </tr>
+      `).join('');
+    }
+
+    // 5. Analytics Page Logic
+    function loadAnalytics() {
+      // 1. Payment Methods (HAVING count > 10)
+      const pmMap = {};
+      DB.payments.forEach(p => {
+        if (p.status === 'SUCCESS') {
+          const m = p.payment_method;
+          const inr = p.currency === 'USD' ? p.amount * 83 : p.amount;
+          if (!pmMap[m]) pmMap[m] = { method: m, count: 0, total_inr: 0 };
+          pmMap[m].count += 1;
+          pmMap[m].total_inr += inr;
+        }
+      });
+
+      const pmList = Object.values(pmMap).filter(p => p.count > 10).sort((a,b) => b.total_inr - a.total_inr);
+      pmList.forEach(p => p.avg = p.total_inr / p.count);
+
+      Plotly.newPlot('chart-payment-methods', [{
+        type: 'bar',
+        x: pmList.map(p => p.method),
+        y: pmList.map(p => p.total_inr),
+        marker: { color: ['#6366F1', '#EC4899', '#10B981', '#F59E0B'] },
+      }], {
+        title: 'Total Revenue by Payment Method (INR)',
+        margin: { l: 60, r: 20, t: 30, b: 30 },
+        paper_bgcolor: 'transparent',
+        plot_bgcolor: 'transparent',
+      }, { responsive: true, displayModeBar: false });
+
+      document.getElementById('table-payment-methods-body').innerHTML = pmList.map(p => `
+        <tr class="hover:bg-gray-50">
+          <td class="px-3 py-2 font-bold text-gray-800">${p.method}</td>
+          <td class="px-3 py-2 text-right">${p.count}</td>
+          <td class="px-3 py-2 text-right font-bold text-green-700">${formatINR(p.total_inr)}</td>
+          <td class="px-3 py-2 text-right text-gray-700">${formatINR(p.avg)}</td>
+        </tr>
+      `).join('');
+
+      // 2. Currencies
+      const currMap = {};
+      DB.payments.forEach(p => {
+        if (p.status === 'SUCCESS') {
+          const c = p.currency;
+          if (!currMap[c]) currMap[c] = { currency: c, count: 0, orig_sum: 0, inr_sum: 0 };
+          currMap[c].count += 1;
+          currMap[c].orig_sum += p.amount;
+          currMap[c].inr_sum += (c === 'USD' ? p.amount * 83 : p.amount);
+        }
+      });
+      const currs = Object.values(currMap).sort((a,b) => a.currency.localeCompare(b.currency));
+
+      document.getElementById('currency-cards-container').innerHTML = currs.map(c => `
+        <div class="metric-card">
+          <p class="text-xs uppercase tracking-wider text-gray-500 font-semibold">${c.currency} Transactions</p>
+          <p class="text-2xl font-bold text-gray-900 mt-1">${c.count} payments</p>
+          <p class="text-xs font-semibold text-blue-700 mt-1">Total: ${formatINR(c.inr_sum)}</p>
+        </div>
+      `).join('');
+
+      Plotly.newPlot('chart-currency-count', [{
+        type: 'pie',
+        hole: 0.4,
+        labels: currs.map(c => c.currency),
+        values: currs.map(c => c.count),
+        marker: { colors: ['#3B82F6', '#F59E0B'] }
+      }], {
+        title: 'Payment Volume by Currency',
+        margin: { l: 20, r: 20, t: 40, b: 20 },
+        paper_bgcolor: 'transparent',
+      }, { responsive: true, displayModeBar: false });
+
+      Plotly.newPlot('chart-currency-revenue', [{
+        type: 'pie',
+        hole: 0.4,
+        labels: currs.map(c => c.currency),
+        values: currs.map(c => c.inr_sum),
+        marker: { colors: ['#3B82F6', '#10B981'] }
+      }], {
+        title: 'Normalized Revenue Proportion (in INR terms)',
+        margin: { l: 20, r: 20, t: 40, b: 20 },
+        paper_bgcolor: 'transparent',
+      }, { responsive: true, displayModeBar: false });
+
+      document.getElementById('table-currency-body').innerHTML = currs.map(c => `
+        <tr class="hover:bg-gray-50">
+          <td class="px-3 py-2 font-bold text-gray-800">${c.currency}</td>
+          <td class="px-3 py-2 text-right">${c.count}</td>
+          <td class="px-3 py-2 text-right font-medium text-gray-700">${Number(c.orig_sum).toLocaleString()}</td>
+          <td class="px-3 py-2 text-right font-bold text-green-700">${formatINR(c.inr_sum)}</td>
+          <td class="px-3 py-2 text-right text-gray-700">${formatINR(c.inr_sum / c.count)}</td>
+        </tr>
+      `).join('');
+
+      // 3. Fare Classes (CASE expression)
+      const flightMap = {};
+      DB.flights.forEach(f => flightMap[f.flight_id] = f);
+
+      const fcMap = {
+        'Budget (< ₹5,000)': { class: 'Budget (< ₹5,000)', count: 0, revenue: 0 },
+        'Standard (₹5,000 - ₹25,000)': { class: 'Standard (₹5,000 - ₹25,000)', count: 0, revenue: 0 },
+        'Premium (> ₹25,000)': { class: 'Premium (> ₹25,000)', count: 0, revenue: 0 }
+      };
+
+      DB.bookings.forEach(b => {
+        if (b.status === 'CONFIRMED') {
+          const f = flightMap[b.flight_id];
+          if (f) {
+            let cat = 'Standard (₹5,000 - ₹25,000)';
+            if (f.fare < 5000) cat = 'Budget (< ₹5,000)';
+            else if (f.fare > 25000) cat = 'Premium (> ₹25,000)';
+            fcMap[cat].count += 1;
+            fcMap[cat].revenue += f.fare;
+          }
+        }
+      });
+
+      const fcList = Object.values(fcMap);
+      Plotly.newPlot('chart-fare-classes', [{
+        type: 'bar',
+        x: fcList.map(f => f.class),
+        y: fcList.map(f => f.count),
+        marker: { color: ['#10B981', '#3B82F6', '#8B5CF6'] },
+      }], {
+        title: 'Bookings by Fare Tier',
+        margin: { l: 40, r: 20, t: 30, b: 30 },
+        paper_bgcolor: 'transparent',
+        plot_bgcolor: 'transparent',
+      }, { responsive: true, displayModeBar: false });
+
+      document.getElementById('table-fare-classes-body').innerHTML = fcList.map(f => `
+        <tr class="hover:bg-gray-50">
+          <td class="px-3 py-2 font-bold text-gray-800">${f.class}</td>
+          <td class="px-3 py-2 text-right font-medium">${f.count}</td>
+          <td class="px-3 py-2 text-right font-bold text-green-700">${formatINR(f.revenue)}</td>
+        </tr>
+      `).join('');
+    }
+
+    // Startup
+    window.addEventListener('DOMContentLoaded', () => {
+      loadDashboard();
+    });
+  </script>
+</body>
+</html>

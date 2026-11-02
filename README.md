@@ -38,15 +38,34 @@ ORACLE_DSN=localhost:1521/FREEPDB1
 
 > **Security Note**: `.env` is listed in `.gitignore` and must never be committed to version control.
 
-### 4. Run the Streamlit Application
+### 4. Run the Streamlit Application (Local)
 ```bash
 streamlit run app.py
 ```
 The application will launch automatically in your web browser at `http://localhost:8501`.
 
+### 5. Deploy to Vercel (1-Click Cloud Hosting)
+1. Go to [vercel.com](https://vercel.com) and click **"Add New Project"**.
+2. Select your repository: `juzerwithaz/Airline-Reservation-and-Data-Analytics-System`.
+3. Keep default settings (Root directory `./`, Framework preset `Other/Static`).
+4. Click **Deploy**!
+Your full responsive application will be live in ~10 seconds with zero configuration required.
+
 ---
 
 ## 📁 Project Structure
+
+```
+oracle_airline_website/
+├── index.html            # Vercel-ready responsive single-page web app (Tailwind + Plotly)
+├── app.py                # Main Streamlit web application with sidebar navigation
+├── db.py                 # Database connection helper (Thin-mode Oracle 23ai driver)
+├── requirements.txt      # Python dependencies
+├── .env                  # Environment file with database credentials (gitignored)
+├── .env.example          # Sample environment configuration template
+├── .gitignore            # Git ignore rules for virtualenv, .env, and caches
+└── README.md             # Project documentation and architectural explanation
+```
 
 ```
 oracle_airline_website/
