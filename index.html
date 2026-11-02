@@ -71,65 +71,132 @@
   <!-- ============================================================== -->
   <!-- 1. CLEAN TOP NAVIGATION BAR (INDIGO STYLE)                     -->
   <!-- ============================================================== -->
-  <header class="sticky top-0 z-40 bg-white border-b border-gray-200 shadow-sm transition-all">
+  <header class="sticky top-0 z-40 bg-white border-b border-gray-200 shadow-xs transition-all">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
       
-      <!-- Brand Logo -->
-      <div class="flex items-center gap-8 cursor-pointer" onclick="switchView('landing')">
-        <div class="flex items-center gap-2.5">
+      <!-- Brand Logo & Portal Indicator -->
+      <div class="flex items-center gap-6">
+        <div class="flex items-center gap-3 cursor-pointer" onclick="selectPortal('gateway')" title="Return to Portal Selection Gateway">
           <div class="w-9 h-9 rounded-lg bg-[#001B48] flex items-center justify-center text-white font-bold text-lg shadow-sm">
             ✈
           </div>
           <div class="flex flex-col">
-            <span class="font-extrabold text-xl tracking-tight text-[#001B48] flex items-center leading-none">
-              AZ<span class="text-[#0052CC] ml-1">AIRLINES</span>
-            </span>
-            <span class="text-[10px] text-gray-500 font-medium tracking-wide">Always on Time</span>
+            <div class="flex items-center gap-2">
+              <span class="font-extrabold text-xl tracking-tight text-[#001B48] flex items-center leading-none">
+                AZ<span class="text-[#0052CC] ml-1">AIRLINES</span>
+              </span>
+              <span id="header-portal-pill" class="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-blue-100 text-[#0052CC]">Passenger</span>
+            </div>
+            <span id="header-portal-subtitle" class="text-[10px] text-gray-500 font-medium tracking-wide">Domestic & International Carrier</span>
           </div>
         </div>
 
-        <!-- Passenger Navigation Links -->
-        <nav class="hidden md:flex items-center gap-1 text-sm font-semibold">
+        <!-- Passenger Navigation Links (Only shown in Passenger Mode) -->
+        <nav id="nav-passenger" class="hidden md:flex items-center gap-1 text-sm font-semibold">
           <button onclick="switchView('landing')" id="nav-btn-landing" class="px-3.5 py-2 rounded-md text-[#0052CC] bg-blue-50 transition">
             Book Flights
           </button>
-          <button onclick="openMyBookingsView()" id="nav-btn-bookings" class="px-3.5 py-2 rounded-md text-gray-700 hover:text-[#0052CC] hover:bg-gray-50 transition">
+          <button onclick="openMyBookingsView()" id="nav-btn-my-bookings" class="px-3.5 py-2 rounded-md text-gray-700 hover:text-[#0052CC] hover:bg-gray-50 transition">
             Manage Booking
           </button>
-          <button onclick="openAdminPortalView()" id="nav-btn-admin" class="hidden px-3.5 py-2 rounded-md text-gray-700 hover:text-[#0052CC] hover:bg-gray-50 transition">
+          <button onclick="openModal('modal-claim')" class="px-3.5 py-2 rounded-md text-gray-600 hover:text-[#0052CC] hover:bg-gray-50 transition">
+            Claim Passenger ID
+          </button>
+        </nav>
+
+        <!-- Admin Navigation Links (Only shown in Admin Mode) -->
+        <nav id="nav-admin" class="hidden md:flex items-center gap-1 text-sm font-semibold">
+          <button onclick="openAdminPortalView()" id="nav-btn-admin-dashboard" class="px-3.5 py-2 rounded-md text-[#0052CC] bg-blue-50 transition">
             Operations & Analytics
           </button>
-          <button onclick="openAdminCrudView()" id="nav-btn-records" class="hidden px-3.5 py-2 rounded-md text-gray-700 hover:text-[#0052CC] hover:bg-gray-50 transition">
-            Fleet Management
+          <button onclick="openAdminCrudView()" id="nav-btn-admin-crud" class="px-3.5 py-2 rounded-md text-gray-700 hover:text-[#0052CC] hover:bg-gray-50 transition">
+            Fleet Management (CRUD)
           </button>
         </nav>
       </div>
 
-      <!-- Right Action Controls (Guest vs Logged In) -->
+      <!-- Right Action Controls -->
       <div class="flex items-center gap-3">
-        <!-- Guest Controls -->
-        <div id="auth-guest-controls" class="flex items-center gap-2">
-          <button onclick="openModal('modal-claim')" class="hidden sm:inline-flex text-xs font-medium text-gray-600 hover:text-gray-900 px-3 py-1.5 rounded-md hover:bg-gray-100 transition">
-            Claim Passenger ID
+        
+        <!-- Controls: Passenger Mode -->
+        <div id="controls-passenger" class="flex items-center gap-2.5">
+          <!-- Guest Passenger -->
+          <div id="passenger-guest-btns" class="flex items-center gap-2">
+            <button onclick="openModal('modal-passenger-login')" class="text-xs sm:text-sm font-semibold text-[#001B48] hover:text-[#0052CC] px-3 py-1.5 rounded-md hover:bg-gray-50 transition">
+              Sign In
+            </button>
+            <button onclick="openModal('modal-passenger-register')" class="text-xs sm:text-sm font-semibold text-white bg-[#0052CC] hover:bg-[#0043A8] px-3.5 py-1.5 rounded-md shadow-xs transition">
+              Register
+            </button>
+          </div>
+
+          <!-- Logged-in Passenger -->
+          <div id="passenger-logged-btns" class="hidden flex items-center gap-2">
+            <div class="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-blue-50 border border-blue-100 text-xs">
+              <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+              <span id="passenger-display-name" class="font-bold text-[#001B48] max-w-[120px] truncate">Passenger</span>
+            </div>
+            <button onclick="logout()" class="text-xs font-semibold px-2.5 py-1.5 rounded-md text-red-600 hover:bg-red-50 transition">
+              Sign Out
+            </button>
+          </div>
+
+          <!-- PROMINENT SWITCH TO ADMIN PORTAL BUTTON -->
+          <div class="border-l border-gray-200 pl-2.5 ml-1 flex items-center gap-1.5">
+            <button onclick="selectPortal('admin')" class="px-3.5 py-1.5 rounded-lg border border-slate-300 hover:border-slate-400 bg-white hover:bg-slate-50 text-xs font-bold text-[#001B48] flex items-center gap-1.5 shadow-xs transition" title="Switch to Operations & Administrator Portal">
+              <span>🛡️</span>
+              <span class="hidden sm:inline">Admin Portal</span>
+              <span class="text-[#0052CC]">➔</span>
+            </button>
+            <button onclick="selectPortal('gateway')" class="hidden md:inline-flex text-[11px] text-gray-400 hover:text-gray-700 px-1 py-1" title="Select Role Gateway">
+              Switch Role
+            </button>
+          </div>
+        </div>
+
+        <!-- Controls: Admin Mode -->
+        <div id="controls-admin" class="hidden flex items-center gap-2.5">
+          <!-- Admin Logged In -->
+          <div id="admin-logged-btns" class="hidden flex items-center gap-2">
+            <div class="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-slate-100 border border-slate-200 text-xs">
+              <span class="px-1.5 py-0.5 rounded text-[9px] font-extrabold uppercase bg-slate-900 text-white">ADMIN</span>
+              <span id="admin-display-name" class="font-bold text-gray-900 max-w-[120px] truncate">admin</span>
+            </div>
+            <button onclick="logout()" class="text-xs font-semibold px-2.5 py-1.5 rounded-md text-red-600 hover:bg-red-50 transition">
+              Sign Out
+            </button>
+          </div>
+
+          <!-- Admin Guest (Not Signed In) -->
+          <div id="admin-guest-btns" class="flex items-center gap-2">
+            <button onclick="openModal('modal-admin-login')" class="text-xs font-bold text-white bg-[#001B48] hover:bg-[#00112C] px-3.5 py-2 rounded-md shadow-xs transition">
+              Staff Sign In
+            </button>
+          </div>
+
+          <!-- PROMINENT SWITCH TO PASSENGER PORTAL BUTTON -->
+          <div class="border-l border-gray-200 pl-2.5 ml-1 flex items-center gap-1.5">
+            <button onclick="selectPortal('passenger')" class="px-3.5 py-1.5 rounded-lg bg-[#0052CC] hover:bg-[#0043A8] text-white text-xs font-bold flex items-center gap-1.5 shadow-xs transition" title="Switch to Passenger Flight Booking">
+              <span>✈️</span>
+              <span class="hidden sm:inline">Passenger Portal</span>
+              <span>➔</span>
+            </button>
+            <button onclick="selectPortal('gateway')" class="hidden md:inline-flex text-[11px] text-gray-400 hover:text-gray-700 px-1 py-1" title="Select Role Gateway">
+              Switch Role
+            </button>
+          </div>
+        </div>
+
+        <!-- Controls: Gateway Mode -->
+        <div id="controls-gateway" class="hidden flex items-center gap-2">
+          <button onclick="selectPortal('passenger')" class="text-xs font-semibold px-3 py-1.5 rounded-md text-gray-600 hover:text-[#0052CC] hover:bg-gray-100 transition">
+            ✈ Passenger
           </button>
-          <button onclick="openModal('modal-passenger-login')" class="text-sm font-semibold text-[#001B48] hover:text-[#0052CC] px-3.5 py-1.5 rounded-md hover:bg-gray-50 transition">
-            Sign In
-          </button>
-          <button onclick="openModal('modal-passenger-register')" class="text-sm font-semibold text-white bg-[#0052CC] hover:bg-[#0043A8] px-4 py-2 rounded-md shadow-sm transition">
-            Register
+          <button onclick="selectPortal('admin')" class="text-xs font-semibold px-3 py-1.5 rounded-md text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition">
+            🛡️ Admin
           </button>
         </div>
 
-        <!-- Logged In Controls -->
-        <div id="auth-user-controls" class="hidden flex items-center gap-3">
-          <div class="flex items-center gap-2 px-3 py-1.5 rounded-md bg-gray-100 text-xs">
-            <span id="user-role-badge" class="px-1.5 py-0.5 rounded text-[10px] font-bold uppercase bg-blue-100 text-blue-800">Passenger</span>
-            <span id="user-display-name" class="font-bold text-gray-900 max-w-[140px] truncate">User</span>
-          </div>
-          <button onclick="logout()" class="text-xs font-semibold px-3 py-1.5 rounded-md text-red-600 hover:bg-red-50 transition">
-            Sign Out
-          </button>
-        </div>
       </div>
     </div>
   </header>
@@ -143,9 +210,88 @@
   <main class="flex-1 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
 
     <!-- ============================================================ -->
+    <!-- VIEW 0: ROLE SELECTION GATEWAY (PROMPTED FIRST UPON VISIT)  -->
+    <!-- ============================================================ -->
+    <section id="view-gateway" class="space-y-8 animate-fadeIn max-w-5xl mx-auto py-4">
+      <div class="text-center space-y-2">
+        <div class="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-blue-50 text-[#0052CC] text-xs font-bold border border-blue-100">
+          ✈ AZ Airlines Official Portal System
+        </div>
+        <h1 class="text-3xl sm:text-4xl font-extrabold text-[#001B48] tracking-tight">
+          Select Your Portal to Continue
+        </h1>
+        <p class="text-sm text-gray-500 max-w-xl mx-auto">
+          Welcome to AZ Airlines. Please choose your entry portal below. You can seamlessly switch between passenger booking and operations management at any time.
+        </p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4">
+        
+        <!-- Option 1: Passenger Portal -->
+        <div class="bg-white rounded-2xl border-2 border-gray-200 hover:border-[#0052CC] p-7 sm:p-8 shadow-xs hover:shadow-md transition flex flex-col justify-between group cursor-pointer" onclick="selectPortal('passenger')">
+          <div class="space-y-4">
+            <div class="flex items-center justify-between">
+              <div class="w-14 h-14 rounded-2xl bg-blue-50 text-[#0052CC] group-hover:bg-[#0052CC] group-hover:text-white flex items-center justify-center text-2xl transition">
+                ✈
+              </div>
+              <span class="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-blue-100 text-[#0052CC]">Passenger</span>
+            </div>
+            <div>
+              <h2 class="text-2xl font-bold text-[#001B48]">Passenger Portal</h2>
+              <p class="text-sm text-gray-500 mt-1">Book scheduled flights, manage tickets, and check reservation status.</p>
+            </div>
+            <ul class="space-y-2.5 text-xs text-gray-600 border-t border-gray-100 pt-4 font-medium">
+              <li class="flex items-center gap-2"><span class="text-emerald-500 font-bold">✓</span> Search scheduled flights across 10 global hubs</li>
+              <li class="flex items-center gap-2"><span class="text-emerald-500 font-bold">✓</span> Real-time seat reservation with instant confirmation</li>
+              <li class="flex items-center gap-2"><span class="text-emerald-500 font-bold">✓</span> View booking history and cancel tickets</li>
+              <li class="flex items-center gap-2"><span class="text-emerald-500 font-bold">✓</span> Register or claim existing passenger account</li>
+            </ul>
+          </div>
+
+          <div class="pt-8">
+            <button onclick="event.stopPropagation(); selectPortal('passenger')" class="w-full py-3.5 px-6 rounded-xl bg-[#0052CC] hover:bg-[#0043A8] text-white font-bold text-sm shadow-xs transition flex items-center justify-center gap-2">
+              <span>Continue as Passenger</span>
+              <span>→</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Option 2: Administrator & Operations Portal -->
+        <div class="bg-white rounded-2xl border-2 border-gray-200 hover:border-[#001B48] p-7 sm:p-8 shadow-xs hover:shadow-md transition flex flex-col justify-between group cursor-pointer" onclick="selectPortal('admin')">
+          <div class="space-y-4">
+            <div class="flex items-center justify-between">
+              <div class="w-14 h-14 rounded-2xl bg-slate-100 text-[#001B48] group-hover:bg-[#001B48] group-hover:text-white flex items-center justify-center text-2xl transition">
+                🛡️
+              </div>
+              <span class="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-slate-100 text-slate-800">Staff & Operations</span>
+            </div>
+            <div>
+              <h2 class="text-2xl font-bold text-[#001B48]">Operations & Admin Portal</h2>
+              <p class="text-sm text-gray-500 mt-1">Fleet management, flight schedules, bookings, and SQL analytics.</p>
+            </div>
+            <ul class="space-y-2.5 text-xs text-gray-600 border-t border-gray-100 pt-4 font-medium">
+              <li class="flex items-center gap-2"><span class="text-emerald-500 font-bold">✓</span> Real-time operations KPIs & route performance</li>
+              <li class="flex items-center gap-2"><span class="text-emerald-500 font-bold">✓</span> Fleet CRUD: Airports, flights, and fare adjustments</li>
+              <li class="flex items-center gap-2"><span class="text-emerald-500 font-bold">✓</span> Passenger activation code issuance & account audits</li>
+              <li class="flex items-center gap-2"><span class="text-emerald-500 font-bold">✓</span> Materialized view refresh & SQL analytic functions</li>
+            </ul>
+          </div>
+
+          <div class="pt-8">
+            <button onclick="event.stopPropagation(); selectPortal('admin')" class="w-full py-3.5 px-6 rounded-xl bg-[#001B48] hover:bg-[#00112C] text-white font-bold text-sm shadow-xs transition flex items-center justify-center gap-2">
+              <span>Enter Operations Portal</span>
+              <span>→</span>
+            </button>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ============================================================ -->
     <!-- VIEW 1: HOMEPAGE & FLIGHT SEARCH (INDIGO STYLE)             -->
     <!-- ============================================================ -->
-    <section id="view-landing" class="space-y-8 animate-fadeIn">
+    <section id="view-landing" class="hidden space-y-8 animate-fadeIn">
       
       <!-- Minimalist Hero Heading -->
       <div class="text-center sm:text-left space-y-1 mb-2">
@@ -304,126 +450,163 @@
     <!-- ============================================================ -->
     <section id="view-admin-dashboard" class="hidden space-y-6 animate-fadeIn">
       
-      <!-- Admin Header with Materialized View Trigger -->
-      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-gray-200 pb-4">
-        <div>
-          <div class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded text-[10px] font-bold uppercase bg-blue-100 text-[#0052CC] mb-1">
-            <span>🛡️</span> Security Clearance: <span id="admin-role-title">SUPER_ADMIN</span>
+      <!-- If Not Authenticated as Admin: Show Clean Inline Login Box -->
+      <div id="admin-unauth-box" class="max-w-md mx-auto my-8 bg-white rounded-2xl border border-gray-200 shadow-sm p-7 space-y-5">
+        <div class="text-center space-y-2">
+          <div class="w-12 h-12 rounded-xl bg-slate-900 text-white flex items-center justify-center text-xl mx-auto shadow-xs">
+            🛡️
           </div>
-          <h1 class="text-2xl sm:text-3xl font-extrabold text-[#001B48]">Operations & Revenue Analytics</h1>
-          <p class="text-xs text-gray-500">Fleet analytics and performance reports powered by Oracle 23ai Analytic Functions.</p>
+          <h2 class="text-xl font-bold text-[#001B48]">Staff & Operations Sign In</h2>
+          <p class="text-xs text-gray-500">
+            Please enter your administrator credentials to access the fleet dashboard and revenue analytics.
+          </p>
         </div>
 
-        <div class="flex items-center gap-2">
-          <button onclick="triggerMvRefresh()" id="btn-refresh-mv" class="px-4 py-2 text-xs font-semibold rounded-lg bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 hover:border-gray-400 flex items-center gap-1.5 transition shadow-sm">
-            <span>⚡</span> Refresh Materialized View
+        <form onsubmit="handleAdminLogin(event, 'inline')" class="space-y-4 text-sm">
+          <div>
+            <label class="block text-xs font-bold text-gray-700 mb-1">Staff Username or Email</label>
+            <input type="text" id="inline-admin-username" required placeholder="e.g. admin" value="admin" class="w-full bg-white border border-gray-300 rounded-lg p-2.5 text-gray-900 focus:outline-none focus:border-[#0052CC]">
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-gray-700 mb-1">Password</label>
+            <input type="password" id="inline-admin-password" required placeholder="••••••••" value="AdminPass123!" class="w-full bg-white border border-gray-300 rounded-lg p-2.5 text-gray-900 focus:outline-none focus:border-[#0052CC]">
+          </div>
+          <button type="submit" class="w-full bg-[#001B48] hover:bg-[#00112C] text-white font-bold p-3 rounded-lg transition shadow-sm text-xs uppercase tracking-wider">
+            Sign In to Operations Portal
           </button>
-          <button onclick="loadAdminAnalytics()" class="px-3 py-2 text-xs font-semibold rounded-lg bg-[#0052CC] text-white hover:bg-[#0043A8] transition shadow-sm">
-            🔄 Reload
+        </form>
+
+        <div class="pt-2 border-t border-gray-100 flex items-center justify-between text-xs text-gray-500">
+          <span>Not staff?</span>
+          <button onclick="selectPortal('passenger')" class="text-[#0052CC] font-bold hover:underline">
+            Go to Passenger Booking →
           </button>
         </div>
       </div>
 
-      <!-- KPI Cards Grid (Clean White Style) -->
-      <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-        <div class="bg-white rounded-xl border border-gray-200 p-4 shadow-sm">
-          <span class="text-[11px] uppercase tracking-wider text-gray-500 font-semibold block">Total Bookings</span>
-          <span id="kpi-total-bookings" class="text-2xl font-extrabold text-gray-900 mt-1 block">—</span>
-        </div>
-        <div class="bg-white rounded-xl border border-gray-200 p-4 shadow-sm">
-          <span class="text-[11px] uppercase tracking-wider text-gray-500 font-semibold block">Confirmed</span>
-          <span id="kpi-confirmed-bookings" class="text-2xl font-extrabold text-emerald-600 mt-1 block">—</span>
-        </div>
-        <div class="bg-white rounded-xl border border-gray-200 p-4 shadow-sm">
-          <span class="text-[11px] uppercase tracking-wider text-gray-500 font-semibold block">Cancelled</span>
-          <span id="kpi-cancelled-bookings" class="text-2xl font-extrabold text-rose-600 mt-1 block">—</span>
-        </div>
-        <div class="bg-white rounded-xl border border-gray-200 p-4 shadow-sm col-span-2">
-          <span class="text-[11px] uppercase tracking-wider text-gray-500 font-semibold block">Total Realized Revenue</span>
-          <span id="kpi-total-revenue" class="text-2xl font-extrabold text-[#0052CC] mt-1 block">—</span>
-        </div>
-        <div class="bg-white rounded-xl border border-gray-200 p-4 shadow-sm">
-          <span class="text-[11px] uppercase tracking-wider text-gray-500 font-semibold block">Passengers</span>
-          <span id="kpi-total-passengers" class="text-2xl font-extrabold text-gray-900 mt-1 block">—</span>
-        </div>
-      </div>
-
-      <!-- View SQL Drawer: KPIs -->
-      <details class="bg-white rounded-xl border border-gray-200 p-3.5 shadow-sm">
-        <summary class="text-xs font-bold text-[#0052CC] flex items-center justify-between cursor-pointer">
-          <span>🔍 View SQL: System-Wide Operations KPIs (Single-Pass Aggregation)</span>
-          <span class="text-gray-400">▼</span>
-        </summary>
-        <pre id="sql-kpis" class="sql-code-box mt-3 overflow-x-auto"></pre>
-      </details>
-
-      <!-- Charts Grid 1 -->
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <!-- Chart 1: Route Ranking -->
-        <div class="bg-white rounded-xl border border-gray-200 p-5 shadow-sm space-y-3">
-          <div class="flex items-center justify-between">
-            <div>
-              <h3 class="font-bold text-gray-900 text-base">Route Performance Ranking</h3>
-              <p class="text-xs text-gray-500">Calculated via Oracle <code class="text-blue-600 font-mono">RANK() OVER (ORDER BY revenue DESC)</code></p>
+      <!-- Authenticated Admin Content -->
+      <div id="admin-auth-content" class="hidden space-y-6">
+        <!-- Admin Header with Materialized View Trigger -->
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-gray-200 pb-4">
+          <div>
+            <div class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded text-[10px] font-bold uppercase bg-blue-100 text-[#0052CC] mb-1">
+              <span>🛡️</span> Security Clearance: <span id="admin-role-title">SUPER_ADMIN</span>
             </div>
-            <span class="text-xs px-2 py-0.5 rounded bg-blue-100 text-blue-700 font-mono font-semibold">RANK() OVER</span>
+            <h1 class="text-2xl sm:text-3xl font-extrabold text-[#001B48]">Operations & Revenue Analytics</h1>
+            <p class="text-xs text-gray-500">Fleet analytics and performance reports powered by Oracle 23ai Analytic Functions.</p>
           </div>
-          <div id="chart-route-ranking" class="h-64 w-full"></div>
-          <details class="bg-gray-50 rounded-lg p-2.5 border border-gray-200">
-            <summary class="text-xs font-bold text-[#0052CC] cursor-pointer">🔍 View SQL: Route Ranking Query</summary>
-            <pre id="sql-route-ranking" class="sql-code-box mt-2 overflow-x-auto"></pre>
-          </details>
+
+          <div class="flex items-center gap-2">
+            <button onclick="triggerMvRefresh()" id="btn-refresh-mv" class="px-4 py-2 text-xs font-semibold rounded-lg bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 hover:border-gray-400 flex items-center gap-1.5 transition shadow-sm">
+              <span>⚡</span> Refresh Materialized View
+            </button>
+            <button onclick="loadAdminAnalytics()" class="px-3 py-2 text-xs font-semibold rounded-lg bg-[#0052CC] text-white hover:bg-[#0043A8] transition shadow-sm">
+              🔄 Reload
+            </button>
+          </div>
         </div>
 
-        <!-- Chart 2: Day-over-Day Trends -->
-        <div class="bg-white rounded-xl border border-gray-200 p-5 shadow-sm space-y-3">
-          <div class="flex items-center justify-between">
-            <div>
-              <h3 class="font-bold text-gray-900 text-base">Day-over-Day Revenue Growth</h3>
-              <p class="text-xs text-gray-500">Variance analysis computed via Oracle <code class="text-blue-600 font-mono">LAG()</code></p>
-            </div>
-            <span class="text-xs px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 font-mono font-semibold">LAG()</span>
+        <!-- KPI Cards Grid (Clean White Style) -->
+        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+          <div class="bg-white rounded-xl border border-gray-200 p-4 shadow-sm">
+            <span class="text-[11px] uppercase tracking-wider text-gray-500 font-semibold block">Total Bookings</span>
+            <span id="kpi-total-bookings" class="text-2xl font-extrabold text-gray-900 mt-1 block">—</span>
           </div>
-          <div id="chart-day-over-day" class="h-64 w-full"></div>
-          <details class="bg-gray-50 rounded-lg p-2.5 border border-gray-200">
-            <summary class="text-xs font-bold text-[#0052CC] cursor-pointer">🔍 View SQL: Day-over-Day Variance Query</summary>
-            <pre id="sql-day-over-day" class="sql-code-box mt-2 overflow-x-auto"></pre>
-          </details>
-        </div>
-      </div>
-
-      <!-- Charts Grid 2 -->
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <!-- Chart 3: Cumulative Total -->
-        <div class="bg-white rounded-xl border border-gray-200 p-5 shadow-sm space-y-3">
-          <div class="flex items-center justify-between">
-            <div>
-              <h3 class="font-bold text-gray-900 text-base">Cumulative Realized Revenue</h3>
-              <p class="text-xs text-gray-500">Running total via <code class="text-blue-600 font-mono">SUM() OVER (ROWS UNBOUNDED PRECEDING)</code></p>
-            </div>
-            <span class="text-xs px-2 py-0.5 rounded bg-purple-100 text-purple-700 font-mono font-semibold">SUM() OVER</span>
+          <div class="bg-white rounded-xl border border-gray-200 p-4 shadow-sm">
+            <span class="text-[11px] uppercase tracking-wider text-gray-500 font-semibold block">Confirmed</span>
+            <span id="kpi-confirmed-bookings" class="text-2xl font-extrabold text-emerald-600 mt-1 block">—</span>
           </div>
-          <div id="chart-cumulative-revenue" class="h-64 w-full"></div>
-          <details class="bg-gray-50 rounded-lg p-2.5 border border-gray-200">
-            <summary class="text-xs font-bold text-[#0052CC] cursor-pointer">🔍 View SQL: Running Total Query</summary>
-            <pre id="sql-cumulative-revenue" class="sql-code-box mt-2 overflow-x-auto"></pre>
-          </details>
+          <div class="bg-white rounded-xl border border-gray-200 p-4 shadow-sm">
+            <span class="text-[11px] uppercase tracking-wider text-gray-500 font-semibold block">Cancelled</span>
+            <span id="kpi-cancelled-bookings" class="text-2xl font-extrabold text-rose-600 mt-1 block">—</span>
+          </div>
+          <div class="bg-white rounded-xl border border-gray-200 p-4 shadow-sm col-span-2">
+            <span class="text-[11px] uppercase tracking-wider text-gray-500 font-semibold block">Total Realized Revenue</span>
+            <span id="kpi-total-revenue" class="text-2xl font-extrabold text-[#0052CC] mt-1 block">—</span>
+          </div>
+          <div class="bg-white rounded-xl border border-gray-200 p-4 shadow-sm">
+            <span class="text-[11px] uppercase tracking-wider text-gray-500 font-semibold block">Passengers</span>
+            <span id="kpi-total-passengers" class="text-2xl font-extrabold text-gray-900 mt-1 block">—</span>
+          </div>
         </div>
 
-        <!-- Chart 4: Meal Preferences -->
-        <div class="bg-white rounded-xl border border-gray-200 p-5 shadow-sm space-y-3">
-          <div class="flex items-center justify-between">
-            <div>
-              <h3 class="font-bold text-gray-900 text-base">Passenger Preferences Breakdown</h3>
-              <p class="text-xs text-gray-500">Extracted from JSON documents via <code class="text-blue-600 font-mono">JSON_VALUE(preferences, '$.meal')</code></p>
+        <!-- View SQL Drawer: KPIs -->
+        <details class="bg-white rounded-xl border border-gray-200 p-3.5 shadow-sm">
+          <summary class="text-xs font-bold text-[#0052CC] flex items-center justify-between cursor-pointer">
+            <span>🔍 View SQL: System-Wide Operations KPIs (Single-Pass Aggregation)</span>
+            <span class="text-gray-400">▼</span>
+          </summary>
+          <pre id="sql-kpis" class="sql-code-box mt-3 overflow-x-auto"></pre>
+        </details>
+
+        <!-- Charts Grid 1 -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <!-- Chart 1: Route Ranking -->
+          <div class="bg-white rounded-xl border border-gray-200 p-5 shadow-sm space-y-3">
+            <div class="flex items-center justify-between">
+              <div>
+                <h3 class="font-bold text-gray-900 text-base">Route Performance Ranking</h3>
+                <p class="text-xs text-gray-500">Calculated via Oracle <code class="text-blue-600 font-mono">RANK() OVER (ORDER BY revenue DESC)</code></p>
+              </div>
+              <span class="text-xs px-2 py-0.5 rounded bg-blue-100 text-blue-700 font-mono font-semibold">RANK() OVER</span>
             </div>
-            <span class="text-xs px-2 py-0.5 rounded bg-rose-100 text-rose-700 font-mono font-semibold">JSON_VALUE</span>
+            <div id="chart-route-ranking" class="h-64 w-full"></div>
+            <details class="bg-gray-50 rounded-lg p-2.5 border border-gray-200">
+              <summary class="text-xs font-bold text-[#0052CC] cursor-pointer">🔍 View SQL: Route Ranking Query</summary>
+              <pre id="sql-route-ranking" class="sql-code-box mt-2 overflow-x-auto"></pre>
+            </details>
           </div>
-          <div id="chart-meal-preferences" class="h-64 w-full"></div>
-          <details class="bg-gray-50 rounded-lg p-2.5 border border-gray-200">
-            <summary class="text-xs font-bold text-[#0052CC] cursor-pointer">🔍 View SQL: JSON Document Query</summary>
-            <pre id="sql-meal-preferences" class="sql-code-box mt-2 overflow-x-auto"></pre>
-          </details>
+
+          <!-- Chart 2: Day-over-Day Trends -->
+          <div class="bg-white rounded-xl border border-gray-200 p-5 shadow-sm space-y-3">
+            <div class="flex items-center justify-between">
+              <div>
+                <h3 class="font-bold text-gray-900 text-base">Day-over-Day Revenue Growth</h3>
+                <p class="text-xs text-gray-500">Variance analysis computed via Oracle <code class="text-blue-600 font-mono">LAG()</code></p>
+              </div>
+              <span class="text-xs px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 font-mono font-semibold">LAG()</span>
+            </div>
+            <div id="chart-day-over-day" class="h-64 w-full"></div>
+            <details class="bg-gray-50 rounded-lg p-2.5 border border-gray-200">
+              <summary class="text-xs font-bold text-[#0052CC] cursor-pointer">🔍 View SQL: Day-over-Day Variance Query</summary>
+              <pre id="sql-day-over-day" class="sql-code-box mt-2 overflow-x-auto"></pre>
+            </details>
+          </div>
+        </div>
+
+        <!-- Charts Grid 2 -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <!-- Chart 3: Cumulative Total -->
+          <div class="bg-white rounded-xl border border-gray-200 p-5 shadow-sm space-y-3">
+            <div class="flex items-center justify-between">
+              <div>
+                <h3 class="font-bold text-gray-900 text-base">Cumulative Realized Revenue</h3>
+                <p class="text-xs text-gray-500">Running total via <code class="text-blue-600 font-mono">SUM() OVER (ROWS UNBOUNDED PRECEDING)</code></p>
+              </div>
+              <span class="text-xs px-2 py-0.5 rounded bg-purple-100 text-purple-700 font-mono font-semibold">SUM() OVER</span>
+            </div>
+            <div id="chart-cumulative-revenue" class="h-64 w-full"></div>
+            <details class="bg-gray-50 rounded-lg p-2.5 border border-gray-200">
+              <summary class="text-xs font-bold text-[#0052CC] cursor-pointer">🔍 View SQL: Running Total Query</summary>
+              <pre id="sql-cumulative-revenue" class="sql-code-box mt-2 overflow-x-auto"></pre>
+            </details>
+          </div>
+
+          <!-- Chart 4: Meal Preferences -->
+          <div class="bg-white rounded-xl border border-gray-200 p-5 shadow-sm space-y-3">
+            <div class="flex items-center justify-between">
+              <div>
+                <h3 class="font-bold text-gray-900 text-base">Passenger Preferences Breakdown</h3>
+                <p class="text-xs text-gray-500">Extracted from JSON documents via <code class="text-blue-600 font-mono">JSON_VALUE(preferences, '$.meal')</code></p>
+              </div>
+              <span class="text-xs px-2 py-0.5 rounded bg-rose-100 text-rose-700 font-mono font-semibold">JSON_VALUE</span>
+            </div>
+            <div id="chart-meal-preferences" class="h-64 w-full"></div>
+            <details class="bg-gray-50 rounded-lg p-2.5 border border-gray-200">
+              <summary class="text-xs font-bold text-[#0052CC] cursor-pointer">🔍 View SQL: JSON Document Query</summary>
+              <pre id="sql-meal-preferences" class="sql-code-box mt-2 overflow-x-auto"></pre>
+            </details>
+          </div>
         </div>
       </div>
     </section>
@@ -471,20 +654,20 @@
   </main>
 
   <!-- ============================================================== -->
-  <!-- 3. CLEAN FOOTER WITH SUBTLE ADMIN ACCESS                       -->
+  <!-- 3. CLEAN FOOTER WITH DUAL PORTAL ACCESS                        -->
   <!-- ============================================================== -->
   <footer class="mt-auto bg-white border-t border-gray-200 py-6 text-xs text-gray-500">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4">
       <div class="flex items-center gap-2">
         <span class="font-bold text-[#001B48]">AZ Airlines</span>
         <span>•</span>
-        <span>Domestic & International Air Carrier</span>
+        <span id="footer-system-text">Domestic & International Air Carrier</span>
       </div>
       <div class="flex items-center gap-4">
         <span>© 2026 AZ Airlines Ltd. All Rights Reserved.</span>
         <span>•</span>
-        <button onclick="openModal('modal-admin-login')" class="text-gray-400 hover:text-gray-700 transition">
-          Staff Portal
+        <button onclick="selectPortal('gateway')" class="text-[#0052CC] hover:underline font-medium transition">
+          Switch Portal (Role Gateway)
         </button>
       </div>
     </div>
@@ -841,6 +1024,7 @@
     let currentUser = null;
     let authRole = null;
     let authToken = null;
+    let currentPortal = 'gateway'; // 'gateway' | 'passenger' | 'admin'
     let globalFlights = [];
     let currentSelectedFlight = null;
     let activeCrudTab = 'airports';
@@ -901,12 +1085,20 @@
       const savedToken = localStorage.getItem('az_token');
       const savedUser = localStorage.getItem('az_user');
       const savedRole = localStorage.getItem('az_role');
+      const savedPortal = localStorage.getItem('az_portal_mode');
 
       if (savedToken && savedUser) {
         authToken = savedToken;
         currentUser = JSON.parse(savedUser);
         authRole = savedRole;
-        updateAuthUI();
+      }
+
+      if (savedPortal === 'admin') {
+        selectPortal('admin');
+      } else if (savedPortal === 'passenger') {
+        selectPortal('passenger');
+      } else {
+        selectPortal('gateway');
       }
     }
 
@@ -917,7 +1109,7 @@
       localStorage.setItem('az_token', token);
       localStorage.setItem('az_user', JSON.stringify(user));
       localStorage.setItem('az_role', role);
-      updateAuthUI();
+      updatePortalUI();
     }
 
     function logout() {
@@ -927,41 +1119,131 @@
       localStorage.removeItem('az_token');
       localStorage.removeItem('az_user');
       localStorage.removeItem('az_role');
-      updateAuthUI();
-      switchView('landing');
+      updatePortalUI();
+      if (currentPortal === 'admin') {
+        switchView('admin-dashboard');
+      } else {
+        switchView('landing');
+      }
       showToast("Signed out successfully.", "info");
     }
 
-    function updateAuthUI() {
-      const guestControls = document.getElementById('auth-guest-controls');
-      const userControls = document.getElementById('auth-user-controls');
-      const navAdmin = document.getElementById('nav-btn-admin');
-      const navRecords = document.getElementById('nav-btn-records');
-      const userBadge = document.getElementById('user-role-badge');
-      const userName = document.getElementById('user-display-name');
+    // ----------------------------------------------------------------
+    // Portal & UI Mode Management
+    // ----------------------------------------------------------------
+    function selectPortal(portal, targetView = null) {
+      currentPortal = portal;
 
-      if (currentUser && authToken) {
-        guestControls.classList.add('hidden');
-        userControls.classList.remove('hidden');
-
-        userName.textContent = currentUser.name || currentUser.full_name || currentUser.username || "User";
-
-        if (authRole === 'ADMIN') {
-          userBadge.textContent = currentUser.role || "ADMIN";
-          userBadge.className = "px-1.5 py-0.5 rounded text-[10px] font-bold uppercase bg-red-100 text-red-800";
-          navAdmin.classList.remove('hidden');
-          navRecords.classList.remove('hidden');
-        } else {
-          userBadge.textContent = "PASSENGER";
-          userBadge.className = "px-1.5 py-0.5 rounded text-[10px] font-bold uppercase bg-blue-100 text-blue-800";
-          navAdmin.classList.add('hidden');
-          navRecords.classList.add('hidden');
+      if (portal === 'gateway') {
+        localStorage.removeItem('az_portal_mode');
+        switchView('gateway');
+      } else if (portal === 'passenger') {
+        localStorage.setItem('az_portal_mode', 'passenger');
+        switchView(targetView || 'landing');
+      } else if (portal === 'admin') {
+        localStorage.setItem('az_portal_mode', 'admin');
+        switchView(targetView || 'admin-dashboard');
+        if (currentUser && authRole === 'ADMIN') {
+          loadAdminAnalytics();
         }
-      } else {
-        guestControls.classList.remove('hidden');
-        userControls.classList.add('hidden');
-        navAdmin.classList.add('hidden');
-        navRecords.classList.add('hidden');
+      }
+
+      updatePortalUI();
+    }
+
+    function updatePortalUI() {
+      const pill = document.getElementById('header-portal-pill');
+      const subtitle = document.getElementById('header-portal-subtitle');
+      const footerText = document.getElementById('footer-system-text');
+
+      const navPassenger = document.getElementById('nav-passenger');
+      const navAdmin = document.getElementById('nav-admin');
+
+      const controlsPassenger = document.getElementById('controls-passenger');
+      const controlsAdmin = document.getElementById('controls-admin');
+      const controlsGateway = document.getElementById('controls-gateway');
+
+      const passengerGuest = document.getElementById('passenger-guest-btns');
+      const passengerLogged = document.getElementById('passenger-logged-btns');
+      const passengerName = document.getElementById('passenger-display-name');
+
+      const adminGuest = document.getElementById('admin-guest-btns');
+      const adminLogged = document.getElementById('admin-logged-btns');
+      const adminName = document.getElementById('admin-display-name');
+
+      const adminUnauthBox = document.getElementById('admin-unauth-box');
+      const adminAuthContent = document.getElementById('admin-auth-content');
+
+      if (currentPortal === 'gateway') {
+        if (pill) {
+          pill.textContent = "PORTAL SELECT";
+          pill.className = "px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-gray-100 text-gray-700";
+        }
+        if (subtitle) subtitle.textContent = "Select Passenger or Operations";
+        if (footerText) footerText.textContent = "Airline Reservation & Operations Gateway";
+
+        if (navPassenger) navPassenger.classList.add('hidden');
+        if (navAdmin) navAdmin.classList.add('hidden');
+
+        if (controlsPassenger) controlsPassenger.classList.add('hidden');
+        if (controlsAdmin) controlsAdmin.classList.add('hidden');
+        if (controlsGateway) controlsGateway.classList.remove('hidden');
+
+      } else if (currentPortal === 'passenger') {
+        if (pill) {
+          pill.textContent = "PASSENGER";
+          pill.className = "px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-blue-100 text-[#0052CC]";
+        }
+        if (subtitle) subtitle.textContent = "Domestic & International Carrier";
+        if (footerText) footerText.textContent = "Domestic & International Passenger Flights";
+
+        if (navPassenger) navPassenger.classList.remove('hidden');
+        if (navAdmin) navAdmin.classList.add('hidden');
+
+        if (controlsPassenger) controlsPassenger.classList.remove('hidden');
+        if (controlsAdmin) controlsAdmin.classList.add('hidden');
+        if (controlsGateway) controlsGateway.classList.add('hidden');
+
+        if (currentUser && authRole === 'PASSENGER') {
+          if (passengerGuest) passengerGuest.classList.add('hidden');
+          if (passengerLogged) passengerLogged.classList.remove('hidden');
+          if (passengerName) passengerName.textContent = currentUser.name || "Passenger";
+        } else {
+          if (passengerGuest) passengerGuest.classList.remove('hidden');
+          if (passengerLogged) passengerLogged.classList.add('hidden');
+        }
+
+      } else if (currentPortal === 'admin') {
+        if (pill) {
+          pill.textContent = "OPERATIONS & ADMIN";
+          pill.className = "px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-slate-900 text-white";
+        }
+        if (subtitle) subtitle.textContent = "Fleet & Revenue Operations";
+        if (footerText) footerText.textContent = "Internal Flight Operations & Management System";
+
+        if (navPassenger) navPassenger.classList.add('hidden');
+        if (navAdmin) navAdmin.classList.remove('hidden');
+
+        if (controlsPassenger) controlsPassenger.classList.add('hidden');
+        if (controlsAdmin) controlsAdmin.classList.remove('hidden');
+        if (controlsGateway) controlsGateway.classList.add('hidden');
+
+        const isAdmin = currentUser && authRole === 'ADMIN';
+
+        if (isAdmin) {
+          if (adminGuest) adminGuest.classList.add('hidden');
+          if (adminLogged) adminLogged.classList.remove('hidden');
+          if (adminName) adminName.textContent = currentUser.username || currentUser.name || "admin";
+
+          if (adminUnauthBox) adminUnauthBox.classList.add('hidden');
+          if (adminAuthContent) adminAuthContent.classList.remove('hidden');
+        } else {
+          if (adminGuest) adminGuest.classList.remove('hidden');
+          if (adminLogged) adminLogged.classList.add('hidden');
+
+          if (adminUnauthBox) adminUnauthBox.classList.remove('hidden');
+          if (adminAuthContent) adminAuthContent.classList.add('hidden');
+        }
       }
     }
 
@@ -969,7 +1251,7 @@
     // Navigation & Views
     // ----------------------------------------------------------------
     function switchView(viewName) {
-      const views = ['landing', 'my-bookings', 'admin-dashboard', 'admin-crud'];
+      const views = ['gateway', 'landing', 'my-bookings', 'admin-dashboard', 'admin-crud'];
       views.forEach(v => {
         const el = document.getElementById(`view-${v}`);
         if (el) el.classList.add('hidden');
@@ -982,7 +1264,7 @@
       document.querySelectorAll('header nav button').forEach(b => {
         b.className = "px-3.5 py-2 rounded-md text-gray-700 hover:text-[#0052CC] hover:bg-gray-50 transition";
       });
-      const activeBtn = document.getElementById(`nav-btn-${viewName.replace('admin-', '').replace('my-', '')}`);
+      const activeBtn = document.getElementById(`nav-btn-${viewName}`);
       if (activeBtn) {
         activeBtn.className = "px-3.5 py-2 rounded-md text-[#0052CC] bg-blue-50 font-semibold transition";
       }
@@ -996,26 +1278,21 @@
         showToast("Please sign in as a passenger to view your reservations.", "info");
         return;
       }
-      switchView('my-bookings');
+      selectPortal('passenger', 'my-bookings');
       loadPassengerBookings();
     }
 
     function openAdminPortalView() {
-      if (!currentUser || authRole !== 'ADMIN') {
-        openModal('modal-admin-login');
-        showToast("Administrator credentials required.", "info");
-        return;
-      }
-      switchView('admin-dashboard');
-      loadAdminAnalytics();
+      selectPortal('admin', 'admin-dashboard');
     }
 
     function openAdminCrudView() {
       if (!currentUser || authRole !== 'ADMIN') {
-        openModal('modal-admin-login');
+        selectPortal('admin', 'admin-dashboard');
+        showToast("Administrator credentials required to manage records.", "info");
         return;
       }
-      switchView('admin-crud');
+      selectPortal('admin', 'admin-crud');
       switchCrudTab(activeCrudTab);
     }
 
@@ -1203,6 +1480,7 @@
         });
         saveSession(res.access_token, res.user, 'PASSENGER');
         closeModal('modal-passenger-login');
+        selectPortal('passenger', 'landing');
         showToast(`Welcome back, ${res.user.name}!`, "success");
       } catch (e) {}
     }
@@ -1224,6 +1502,7 @@
         const res = await apiRequest('/api/auth/passenger/register', 'POST', payload);
         saveSession(res.access_token, res.user, 'PASSENGER');
         closeModal('modal-passenger-register');
+        selectPortal('passenger', 'landing');
         showToast(`Welcome to AZ Airlines, ${res.user.name}!`, "success");
       } catch (e) {}
     }
@@ -1240,15 +1519,23 @@
         const res = await apiRequest('/api/auth/passenger/claim', 'POST', payload);
         saveSession(res.access_token, res.user, 'PASSENGER');
         closeModal('modal-claim');
+        selectPortal('passenger', 'landing');
         showToast("Account claimed and activated successfully!", "success");
       } catch (e) {}
     }
 
-    async function handleAdminLogin(e) {
+    async function handleAdminLogin(e, source = 'modal') {
       e.preventDefault();
+      const usernameInput = source === 'inline'
+        ? document.getElementById('inline-admin-username')
+        : document.getElementById('admin-login-username');
+      const passwordInput = source === 'inline'
+        ? document.getElementById('inline-admin-password')
+        : document.getElementById('admin-login-password');
+
       const payload = {
-        username_or_email: document.getElementById('admin-login-username').value,
-        password: document.getElementById('admin-login-password').value,
+        username_or_email: usernameInput.value,
+        password: passwordInput.value,
       };
 
       try {
@@ -1256,7 +1543,7 @@
         saveSession(res.access_token, res.admin, 'ADMIN');
         closeModal('modal-admin-login');
         showToast(`Staff authenticated (${res.admin.role}).`, "success");
-        openAdminPortalView();
+        selectPortal('admin', 'admin-dashboard');
       } catch (e) {}
     }
 
