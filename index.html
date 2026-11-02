@@ -3,33 +3,33 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>AeroOracle Airways — Reservation & Analytics Portal</title>
+  <title>AZ Airlines — Book Domestic & International Flights</title>
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- Plotly.js -->
   <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
-  <!-- Google Fonts: Playfair Display & Inter & Source Code Pro -->
+  <!-- Google Fonts: Inter -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;800&family=Inter:wght@300;400;500;600;700&family=Source+Code+Pro:wght@400;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Source+Code+Pro:wght@400;500;600&display=swap" rel="stylesheet">
 
   <script>
     tailwind.config = {
       theme: {
         extend: {
           colors: {
-            brand: {
-              navy: '#0A192F',
-              midnight: '#020C1B',
-              slate: '#1E293B',
-              gold: '#D4AF37',
-              goldLight: '#F3E5AB',
-              crimson: '#881337',
-              accent: '#3B82F6',
+            az: {
+              navy: '#001B48',
+              navyDark: '#00112C',
+              blue: '#0052CC',
+              blueHover: '#0043A8',
+              blueLight: '#EBF3FF',
+              sky: '#F4F7FB',
+              slate: '#475569',
+              border: '#E2E8F0',
             }
           },
           fontFamily: {
             sans: ['Inter', 'sans-serif'],
-            display: ['Cinzel', 'serif'],
             mono: ['Source Code Pro', 'monospace'],
           }
         }
@@ -39,109 +39,94 @@
 
   <style>
     body {
-      background-color: #0A192F;
-      color: #E2E8F0;
+      background-color: #F8FAFC;
+      color: #0F172A;
       font-family: 'Inter', sans-serif;
-    }
-    .gold-gradient-text {
-      background: linear-gradient(135deg, #FFF3BF 0%, #D4AF37 50%, #AA771C 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-    }
-    .hero-glow {
-      background: radial-gradient(circle at 50% 20%, rgba(212, 175, 55, 0.12) 0%, rgba(10, 25, 47, 0) 70%);
-    }
-    .glass-card {
-      background: rgba(15, 23, 42, 0.75);
-      backdrop-filter: blur(12px);
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
-    }
-    .glass-card-gold {
-      background: rgba(15, 23, 42, 0.85);
-      backdrop-filter: blur(12px);
-      border: 1px solid rgba(212, 175, 55, 0.25);
-      box-shadow: 0 8px 32px 0 rgba(212, 175, 55, 0.08);
     }
     .sql-code-box {
       font-family: 'Source Code Pro', monospace;
-      background: #030712;
-      border: 1px solid #1F2937;
+      background: #0F172A;
+      border: 1px solid #1E293B;
       color: #38BDF8;
       font-size: 0.8rem;
       border-radius: 6px;
       padding: 0.75rem;
     }
+    /* Clean subtle scrollbar */
     ::-webkit-scrollbar {
       width: 6px;
       height: 6px;
     }
     ::-webkit-scrollbar-thumb {
-      background: #334155;
+      background: #CBD5E1;
       border-radius: 3px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #94A3B8;
     }
   </style>
 </head>
-<body class="min-h-screen flex flex-col antialiased">
+<body class="min-h-screen flex flex-col bg-[#F8FAFC]">
 
   <!-- ============================================================== -->
-  <!-- TOP GLOBAL NAVIGATION BAR                                       -->
+  <!-- 1. CLEAN TOP NAVIGATION BAR (INDIGO STYLE)                     -->
   <!-- ============================================================== -->
-  <header class="sticky top-0 z-40 bg-[#0A192F]/95 backdrop-blur border-b border-white/10 px-4 lg:px-8 py-3.5 transition-all">
-    <div class="max-w-7xl mx-auto flex items-center justify-between">
+  <header class="sticky top-0 z-40 bg-white border-b border-gray-200 shadow-sm transition-all">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
       
-      <!-- Logo & Brand -->
-      <div class="flex items-center gap-3 cursor-pointer" onclick="switchView('landing')">
-        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-[#AA771C] via-[#D4AF37] to-[#FFF3BF] flex items-center justify-center shadow-lg shadow-amber-900/30">
-          <span class="text-xl">✈️</span>
+      <!-- Brand Logo -->
+      <div class="flex items-center gap-8 cursor-pointer" onclick="switchView('landing')">
+        <div class="flex items-center gap-2.5">
+          <div class="w-9 h-9 rounded-lg bg-[#001B48] flex items-center justify-center text-white font-bold text-lg shadow-sm">
+            ✈
+          </div>
+          <div class="flex flex-col">
+            <span class="font-extrabold text-xl tracking-tight text-[#001B48] flex items-center leading-none">
+              AZ<span class="text-[#0052CC] ml-1">AIRLINES</span>
+            </span>
+            <span class="text-[10px] text-gray-500 font-medium tracking-wide">Always on Time</span>
+          </div>
         </div>
-        <div>
-          <span class="font-display font-bold text-lg md:text-xl tracking-wider text-white flex items-center gap-2">
-            AERO<span class="gold-gradient-text">ORACLE</span>
-          </span>
-          <span class="text-[10px] text-gray-400 tracking-widest uppercase block -mt-1 font-semibold">Oracle 23ai Fleet Engine</span>
-        </div>
+
+        <!-- Passenger Navigation Links -->
+        <nav class="hidden md:flex items-center gap-1 text-sm font-semibold">
+          <button onclick="switchView('landing')" id="nav-btn-landing" class="px-3.5 py-2 rounded-md text-[#0052CC] bg-blue-50 transition">
+            Book Flights
+          </button>
+          <button onclick="openMyBookingsView()" id="nav-btn-bookings" class="px-3.5 py-2 rounded-md text-gray-700 hover:text-[#0052CC] hover:bg-gray-50 transition">
+            Manage Booking
+          </button>
+          <button onclick="openAdminPortalView()" id="nav-btn-admin" class="hidden px-3.5 py-2 rounded-md text-gray-700 hover:text-[#0052CC] hover:bg-gray-50 transition">
+            Operations & Analytics
+          </button>
+          <button onclick="openAdminCrudView()" id="nav-btn-records" class="hidden px-3.5 py-2 rounded-md text-gray-700 hover:text-[#0052CC] hover:bg-gray-50 transition">
+            Fleet Management
+          </button>
+        </nav>
       </div>
 
-      <!-- Live Backend & DB Health Indicator -->
-      <div id="backend-health-pill" class="hidden md:flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium bg-slate-800/80 border border-slate-700">
-        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-        <span id="health-status-text" class="text-gray-300">Checking Oracle Connection...</span>
-      </div>
-
-      <!-- Navigation Tabs -->
-      <nav class="hidden md:flex items-center gap-1 text-sm font-medium">
-        <button onclick="switchView('landing')" id="nav-btn-landing" class="px-3.5 py-1.5 rounded-lg text-amber-400 hover:text-white transition">Book Flights</button>
-        <button onclick="openMyBookingsView()" id="nav-btn-bookings" class="hidden px-3.5 py-1.5 rounded-lg text-gray-300 hover:text-white transition">My Bookings</button>
-        <button onclick="openAdminPortalView()" id="nav-btn-admin" class="hidden px-3.5 py-1.5 rounded-lg text-gray-300 hover:text-white transition">Operations Dashboard</button>
-        <button onclick="openAdminCrudView()" id="nav-btn-records" class="hidden px-3.5 py-1.5 rounded-lg text-gray-300 hover:text-white transition">Fleet Management</button>
-      </nav>
-
-      <!-- Auth Action Controls -->
-      <div class="flex items-center gap-2.5">
+      <!-- Right Action Controls (Guest vs Logged In) -->
+      <div class="flex items-center gap-3">
         <!-- Guest Controls -->
         <div id="auth-guest-controls" class="flex items-center gap-2">
-          <button onclick="openModal('modal-claim')" class="hidden sm:inline-flex text-xs text-amber-300 hover:text-amber-200 px-2.5 py-1.5 rounded border border-amber-500/30 hover:border-amber-400 transition">
-            Claim Existing ID
+          <button onclick="openModal('modal-claim')" class="hidden sm:inline-flex text-xs font-medium text-gray-600 hover:text-gray-900 px-3 py-1.5 rounded-md hover:bg-gray-100 transition">
+            Claim Passenger ID
           </button>
-          <button onclick="openModal('modal-passenger-login')" class="text-xs sm:text-sm font-medium px-3.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-white border border-slate-700 transition">
+          <button onclick="openModal('modal-passenger-login')" class="text-sm font-semibold text-[#001B48] hover:text-[#0052CC] px-3.5 py-1.5 rounded-md hover:bg-gray-50 transition">
             Sign In
           </button>
-          <button onclick="openModal('modal-passenger-register')" class="text-xs sm:text-sm font-semibold px-4 py-1.5 rounded-lg bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 shadow-md shadow-amber-600/20 transition">
+          <button onclick="openModal('modal-passenger-register')" class="text-sm font-semibold text-white bg-[#0052CC] hover:bg-[#0043A8] px-4 py-2 rounded-md shadow-sm transition">
             Register
-          </button>
-          <button onclick="openModal('modal-admin-login')" title="Administrator Login" class="text-xs px-2.5 py-1.5 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-gray-400 hover:text-amber-300 border border-slate-700 transition flex items-center gap-1">
-            <span>🛡️</span> Admin
           </button>
         </div>
 
-        <!-- Logged In User Pill -->
-        <div id="auth-user-controls" class="hidden flex items-center gap-2">
-          <div class="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-800/90 border border-slate-700 text-xs">
-            <span id="user-role-badge" class="px-1.5 py-0.5 rounded text-[10px] font-bold uppercase bg-amber-500/20 text-amber-300">Passenger</span>
-            <span id="user-display-name" class="font-semibold text-white max-w-[120px] truncate">User</span>
+        <!-- Logged In Controls -->
+        <div id="auth-user-controls" class="hidden flex items-center gap-3">
+          <div class="flex items-center gap-2 px-3 py-1.5 rounded-md bg-gray-100 text-xs">
+            <span id="user-role-badge" class="px-1.5 py-0.5 rounded text-[10px] font-bold uppercase bg-blue-100 text-blue-800">Passenger</span>
+            <span id="user-display-name" class="font-bold text-gray-900 max-w-[140px] truncate">User</span>
           </div>
-          <button onclick="logout()" class="text-xs px-2.5 py-1.5 rounded-lg bg-red-950/60 hover:bg-red-900/80 text-red-200 border border-red-800/40 transition">
+          <button onclick="logout()" class="text-xs font-semibold px-3 py-1.5 rounded-md text-red-600 hover:bg-red-50 transition">
             Sign Out
           </button>
         </div>
@@ -149,128 +134,168 @@
     </div>
   </header>
 
-  <!-- Global Notification Toast Container -->
-  <div id="toast-container" class="fixed bottom-6 right-6 z-50 flex flex-col gap-2 pointer-events-none max-w-md w-full px-4"></div>
+  <!-- Global Toast Container -->
+  <div id="toast-container" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 pointer-events-none max-w-md w-full px-4"></div>
 
   <!-- ============================================================== -->
-  <!-- MAIN CONTENT CONTAINER                                          -->
+  <!-- 2. MAIN APPLICATION CONTENT AREA                               -->
   <!-- ============================================================== -->
-  <main class="flex-1 w-full max-w-7xl mx-auto px-4 lg:px-8 py-6">
+  <main class="flex-1 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
 
     <!-- ============================================================ -->
-    <!-- VIEW 1: HERO & FLIGHT SEARCH (PASSENGER LANDING)            -->
+    <!-- VIEW 1: HOMEPAGE & FLIGHT SEARCH (INDIGO STYLE)             -->
     <!-- ============================================================ -->
     <section id="view-landing" class="space-y-8 animate-fadeIn">
       
-      <!-- Hero Headline Banner -->
-      <div class="hero-glow rounded-3xl p-8 md:p-12 border border-white/5 relative overflow-hidden text-center space-y-4">
-        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-amber-500/10 text-amber-300 border border-amber-500/20">
-          <span>✨</span> Emirates & Singapore Airlines Inspired Experience
-        </div>
-        <h1 class="text-3xl md:text-5xl font-display font-bold text-white tracking-wide max-w-3xl mx-auto leading-tight">
-          Experience Pure Luxury in the Sky. Powered by <span class="gold-gradient-text">Oracle 23ai</span>
+      <!-- Minimalist Hero Heading -->
+      <div class="text-center sm:text-left space-y-1 mb-2">
+        <h1 class="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-[#001B48] tracking-tight">
+          Where would you like to go?
         </h1>
-        <p class="text-sm md:text-base text-gray-300 max-w-2xl mx-auto font-light">
-          Real-time flight reservations, dynamic timezone conversions, and automated transactional payments verified against local Oracle Database 23ai Free.
+        <p class="text-sm text-gray-500 font-normal">
+          Discover destinations and book your next journey with AZ Airlines.
         </p>
+      </div>
 
-        <!-- Search Widget Card -->
-        <div class="glass-card-gold rounded-2xl p-6 max-w-5xl mx-auto mt-6 text-left space-y-4">
-          <div class="flex items-center justify-between border-b border-white/10 pb-3">
-            <div class="flex items-center gap-2">
-              <span class="text-amber-400 font-semibold text-sm">✈️ Reserve Your Journey</span>
-              <span class="text-xs text-gray-400">| Direct Flights Across 10 Major Global Hubs</span>
-            </div>
-            <div class="flex items-center gap-2">
-              <label class="text-xs text-gray-400">Timezone (AT TIME ZONE):</label>
-              <select id="search-tz" onchange="fetchFlights()" class="bg-slate-900 border border-slate-700 text-xs rounded px-2.5 py-1 text-amber-300 focus:outline-none focus:border-amber-400">
-                <option value="Asia/Kolkata" selected>Asia/Kolkata (IST)</option>
-                <option value="Asia/Dubai">Asia/Dubai (GST)</option>
-                <option value="Europe/London">Europe/London (BST)</option>
-                <option value="America/New_York">America/New_York (EDT)</option>
-                <option value="Asia/Singapore">Asia/Singapore (SGT)</option>
-                <option value="UTC">UTC</option>
+      <!-- Booking Card (IndiGo Style White Box with Clean Borders) -->
+      <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-6 sm:p-7 space-y-5">
+        
+        <!-- Trip Type Radio & Options -->
+        <div class="flex flex-wrap items-center justify-between gap-4 border-b border-gray-100 pb-4">
+          <div class="flex items-center gap-6 text-sm font-semibold text-gray-800">
+            <label class="flex items-center gap-2 cursor-pointer">
+              <input type="radio" name="trip-type" value="oneway" checked class="text-[#0052CC] focus:ring-blue-500" onchange="toggleTripType(this.value)">
+              <span>One-way</span>
+            </label>
+            <label class="flex items-center gap-2 cursor-pointer">
+              <input type="radio" name="trip-type" value="roundtrip" class="text-[#0052CC] focus:ring-blue-500" onchange="toggleTripType(this.value)">
+              <span>Round-trip</span>
+            </label>
+          </div>
+
+          <div class="flex items-center gap-2 text-xs text-gray-600">
+            <span>Display Timezone:</span>
+            <select id="search-tz" class="bg-gray-50 border border-gray-300 rounded px-2.5 py-1 text-xs text-gray-800 font-medium focus:outline-none focus:border-blue-500">
+              <option value="Asia/Kolkata" selected>Asia/Kolkata (IST)</option>
+              <option value="Asia/Dubai">Asia/Dubai (GST)</option>
+              <option value="Europe/London">Europe/London (BST)</option>
+              <option value="America/New_York">America/New_York (EDT)</option>
+              <option value="Asia/Singapore">Asia/Singapore (SGT)</option>
+              <option value="UTC">UTC</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Search Inputs Grid -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          
+          <!-- Origin -->
+          <div class="space-y-1">
+            <label class="block text-xs font-bold text-gray-600 uppercase tracking-wider">From</label>
+            <div class="relative">
+              <select id="search-origin" class="w-full bg-white border border-gray-300 rounded-lg p-3 text-sm font-semibold text-gray-900 focus:outline-none focus:border-[#0052CC] focus:ring-1 focus:ring-[#0052CC] transition">
+                <option value="">All Airports</option>
               </select>
             </div>
           </div>
 
-          <!-- Search Inputs Grid -->
-          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div>
-              <label class="block text-xs font-medium text-gray-300 mb-1">Departure Airport</label>
-              <select id="search-origin" class="w-full bg-slate-900/90 border border-slate-700 rounded-lg p-2.5 text-sm text-white focus:outline-none focus:border-amber-400">
-                <option value="">All Origins</option>
+          <!-- Destination -->
+          <div class="space-y-1">
+            <label class="block text-xs font-bold text-gray-600 uppercase tracking-wider">To</label>
+            <div class="relative">
+              <select id="search-destination" class="w-full bg-white border border-gray-300 rounded-lg p-3 text-sm font-semibold text-gray-900 focus:outline-none focus:border-[#0052CC] focus:ring-1 focus:ring-[#0052CC] transition">
+                <option value="">All Airports</option>
               </select>
-            </div>
-            <div>
-              <label class="block text-xs font-medium text-gray-300 mb-1">Destination Airport</label>
-              <select id="search-destination" class="w-full bg-slate-900/90 border border-slate-700 rounded-lg p-2.5 text-sm text-white focus:outline-none focus:border-amber-400">
-                <option value="">All Destinations</option>
-              </select>
-            </div>
-            <div>
-              <label class="block text-xs font-medium text-gray-300 mb-1">Travel Date</label>
-              <input type="date" id="search-date" class="w-full bg-slate-900/90 border border-slate-700 rounded-lg p-2.5 text-sm text-white focus:outline-none focus:border-amber-400">
-            </div>
-            <div class="flex items-end">
-              <button onclick="fetchFlights()" class="w-full bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-bold p-2.5 rounded-lg shadow-lg shadow-amber-600/30 transition flex items-center justify-center gap-2">
-                <span>🔍</span> Search Flights
-              </button>
             </div>
           </div>
+
+          <!-- Travel Date -->
+          <div class="space-y-1">
+            <label class="block text-xs font-bold text-gray-600 uppercase tracking-wider">Travel Date</label>
+            <input type="date" id="search-date" class="w-full bg-white border border-gray-300 rounded-lg p-3 text-sm font-medium text-gray-900 focus:outline-none focus:border-[#0052CC] focus:ring-1 focus:ring-[#0052CC] transition">
+          </div>
+
+          <!-- Search Button -->
+          <div class="flex items-end">
+            <button onclick="handleSearchClick()" class="w-full bg-[#0052CC] hover:bg-[#0043A8] text-white font-bold py-3 px-6 rounded-lg shadow-sm transition flex items-center justify-center gap-2">
+              <span>Search Flights</span>
+              <span>→</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Quick Route Suggestions (IndiGo Style Pills) -->
+        <div class="pt-2 flex flex-wrap items-center gap-2 text-xs text-gray-500">
+          <span class="font-medium text-gray-700">Popular Routes:</span>
+          <button onclick="selectQuickRoute('DEL', 'BOM')" class="px-2.5 py-1 rounded bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium transition">Delhi ⇄ Mumbai</button>
+          <button onclick="selectQuickRoute('MAA', 'DEL')" class="px-2.5 py-1 rounded bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium transition">Chennai ⇄ Delhi</button>
+          <button onclick="selectQuickRoute('BLR', 'BOM')" class="px-2.5 py-1 rounded bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium transition">Bengaluru ⇄ Mumbai</button>
+          <button onclick="selectQuickRoute('DXB', 'DEL')" class="px-2.5 py-1 rounded bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium transition">Dubai ⇄ Delhi</button>
         </div>
       </div>
 
-      <!-- Flight Results List -->
-      <div class="space-y-4">
-        <div class="flex items-center justify-between">
-          <h2 class="text-xl font-display font-bold text-white flex items-center gap-2">
-            <span>🛫</span> Available Scheduled Flights
-            <span id="flight-results-count" class="text-xs px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 font-sans font-semibold">20 Flights</span>
-          </h2>
-          <span class="text-xs text-gray-400">Projected via <code class="text-amber-300 font-mono">TO_CHAR(departure_time AT TIME ZONE ...)</code></span>
+      <!-- Flight Search Results Container (Hidden until user searches) -->
+      <div id="flight-results-wrapper" class="hidden space-y-4 pt-4">
+        
+        <!-- Results Summary Bar -->
+        <div class="flex items-center justify-between border-b border-gray-200 pb-3">
+          <div>
+            <h2 id="flight-results-heading" class="text-xl font-bold text-[#001B48]">
+              Available Scheduled Flights
+            </h2>
+            <p id="flight-results-subheading" class="text-xs text-gray-500">
+              Direct non-stop service with AZ Airlines
+            </p>
+          </div>
+          <span id="flight-results-count" class="text-xs font-bold px-3 py-1 rounded-full bg-blue-100 text-[#0052CC]">
+            0 Flights
+          </span>
         </div>
 
-        <!-- Flights Container -->
-        <div id="flights-container" class="grid grid-cols-1 gap-4">
-          <div class="text-center py-12 text-gray-500">Loading flight schedules from Oracle...</div>
+        <!-- Cards List Container -->
+        <div id="flights-container" class="space-y-3">
+          <!-- Populated dynamically via JS -->
         </div>
       </div>
     </section>
 
     <!-- ============================================================ -->
-    <!-- VIEW 2: PASSENGER MY BOOKINGS DASHBOARD                      -->
+    <!-- VIEW 2: MANAGE BOOKINGS / PASSENGER DASHBOARD               -->
     <!-- ============================================================ -->
     <section id="view-my-bookings" class="hidden space-y-6 animate-fadeIn">
-      <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-white/10 pb-4">
+      
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-gray-200 pb-4">
         <div>
-          <h1 class="text-2xl md:text-3xl font-display font-bold text-white">My Flight Reservations</h1>
-          <p class="text-xs text-gray-400">Authenticated booking history retrieved directly from Oracle <code class="text-amber-300 font-mono">Bookings</code> & <code class="text-amber-300 font-mono">Payments</code></p>
+          <h1 class="text-2xl sm:text-3xl font-extrabold text-[#001B48]">My Bookings</h1>
+          <p class="text-xs text-gray-500 mt-0.5">View your flight reservations, manage tickets, or cancel eligible bookings.</p>
         </div>
-        <button onclick="switchView('landing')" class="px-4 py-2 text-xs font-semibold rounded-lg bg-amber-500 text-slate-950 hover:bg-amber-400 transition">
-          + Book Another Flight
+        <button onclick="switchView('landing')" class="text-xs font-semibold px-4 py-2 rounded-lg bg-[#0052CC] text-white hover:bg-[#0043A8] transition">
+          + Book New Flight
         </button>
       </div>
 
-      <!-- Passenger Profile Summary Banner -->
-      <div id="passenger-profile-card" class="glass-card rounded-xl p-4 flex flex-wrap items-center justify-between gap-4">
-        <div class="flex items-center gap-3">
-          <div class="w-12 h-12 rounded-full bg-slate-800 border border-amber-500/40 flex items-center justify-center text-xl">👤</div>
+      <!-- Passenger Profile Card -->
+      <div class="bg-white rounded-xl border border-gray-200 p-5 flex flex-wrap items-center justify-between gap-4 shadow-sm">
+        <div class="flex items-center gap-3.5">
+          <div class="w-11 h-11 rounded-full bg-blue-50 text-[#0052CC] flex items-center justify-center font-bold text-lg border border-blue-100">
+            👤
+          </div>
           <div>
-            <h3 id="my-profile-name" class="font-bold text-white text-base">Passenger Name</h3>
-            <p id="my-profile-email" class="text-xs text-gray-400">passenger@example.com</p>
+            <h3 id="my-profile-name" class="font-bold text-gray-900 text-base">Passenger Name</h3>
+            <p id="my-profile-email" class="text-xs text-gray-500">passenger@example.com</p>
           </div>
         </div>
-        <div class="flex items-center gap-6 text-xs text-gray-300">
-          <div><span class="text-gray-500 block">Phone:</span> <span id="my-profile-phone" class="font-mono text-white">—</span></div>
-          <div><span class="text-gray-500 block">Meal Choice:</span> <span id="my-profile-meal" class="font-medium text-amber-300">—</span></div>
-          <div><span class="text-gray-500 block">Seat Preference:</span> <span id="my-profile-seat" class="font-medium text-amber-300">—</span></div>
+
+        <div class="flex items-center gap-6 text-xs text-gray-600">
+          <div><span class="text-gray-400 block font-medium">Contact Phone</span> <span id="my-profile-phone" class="font-semibold text-gray-800">—</span></div>
+          <div><span class="text-gray-400 block font-medium">Meal Choice</span> <span id="my-profile-meal" class="font-semibold text-gray-800">—</span></div>
+          <div><span class="text-gray-400 block font-medium">Seat Choice</span> <span id="my-profile-seat" class="font-semibold text-gray-800">—</span></div>
         </div>
       </div>
 
-      <!-- Bookings List Container -->
-      <div id="my-bookings-container" class="space-y-4">
-        <div class="text-center py-12 text-gray-500">Loading your reservations...</div>
+      <!-- Reservations List -->
+      <div id="my-bookings-container" class="space-y-3">
+        <div class="text-center py-12 text-gray-400">Loading your reservations...</div>
       </div>
     </section>
 
@@ -280,131 +305,123 @@
     <section id="view-admin-dashboard" class="hidden space-y-6 animate-fadeIn">
       
       <!-- Admin Header with Materialized View Trigger -->
-      <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-white/10 pb-4">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-gray-200 pb-4">
         <div>
-          <div class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded text-[10px] font-bold uppercase bg-red-950 text-red-300 border border-red-800/40 mb-1">
+          <div class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded text-[10px] font-bold uppercase bg-blue-100 text-[#0052CC] mb-1">
             <span>🛡️</span> Security Clearance: <span id="admin-role-title">SUPER_ADMIN</span>
           </div>
-          <h1 class="text-2xl md:text-3xl font-display font-bold text-white">Operations & Revenue Analytics</h1>
-          <p class="text-xs text-gray-400">Real-time analytical metrics powered by Oracle 23ai Analytic Functions & Materialized Views</p>
+          <h1 class="text-2xl sm:text-3xl font-extrabold text-[#001B48]">Operations & Revenue Analytics</h1>
+          <p class="text-xs text-gray-500">Fleet analytics and performance reports powered by Oracle 23ai Analytic Functions.</p>
         </div>
 
-        <div class="flex items-center gap-3">
-          <button onclick="triggerMvRefresh()" id="btn-refresh-mv" class="px-4 py-2 text-xs font-semibold rounded-lg bg-slate-800 hover:bg-slate-700 text-amber-300 border border-amber-500/30 flex items-center gap-2 transition">
+        <div class="flex items-center gap-2">
+          <button onclick="triggerMvRefresh()" id="btn-refresh-mv" class="px-4 py-2 text-xs font-semibold rounded-lg bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 hover:border-gray-400 flex items-center gap-1.5 transition shadow-sm">
             <span>⚡</span> Refresh Materialized View
           </button>
-          <button onclick="loadAdminAnalytics()" class="px-3 py-2 text-xs font-semibold rounded-lg bg-slate-800 hover:bg-slate-700 text-gray-300 transition">
-            🔄 Reload Data
+          <button onclick="loadAdminAnalytics()" class="px-3 py-2 text-xs font-semibold rounded-lg bg-[#0052CC] text-white hover:bg-[#0043A8] transition shadow-sm">
+            🔄 Reload
           </button>
         </div>
       </div>
 
-      <!-- System KPI Cards Grid -->
-      <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3">
-        <div class="glass-card rounded-xl p-3.5 border-l-4 border-amber-500">
-          <span class="text-[10px] uppercase tracking-wider text-gray-400 font-semibold block">Total Bookings</span>
-          <span id="kpi-total-bookings" class="text-xl font-bold text-white font-mono">—</span>
+      <!-- KPI Cards Grid (Clean White Style) -->
+      <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+        <div class="bg-white rounded-xl border border-gray-200 p-4 shadow-sm">
+          <span class="text-[11px] uppercase tracking-wider text-gray-500 font-semibold block">Total Bookings</span>
+          <span id="kpi-total-bookings" class="text-2xl font-extrabold text-gray-900 mt-1 block">—</span>
         </div>
-        <div class="glass-card rounded-xl p-3.5 border-l-4 border-emerald-500">
-          <span class="text-[10px] uppercase tracking-wider text-gray-400 font-semibold block">Confirmed</span>
-          <span id="kpi-confirmed-bookings" class="text-xl font-bold text-emerald-400 font-mono">—</span>
+        <div class="bg-white rounded-xl border border-gray-200 p-4 shadow-sm">
+          <span class="text-[11px] uppercase tracking-wider text-gray-500 font-semibold block">Confirmed</span>
+          <span id="kpi-confirmed-bookings" class="text-2xl font-extrabold text-emerald-600 mt-1 block">—</span>
         </div>
-        <div class="glass-card rounded-xl p-3.5 border-l-4 border-rose-500">
-          <span class="text-[10px] uppercase tracking-wider text-gray-400 font-semibold block">Cancelled</span>
-          <span id="kpi-cancelled-bookings" class="text-xl font-bold text-rose-400 font-mono">—</span>
+        <div class="bg-white rounded-xl border border-gray-200 p-4 shadow-sm">
+          <span class="text-[11px] uppercase tracking-wider text-gray-500 font-semibold block">Cancelled</span>
+          <span id="kpi-cancelled-bookings" class="text-2xl font-extrabold text-rose-600 mt-1 block">—</span>
         </div>
-        <div class="glass-card rounded-xl p-3.5 border-l-4 border-amber-400 col-span-2">
-          <span class="text-[10px] uppercase tracking-wider text-gray-400 font-semibold block">Total Revenue (INR)</span>
-          <span id="kpi-total-revenue" class="text-xl font-bold text-amber-300 font-mono">—</span>
+        <div class="bg-white rounded-xl border border-gray-200 p-4 shadow-sm col-span-2">
+          <span class="text-[11px] uppercase tracking-wider text-gray-500 font-semibold block">Total Realized Revenue</span>
+          <span id="kpi-total-revenue" class="text-2xl font-extrabold text-[#0052CC] mt-1 block">—</span>
         </div>
-        <div class="glass-card rounded-xl p-3.5 border-l-4 border-blue-500">
-          <span class="text-[10px] uppercase tracking-wider text-gray-400 font-semibold block">Passengers</span>
-          <span id="kpi-total-passengers" class="text-xl font-bold text-blue-300 font-mono">—</span>
-        </div>
-        <div class="glass-card rounded-xl p-3.5 border-l-4 border-purple-500">
-          <span class="text-[10px] uppercase tracking-wider text-gray-400 font-semibold block">Active Routes</span>
-          <span id="kpi-active-routes" class="text-xl font-bold text-purple-300 font-mono">—</span>
+        <div class="bg-white rounded-xl border border-gray-200 p-4 shadow-sm">
+          <span class="text-[11px] uppercase tracking-wider text-gray-500 font-semibold block">Passengers</span>
+          <span id="kpi-total-passengers" class="text-2xl font-extrabold text-gray-900 mt-1 block">—</span>
         </div>
       </div>
 
-      <!-- SQL Transparency Box for KPIs -->
-      <details class="glass-card rounded-xl p-3 group">
-        <summary class="text-xs font-semibold text-amber-300 flex items-center justify-between cursor-pointer">
-          <span class="flex items-center gap-1.5">🔍 View SQL: System-Wide Operations KPIs (Single-Pass Aggregation)</span>
-          <span class="text-gray-500 group-open:rotate-180 transition">▼</span>
+      <!-- View SQL Drawer: KPIs -->
+      <details class="bg-white rounded-xl border border-gray-200 p-3.5 shadow-sm">
+        <summary class="text-xs font-bold text-[#0052CC] flex items-center justify-between cursor-pointer">
+          <span>🔍 View SQL: System-Wide Operations KPIs (Single-Pass Aggregation)</span>
+          <span class="text-gray-400">▼</span>
         </summary>
-        <div class="mt-3">
-          <pre id="sql-kpis" class="sql-code-box overflow-x-auto"></pre>
-        </div>
+        <pre id="sql-kpis" class="sql-code-box mt-3 overflow-x-auto"></pre>
       </details>
 
-      <!-- Charts Grid 1: Route Rankings & Day-over-Day Trends -->
+      <!-- Charts Grid 1 -->
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        
-        <!-- Chart 1: Route Ranking (RANK() OVER) -->
-        <div class="glass-card rounded-2xl p-5 space-y-3">
+        <!-- Chart 1: Route Ranking -->
+        <div class="bg-white rounded-xl border border-gray-200 p-5 shadow-sm space-y-3">
           <div class="flex items-center justify-between">
             <div>
-              <h3 class="font-display font-bold text-white text-base">Route Performance Ranking</h3>
-              <p class="text-xs text-gray-400">Ranked using Oracle Analytic <code class="text-amber-300">RANK() OVER (ORDER BY revenue DESC)</code></p>
+              <h3 class="font-bold text-gray-900 text-base">Route Performance Ranking</h3>
+              <p class="text-xs text-gray-500">Calculated via Oracle <code class="text-blue-600 font-mono">RANK() OVER (ORDER BY revenue DESC)</code></p>
             </div>
-            <span class="text-xs px-2 py-0.5 rounded bg-blue-500/20 text-blue-300 font-mono">RANK() OVER</span>
+            <span class="text-xs px-2 py-0.5 rounded bg-blue-100 text-blue-700 font-mono font-semibold">RANK() OVER</span>
           </div>
           <div id="chart-route-ranking" class="h-64 w-full"></div>
-          <details class="glass-card rounded-lg p-2.5">
-            <summary class="text-xs font-semibold text-amber-300 cursor-pointer">🔍 View SQL: Route Ranking Query</summary>
+          <details class="bg-gray-50 rounded-lg p-2.5 border border-gray-200">
+            <summary class="text-xs font-bold text-[#0052CC] cursor-pointer">🔍 View SQL: Route Ranking Query</summary>
             <pre id="sql-route-ranking" class="sql-code-box mt-2 overflow-x-auto"></pre>
           </details>
         </div>
 
-        <!-- Chart 2: Day-over-Day Growth (LAG()) -->
-        <div class="glass-card rounded-2xl p-5 space-y-3">
+        <!-- Chart 2: Day-over-Day Trends -->
+        <div class="bg-white rounded-xl border border-gray-200 p-5 shadow-sm space-y-3">
           <div class="flex items-center justify-between">
             <div>
-              <h3 class="font-display font-bold text-white text-base">Day-over-Day Revenue Trend</h3>
-              <p class="text-xs text-gray-400">Variance analysis computed via Oracle Analytic <code class="text-amber-300">LAG()</code></p>
+              <h3 class="font-bold text-gray-900 text-base">Day-over-Day Revenue Growth</h3>
+              <p class="text-xs text-gray-500">Variance analysis computed via Oracle <code class="text-blue-600 font-mono">LAG()</code></p>
             </div>
-            <span class="text-xs px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-mono">LAG()</span>
+            <span class="text-xs px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 font-mono font-semibold">LAG()</span>
           </div>
           <div id="chart-day-over-day" class="h-64 w-full"></div>
-          <details class="glass-card rounded-lg p-2.5">
-            <summary class="text-xs font-semibold text-amber-300 cursor-pointer">🔍 View SQL: Day-over-Day Growth Query</summary>
+          <details class="bg-gray-50 rounded-lg p-2.5 border border-gray-200">
+            <summary class="text-xs font-bold text-[#0052CC] cursor-pointer">🔍 View SQL: Day-over-Day Variance Query</summary>
             <pre id="sql-day-over-day" class="sql-code-box mt-2 overflow-x-auto"></pre>
           </details>
         </div>
       </div>
 
-      <!-- Charts Grid 2: Cumulative Revenue & Meal Preferences -->
+      <!-- Charts Grid 2 -->
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        
-        <!-- Chart 3: Cumulative Running Total (SUM() OVER) -->
-        <div class="glass-card rounded-2xl p-5 space-y-3">
+        <!-- Chart 3: Cumulative Total -->
+        <div class="bg-white rounded-xl border border-gray-200 p-5 shadow-sm space-y-3">
           <div class="flex items-center justify-between">
             <div>
-              <h3 class="font-display font-bold text-white text-base">Cumulative Realized Revenue</h3>
-              <p class="text-xs text-gray-400">Running total via <code class="text-amber-300">SUM() OVER (ROWS UNBOUNDED PRECEDING)</code></p>
+              <h3 class="font-bold text-gray-900 text-base">Cumulative Realized Revenue</h3>
+              <p class="text-xs text-gray-500">Running total via <code class="text-blue-600 font-mono">SUM() OVER (ROWS UNBOUNDED PRECEDING)</code></p>
             </div>
-            <span class="text-xs px-2 py-0.5 rounded bg-purple-500/20 text-purple-300 font-mono">SUM() OVER</span>
+            <span class="text-xs px-2 py-0.5 rounded bg-purple-100 text-purple-700 font-mono font-semibold">SUM() OVER</span>
           </div>
           <div id="chart-cumulative-revenue" class="h-64 w-full"></div>
-          <details class="glass-card rounded-lg p-2.5">
-            <summary class="text-xs font-semibold text-amber-300 cursor-pointer">🔍 View SQL: Cumulative Total Query</summary>
+          <details class="bg-gray-50 rounded-lg p-2.5 border border-gray-200">
+            <summary class="text-xs font-bold text-[#0052CC] cursor-pointer">🔍 View SQL: Running Total Query</summary>
             <pre id="sql-cumulative-revenue" class="sql-code-box mt-2 overflow-x-auto"></pre>
           </details>
         </div>
 
-        <!-- Chart 4: Meal Preferences (JSON_VALUE) -->
-        <div class="glass-card rounded-2xl p-5 space-y-3">
+        <!-- Chart 4: Meal Preferences -->
+        <div class="bg-white rounded-xl border border-gray-200 p-5 shadow-sm space-y-3">
           <div class="flex items-center justify-between">
             <div>
-              <h3 class="font-display font-bold text-white text-base">Passenger Preferences Breakdown</h3>
-              <p class="text-xs text-gray-400">Extracted from JSON documents via <code class="text-amber-300">JSON_VALUE(preferences, '$.meal')</code></p>
+              <h3 class="font-bold text-gray-900 text-base">Passenger Preferences Breakdown</h3>
+              <p class="text-xs text-gray-500">Extracted from JSON documents via <code class="text-blue-600 font-mono">JSON_VALUE(preferences, '$.meal')</code></p>
             </div>
-            <span class="text-xs px-2 py-0.5 rounded bg-rose-500/20 text-rose-300 font-mono">JSON_VALUE</span>
+            <span class="text-xs px-2 py-0.5 rounded bg-rose-100 text-rose-700 font-mono font-semibold">JSON_VALUE</span>
           </div>
           <div id="chart-meal-preferences" class="h-64 w-full"></div>
-          <details class="glass-card rounded-lg p-2.5">
-            <summary class="text-xs font-semibold text-amber-300 cursor-pointer">🔍 View SQL: JSON_VALUE Extraction Query</summary>
+          <details class="bg-gray-50 rounded-lg p-2.5 border border-gray-200">
+            <summary class="text-xs font-bold text-[#0052CC] cursor-pointer">🔍 View SQL: JSON Document Query</summary>
             <pre id="sql-meal-preferences" class="sql-code-box mt-2 overflow-x-auto"></pre>
           </details>
         </div>
@@ -415,204 +432,222 @@
     <!-- VIEW 4: ADMINISTRATOR FLEET & RECORD MANAGEMENT (CRUD)       -->
     <!-- ============================================================ -->
     <section id="view-admin-crud" class="hidden space-y-6 animate-fadeIn">
-      <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-white/10 pb-4">
+      
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-gray-200 pb-4">
         <div>
-          <h1 class="text-2xl md:text-3xl font-display font-bold text-white">Fleet & Record Management</h1>
-          <p class="text-xs text-gray-400">Direct transactional CRUD management for Airports, Flights, Passengers, Bookings, and Payments</p>
+          <h1 class="text-2xl sm:text-3xl font-extrabold text-[#001B48]">Fleet & Record Management</h1>
+          <p class="text-xs text-gray-500">Transactional record management across Airports, Flights, Passengers, Bookings, and Payments.</p>
         </div>
-        <div id="crud-action-buttons" class="flex items-center gap-2">
-          <!-- Dynamically switches based on active tab -->
+        <div id="crud-action-buttons">
+          <!-- Dynamically populated based on active subtab -->
         </div>
       </div>
 
       <!-- Management Sub-Tabs -->
-      <div class="flex items-center gap-2 border-b border-slate-700/80 overflow-x-auto pb-2">
-        <button onclick="switchCrudTab('airports')" id="tab-btn-airports" class="px-4 py-2 text-xs font-semibold rounded-lg bg-amber-500 text-slate-950 transition">
-          🏢 Airports (10)
+      <div class="flex items-center gap-2 border-b border-gray-200 overflow-x-auto pb-2">
+        <button onclick="switchCrudTab('airports')" id="tab-btn-airports" class="px-4 py-2 text-xs font-bold rounded-lg bg-[#0052CC] text-white transition">
+          Airports
         </button>
-        <button onclick="switchCrudTab('flights')" id="tab-btn-flights" class="px-4 py-2 text-xs font-semibold rounded-lg bg-slate-800 text-gray-300 hover:text-white transition">
-          ✈️ Flights (20)
+        <button onclick="switchCrudTab('flights')" id="tab-btn-flights" class="px-4 py-2 text-xs font-bold rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition">
+          Flights
         </button>
-        <button onclick="switchCrudTab('passengers')" id="tab-btn-passengers" class="px-4 py-2 text-xs font-semibold rounded-lg bg-slate-800 text-gray-300 hover:text-white transition">
-          👤 Passengers (60)
+        <button onclick="switchCrudTab('passengers')" id="tab-btn-passengers" class="px-4 py-2 text-xs font-bold rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition">
+          Passengers
         </button>
-        <button onclick="switchCrudTab('bookings')" id="tab-btn-bookings" class="px-4 py-2 text-xs font-semibold rounded-lg bg-slate-800 text-gray-300 hover:text-white transition">
-          📋 Bookings (300+)
+        <button onclick="switchCrudTab('bookings')" id="tab-btn-bookings" class="px-4 py-2 text-xs font-bold rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition">
+          Bookings
         </button>
-        <button onclick="switchCrudTab('payments')" id="tab-btn-payments" class="px-4 py-2 text-xs font-semibold rounded-lg bg-slate-800 text-gray-300 hover:text-white transition">
-          💳 Payments Audit
+        <button onclick="switchCrudTab('payments')" id="tab-btn-payments" class="px-4 py-2 text-xs font-bold rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition">
+          Payments Audit
         </button>
       </div>
 
-      <!-- Tab Content Area -->
-      <div id="crud-table-container" class="glass-card rounded-2xl p-4 overflow-x-auto">
-        <div class="text-center py-12 text-gray-500">Loading records from Oracle...</div>
+      <!-- Table Container -->
+      <div id="crud-table-container" class="bg-white rounded-xl border border-gray-200 p-4 shadow-sm overflow-x-auto">
+        <div class="text-center py-12 text-gray-400">Loading records...</div>
       </div>
     </section>
 
   </main>
 
   <!-- ============================================================== -->
-  <!-- MODALS SECTION                                                 -->
+  <!-- 3. CLEAN FOOTER WITH SUBTLE ADMIN ACCESS                       -->
+  <!-- ============================================================== -->
+  <footer class="mt-auto bg-white border-t border-gray-200 py-6 text-xs text-gray-500">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4">
+      <div class="flex items-center gap-2">
+        <span class="font-bold text-[#001B48]">AZ Airlines</span>
+        <span>•</span>
+        <span>Domestic & International Air Carrier</span>
+      </div>
+      <div class="flex items-center gap-4">
+        <span>© 2026 AZ Airlines Ltd. All Rights Reserved.</span>
+        <span>•</span>
+        <button onclick="openModal('modal-admin-login')" class="text-gray-400 hover:text-gray-700 transition">
+          Staff Portal
+        </button>
+      </div>
+    </div>
+  </footer>
+
+  <!-- ============================================================== -->
+  <!-- 4. CLEAN WHITE MODALS                                          -->
   <!-- ============================================================== -->
 
   <!-- Modal: Passenger Sign In -->
-  <div id="modal-passenger-login" class="hidden fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
-    <div class="glass-card-gold rounded-2xl max-w-md w-full p-6 space-y-4">
-      <div class="flex items-center justify-between border-b border-white/10 pb-3">
-        <h3 class="text-lg font-display font-bold text-white flex items-center gap-2"><span>👤</span> Passenger Sign In</h3>
-        <button onclick="closeModal('modal-passenger-login')" class="text-gray-400 hover:text-white text-lg">✕</button>
+  <div id="modal-passenger-login" class="hidden fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4">
+    <div class="bg-white rounded-xl border border-gray-200 shadow-xl max-w-md w-full p-6 space-y-4">
+      <div class="flex items-center justify-between border-b border-gray-100 pb-3">
+        <h3 class="text-lg font-bold text-[#001B48]">Passenger Sign In</h3>
+        <button onclick="closeModal('modal-passenger-login')" class="text-gray-400 hover:text-gray-600 text-lg">✕</button>
       </div>
       <form onsubmit="handlePassengerLogin(event)" class="space-y-4 text-sm">
         <div>
-          <label class="block text-xs font-medium text-gray-300 mb-1">Email Address</label>
-          <input type="email" id="login-email" required placeholder="e.g. john@example.com" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-white focus:outline-none focus:border-amber-400">
+          <label class="block text-xs font-semibold text-gray-700 mb-1">Email Address</label>
+          <input type="email" id="login-email" required placeholder="name@example.com" class="w-full bg-white border border-gray-300 rounded-lg p-2.5 text-gray-900 focus:outline-none focus:border-[#0052CC] focus:ring-1 focus:ring-[#0052CC]">
         </div>
         <div>
-          <label class="block text-xs font-medium text-gray-300 mb-1">Password</label>
-          <input type="password" id="login-password" required placeholder="••••••••" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-white focus:outline-none focus:border-amber-400">
+          <label class="block text-xs font-semibold text-gray-700 mb-1">Password</label>
+          <input type="password" id="login-password" required placeholder="••••••••" class="w-full bg-white border border-gray-300 rounded-lg p-2.5 text-gray-900 focus:outline-none focus:border-[#0052CC] focus:ring-1 focus:ring-[#0052CC]">
         </div>
-        <button type="submit" class="w-full bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-bold p-2.5 rounded-lg transition shadow-lg shadow-amber-600/20">
+        <button type="submit" class="w-full bg-[#0052CC] hover:bg-[#0043A8] text-white font-bold p-2.5 rounded-lg transition shadow-sm">
           Sign In
         </button>
       </form>
-      <div class="text-xs text-center text-gray-400 pt-2 border-t border-white/5 space-y-1">
-        <p>Don't have an account? <a href="#" onclick="closeModal('modal-passenger-login'); openModal('modal-passenger-register')" class="text-amber-400 hover:underline">Register New Passenger</a></p>
-        <p>Seeded Passenger? <a href="#" onclick="closeModal('modal-passenger-login'); openModal('modal-claim')" class="text-amber-400 hover:underline">Claim with Activation Code</a></p>
+      <div class="text-xs text-center text-gray-500 pt-3 border-t border-gray-100 space-y-1">
+        <p>New to AZ Airlines? <a href="#" onclick="closeModal('modal-passenger-login'); openModal('modal-passenger-register')" class="text-[#0052CC] font-semibold hover:underline">Register here</a></p>
+        <p>Already a registered member? <a href="#" onclick="closeModal('modal-passenger-login'); openModal('modal-claim')" class="text-[#0052CC] font-semibold hover:underline">Claim with Activation Code</a></p>
       </div>
     </div>
   </div>
 
   <!-- Modal: Passenger Registration -->
-  <div id="modal-passenger-register" class="hidden fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
-    <div class="glass-card-gold rounded-2xl max-w-md w-full p-6 space-y-4">
-      <div class="flex items-center justify-between border-b border-white/10 pb-3">
-        <h3 class="text-lg font-display font-bold text-white flex items-center gap-2"><span>✨</span> Register Passenger Account</h3>
-        <button onclick="closeModal('modal-passenger-register')" class="text-gray-400 hover:text-white text-lg">✕</button>
+  <div id="modal-passenger-register" class="hidden fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4">
+    <div class="bg-white rounded-xl border border-gray-200 shadow-xl max-w-md w-full p-6 space-y-4">
+      <div class="flex items-center justify-between border-b border-gray-100 pb-3">
+        <h3 class="text-lg font-bold text-[#001B48]">Create Passenger Account</h3>
+        <button onclick="closeModal('modal-passenger-register')" class="text-gray-400 hover:text-gray-600 text-lg">✕</button>
       </div>
       <form onsubmit="handlePassengerRegister(event)" class="space-y-3 text-sm">
         <div>
-          <label class="block text-xs font-medium text-gray-300 mb-1">Full Name</label>
-          <input type="text" id="reg-name" required placeholder="e.g. Maya Sharma" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-white focus:outline-none focus:border-amber-400">
+          <label class="block text-xs font-semibold text-gray-700 mb-1">Full Name</label>
+          <input type="text" id="reg-name" required placeholder="e.g. Maya Sharma" class="w-full bg-white border border-gray-300 rounded-lg p-2.5 text-gray-900 focus:outline-none focus:border-[#0052CC]">
         </div>
         <div>
-          <label class="block text-xs font-medium text-gray-300 mb-1">Email Address</label>
-          <input type="email" id="reg-email" required placeholder="e.g. maya@example.com" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-white focus:outline-none focus:border-amber-400">
+          <label class="block text-xs font-semibold text-gray-700 mb-1">Email Address</label>
+          <input type="email" id="reg-email" required placeholder="e.g. maya@example.com" class="w-full bg-white border border-gray-300 rounded-lg p-2.5 text-gray-900 focus:outline-none focus:border-[#0052CC]">
         </div>
         <div>
-          <label class="block text-xs font-medium text-gray-300 mb-1">Phone Number</label>
-          <input type="text" id="reg-phone" required placeholder="e.g. +91 9876543210" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-white focus:outline-none focus:border-amber-400">
+          <label class="block text-xs font-semibold text-gray-700 mb-1">Phone Number (Max 15 Chars)</label>
+          <input type="text" id="reg-phone" required maxlength="15" placeholder="e.g. +919876543210" class="w-full bg-white border border-gray-300 rounded-lg p-2.5 text-gray-900 focus:outline-none focus:border-[#0052CC]">
         </div>
         <div>
-          <label class="block text-xs font-medium text-gray-300 mb-1">Password (Min 8 Characters)</label>
-          <input type="password" id="reg-password" required minlength="8" placeholder="••••••••" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-white focus:outline-none focus:border-amber-400">
+          <label class="block text-xs font-semibold text-gray-700 mb-1">Password (Min 8 Characters)</label>
+          <input type="password" id="reg-password" required minlength="8" placeholder="••••••••" class="w-full bg-white border border-gray-300 rounded-lg p-2.5 text-gray-900 focus:outline-none focus:border-[#0052CC]">
         </div>
         <div class="grid grid-cols-2 gap-2">
           <div>
-            <label class="block text-xs font-medium text-gray-300 mb-1">Meal Preference</label>
-            <select id="reg-meal" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-white focus:outline-none">
+            <label class="block text-xs font-semibold text-gray-700 mb-1">Meal Preference</label>
+            <select id="reg-meal" class="w-full bg-white border border-gray-300 rounded-lg p-2 text-xs text-gray-800">
               <option value="Vegetarian">Vegetarian</option>
-              <option value="Standard">Standard Non-Veg</option>
+              <option value="Standard">Standard</option>
               <option value="Vegan">Vegan</option>
               <option value="Halal">Halal</option>
-              <option value="Kosher">Kosher</option>
             </select>
           </div>
           <div>
-            <label class="block text-xs font-medium text-gray-300 mb-1">Seat Preference</label>
-            <select id="reg-seat" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-white focus:outline-none">
+            <label class="block text-xs font-semibold text-gray-700 mb-1">Seat Preference</label>
+            <select id="reg-seat" class="w-full bg-white border border-gray-300 rounded-lg p-2 text-xs text-gray-800">
               <option value="Aisle">Aisle</option>
               <option value="Window">Window</option>
               <option value="Middle">Middle</option>
             </select>
           </div>
         </div>
-        <button type="submit" class="w-full bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-bold p-2.5 rounded-lg transition shadow-lg shadow-amber-600/20 mt-2">
-          Create Account (Allocates PASSENGER_SEQ)
+        <button type="submit" class="w-full bg-[#0052CC] hover:bg-[#0043A8] text-white font-bold p-2.5 rounded-lg transition shadow-sm mt-2">
+          Create Account
         </button>
       </form>
     </div>
   </div>
 
-  <!-- Modal: Claim Existing Seeded Account -->
-  <div id="modal-claim" class="hidden fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
-    <div class="glass-card-gold rounded-2xl max-w-md w-full p-6 space-y-4">
-      <div class="flex items-center justify-between border-b border-white/10 pb-3">
-        <h3 class="text-lg font-display font-bold text-white flex items-center gap-2"><span>🔑</span> Claim Existing Account</h3>
-        <button onclick="closeModal('modal-claim')" class="text-gray-400 hover:text-white text-lg">✕</button>
+  <!-- Modal: Claim Existing Account -->
+  <div id="modal-claim" class="hidden fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4">
+    <div class="bg-white rounded-xl border border-gray-200 shadow-xl max-w-md w-full p-6 space-y-4">
+      <div class="flex items-center justify-between border-b border-gray-100 pb-3">
+        <h3 class="text-lg font-bold text-[#001B48]">Claim Existing Passenger ID</h3>
+        <button onclick="closeModal('modal-claim')" class="text-gray-400 hover:text-gray-600 text-lg">✕</button>
       </div>
-      <p class="text-xs text-gray-300">
-        If you are one of the original 60 passengers, an administrator can generate your secure single-use activation code.
+      <p class="text-xs text-gray-600">
+        Enter your Passenger ID and the one-time activation code provided by an airline operations manager.
       </p>
       <form onsubmit="handleClaimAccount(event)" class="space-y-3 text-sm">
         <div>
-          <label class="block text-xs font-medium text-gray-300 mb-1">Passenger ID</label>
-          <input type="number" id="claim-pid" required placeholder="e.g. 1" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-white focus:outline-none focus:border-amber-400">
+          <label class="block text-xs font-semibold text-gray-700 mb-1">Passenger ID</label>
+          <input type="number" id="claim-pid" required placeholder="e.g. 1" class="w-full bg-white border border-gray-300 rounded-lg p-2.5 text-gray-900 focus:outline-none focus:border-[#0052CC]">
         </div>
         <div>
-          <label class="block text-xs font-medium text-gray-300 mb-1">Activation Code</label>
-          <input type="text" id="claim-token" required placeholder="32-byte high-entropy token from admin" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-white font-mono text-xs focus:outline-none focus:border-amber-400">
+          <label class="block text-xs font-semibold text-gray-700 mb-1">Activation Code</label>
+          <input type="text" id="claim-token" required placeholder="Paste your activation code here" class="w-full bg-white border border-gray-300 rounded-lg p-2.5 text-gray-900 font-mono text-xs focus:outline-none focus:border-[#0052CC]">
         </div>
         <div>
-          <label class="block text-xs font-medium text-gray-300 mb-1">Create New Password</label>
-          <input type="password" id="claim-password" required minlength="8" placeholder="••••••••" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-white focus:outline-none focus:border-amber-400">
+          <label class="block text-xs font-semibold text-gray-700 mb-1">Set Password (Min 8 Characters)</label>
+          <input type="password" id="claim-password" required minlength="8" placeholder="••••••••" class="w-full bg-white border border-gray-300 rounded-lg p-2.5 text-gray-900 focus:outline-none focus:border-[#0052CC]">
         </div>
-        <button type="submit" class="w-full bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-bold p-2.5 rounded-lg transition shadow-lg shadow-amber-600/20 mt-2">
-          Verify Code & Activate Account
+        <button type="submit" class="w-full bg-[#0052CC] hover:bg-[#0043A8] text-white font-bold p-2.5 rounded-lg transition shadow-sm mt-2">
+          Activate Account
         </button>
       </form>
     </div>
   </div>
 
-  <!-- Modal: Administrator Login -->
-  <div id="modal-admin-login" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-    <div class="glass-card rounded-2xl max-w-md w-full p-6 space-y-4 border border-red-500/30">
-      <div class="flex items-center justify-between border-b border-white/10 pb-3">
-        <h3 class="text-lg font-display font-bold text-white flex items-center gap-2"><span class="text-red-400">🛡️</span> Administrator Sign In</h3>
-        <button onclick="closeModal('modal-admin-login')" class="text-gray-400 hover:text-white text-lg">✕</button>
+  <!-- Modal: Administrator Staff Login -->
+  <div id="modal-admin-login" class="hidden fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4">
+    <div class="bg-white rounded-xl border border-gray-200 shadow-xl max-w-md w-full p-6 space-y-4">
+      <div class="flex items-center justify-between border-b border-gray-100 pb-3">
+        <h3 class="text-lg font-bold text-[#001B48]">Staff & Operations Sign In</h3>
+        <button onclick="closeModal('modal-admin-login')" class="text-gray-400 hover:text-gray-600 text-lg">✕</button>
       </div>
       <form onsubmit="handleAdminLogin(event)" class="space-y-4 text-sm">
         <div>
-          <label class="block text-xs font-medium text-gray-300 mb-1">Admin Username or Email</label>
-          <input type="text" id="admin-login-username" required placeholder="e.g. admin" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-white focus:outline-none focus:border-red-400">
+          <label class="block text-xs font-semibold text-gray-700 mb-1">Staff Username or Email</label>
+          <input type="text" id="admin-login-username" required placeholder="e.g. admin" class="w-full bg-white border border-gray-300 rounded-lg p-2.5 text-gray-900 focus:outline-none focus:border-[#0052CC]">
         </div>
         <div>
-          <label class="block text-xs font-medium text-gray-300 mb-1">Password</label>
-          <input type="password" id="admin-login-password" required placeholder="••••••••" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-white focus:outline-none focus:border-red-400">
+          <label class="block text-xs font-semibold text-gray-700 mb-1">Password</label>
+          <input type="password" id="admin-login-password" required placeholder="••••••••" class="w-full bg-white border border-gray-300 rounded-lg p-2.5 text-gray-900 focus:outline-none focus:border-[#0052CC]">
         </div>
-        <button type="submit" class="w-full bg-gradient-to-r from-red-600 to-rose-700 hover:from-red-500 hover:to-rose-600 text-white font-bold p-2.5 rounded-lg transition shadow-lg shadow-red-900/40">
-          Authenticate with ADMIN_USERS
+        <button type="submit" class="w-full bg-[#001B48] hover:bg-[#00112C] text-white font-bold p-2.5 rounded-lg transition shadow-sm">
+          Access Operations Portal
         </button>
       </form>
-      <p class="text-[11px] text-gray-500 text-center">
-        Zero hardcoded passwords. Credentials verified against Argon2id hash in Oracle.
-      </p>
     </div>
   </div>
 
-  <!-- Modal: Multi-Step Flight Booking & Payment -->
-  <div id="modal-booking-checkout" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-    <div class="glass-card-gold rounded-2xl max-w-lg w-full p-6 space-y-4">
-      <div class="flex items-center justify-between border-b border-white/10 pb-3">
+  <!-- Modal: Flight Booking & Payment Checkout -->
+  <div id="modal-booking-checkout" class="hidden fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4">
+    <div class="bg-white rounded-xl border border-gray-200 shadow-2xl max-w-lg w-full p-6 space-y-4">
+      <div class="flex items-center justify-between border-b border-gray-100 pb-3">
         <div>
-          <h3 class="text-lg font-display font-bold text-white flex items-center gap-2"><span>🎫</span> Flight Reservation Checkout</h3>
-          <span class="text-xs text-amber-300 font-mono" id="checkout-flight-no">Flight AI101</span>
+          <h3 class="text-lg font-bold text-[#001B48]">Flight Booking Confirmation</h3>
+          <span class="text-xs text-blue-600 font-mono font-semibold" id="checkout-flight-no">Flight AZ-101</span>
         </div>
-        <button onclick="closeModal('modal-booking-checkout')" class="text-gray-400 hover:text-white text-lg">✕</button>
+        <button onclick="closeModal('modal-booking-checkout')" class="text-gray-400 hover:text-gray-600 text-lg">✕</button>
       </div>
 
-      <div class="bg-slate-900/80 rounded-xl p-4 border border-white/5 space-y-2 text-xs">
-        <div class="flex justify-between text-gray-400">
+      <!-- Itinerary Summary Box -->
+      <div class="bg-gray-50 rounded-lg p-4 border border-gray-200 space-y-2 text-xs">
+        <div class="flex justify-between text-gray-600">
           <span>Route:</span>
-          <span class="text-white font-semibold" id="checkout-route">Chennai (MAA) → Delhi (DEL)</span>
+          <span class="text-gray-900 font-bold" id="checkout-route">Chennai (MAA) → Delhi (DEL)</span>
         </div>
-        <div class="flex justify-between text-gray-400">
+        <div class="flex justify-between text-gray-600">
           <span>Departure:</span>
-          <span class="text-white font-mono" id="checkout-dep">2026-11-01 06:30</span>
+          <span class="text-gray-900 font-semibold" id="checkout-dep">2026-11-05 06:30</span>
         </div>
-        <div class="flex justify-between text-gray-400">
-          <span>Fare:</span>
-          <span class="text-amber-300 font-bold text-sm font-mono" id="checkout-fare">INR 6,500.00</span>
+        <div class="flex justify-between text-gray-600 border-t border-gray-200 pt-2">
+          <span>Base Fare:</span>
+          <span class="text-[#0052CC] font-bold text-sm font-mono" id="checkout-fare">₹6,500.00</span>
         </div>
       </div>
 
@@ -620,201 +655,198 @@
         <input type="hidden" id="checkout-flight-id">
 
         <div>
-          <label class="block text-xs font-medium text-gray-300 mb-1">Special Assistance / Meal Request</label>
-          <input type="text" id="checkout-special" placeholder="e.g. Wheelchair assistance, Window seat" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-white text-xs focus:outline-none focus:border-amber-400">
-          <span class="text-[10px] text-gray-500">Stored in Oracle Bookings JSON metadata column.</span>
+          <label class="block text-xs font-semibold text-gray-700 mb-1">Special Assistance / Request</label>
+          <input type="text" id="checkout-special" placeholder="e.g. Wheelchair assistance, Window seat preference" class="w-full bg-white border border-gray-300 rounded-lg p-2.5 text-xs text-gray-900 focus:outline-none focus:border-[#0052CC]">
         </div>
 
         <div class="grid grid-cols-2 gap-3">
           <div>
-            <label class="block text-xs font-medium text-gray-300 mb-1">Payment Method</label>
-            <select id="checkout-method" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-xs text-white">
+            <label class="block text-xs font-semibold text-gray-700 mb-1">Payment Method</label>
+            <select id="checkout-method" class="w-full bg-white border border-gray-300 rounded-lg p-2 text-xs text-gray-900">
               <option value="CARD">Credit / Debit Card</option>
               <option value="UPI">UPI / Instant Pay</option>
               <option value="NETBANKING">Net Banking</option>
             </select>
           </div>
           <div>
-            <label class="block text-xs font-medium text-gray-300 mb-1">Currency</label>
-            <select id="checkout-currency" onchange="updateCheckoutCurrency()" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-xs text-white">
+            <label class="block text-xs font-semibold text-gray-700 mb-1">Currency</label>
+            <select id="checkout-currency" onchange="updateCheckoutCurrency()" class="w-full bg-white border border-gray-300 rounded-lg p-2 text-xs text-gray-900">
               <option value="INR" selected>INR (₹)</option>
-              <option value="USD">USD ($) (83 INR/USD)</option>
+              <option value="USD">USD ($) (₹83/USD)</option>
             </select>
           </div>
         </div>
 
-        <div class="pt-2 border-t border-white/10 flex items-center justify-between">
+        <div class="pt-3 border-t border-gray-100 flex items-center justify-between">
           <div>
-            <span class="text-xs text-gray-400 block">Total Due:</span>
-            <span id="checkout-due-amount" class="text-lg font-bold font-mono text-amber-300">INR 6,500.00</span>
+            <span class="text-[11px] text-gray-500 block">Total Payable:</span>
+            <span id="checkout-due-amount" class="text-lg font-extrabold text-[#0052CC] font-mono">₹6,500.00</span>
           </div>
-          <button type="submit" id="btn-submit-booking" class="bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-bold px-6 py-2.5 rounded-lg shadow-lg shadow-amber-600/30 transition">
-            Confirm & Pay (ACID)
+          <button type="submit" id="btn-submit-booking" class="bg-[#0052CC] hover:bg-[#0043A8] text-white font-bold px-6 py-2.5 rounded-lg shadow-sm transition">
+            Confirm & Pay
           </button>
         </div>
       </form>
     </div>
   </div>
 
-  <!-- Modal: Admin Issue Activation Code -->
-  <div id="modal-issue-token" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-    <div class="glass-card-gold rounded-2xl max-w-md w-full p-6 space-y-4">
-      <div class="flex items-center justify-between border-b border-white/10 pb-3">
-        <h3 class="text-lg font-display font-bold text-white flex items-center gap-2"><span>🛡️</span> Issue Passenger Activation Code</h3>
-        <button onclick="closeModal('modal-issue-token')" class="text-gray-400 hover:text-white text-lg">✕</button>
+  <!-- Modal: Issue Activation Code (Admin) -->
+  <div id="modal-issue-token" class="hidden fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4">
+    <div class="bg-white rounded-xl border border-gray-200 shadow-xl max-w-md w-full p-6 space-y-4">
+      <div class="flex items-center justify-between border-b border-gray-100 pb-3">
+        <h3 class="text-lg font-bold text-[#001B48]">Issue Passenger Activation Code</h3>
+        <button onclick="closeModal('modal-issue-token')" class="text-gray-400 hover:text-gray-600 text-lg">✕</button>
       </div>
       <form onsubmit="handleAdminIssueToken(event)" class="space-y-3 text-sm">
         <div>
-          <label class="block text-xs font-medium text-gray-300 mb-1">Passenger ID</label>
-          <input type="number" id="issue-pid" required readonly class="w-full bg-slate-900/60 border border-slate-800 rounded-lg p-2.5 text-gray-400 cursor-not-allowed">
+          <label class="block text-xs font-semibold text-gray-700 mb-1">Passenger ID</label>
+          <input type="number" id="issue-pid" readonly class="w-full bg-gray-100 border border-gray-300 rounded-lg p-2.5 text-gray-600 cursor-not-allowed">
         </div>
         <div>
-          <label class="block text-xs font-medium text-gray-300 mb-1">Passenger Name</label>
-          <input type="text" id="issue-pname" readonly class="w-full bg-slate-900/60 border border-slate-800 rounded-lg p-2.5 text-gray-400 cursor-not-allowed">
+          <label class="block text-xs font-semibold text-gray-700 mb-1">Passenger Name</label>
+          <input type="text" id="issue-pname" readonly class="w-full bg-gray-100 border border-gray-300 rounded-lg p-2.5 text-gray-600 cursor-not-allowed">
         </div>
         <div>
-          <label class="block text-xs font-medium text-gray-300 mb-1">Code Expiration</label>
-          <select id="issue-days" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-white">
+          <label class="block text-xs font-semibold text-gray-700 mb-1">Code Expiration</label>
+          <select id="issue-days" class="w-full bg-white border border-gray-300 rounded-lg p-2.5 text-gray-800">
             <option value="3">3 Days</option>
             <option value="7" selected>7 Days</option>
             <option value="14">14 Days</option>
           </select>
         </div>
-        <button type="submit" class="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold p-2.5 rounded-lg transition mt-2">
-          Generate Cryptographic Activation Token
+        <button type="submit" class="w-full bg-[#0052CC] hover:bg-[#0043A8] text-white font-bold p-2.5 rounded-lg transition mt-2 shadow-sm">
+          Generate Activation Code
         </button>
       </form>
 
       <!-- Token Result Box -->
-      <div id="token-result-box" class="hidden bg-slate-900 border border-amber-500/40 rounded-xl p-3.5 space-y-2">
-        <span class="text-[11px] text-amber-300 font-semibold block">Generated Single-Use Activation Token:</span>
+      <div id="token-result-box" class="hidden bg-blue-50 border border-blue-200 rounded-lg p-3.5 space-y-2">
+        <span class="text-xs text-blue-900 font-bold block">One-Time Activation Token:</span>
         <div class="flex items-center gap-2">
-          <input type="text" id="generated-token-text" readonly class="w-full bg-black border border-slate-700 rounded p-1.5 text-xs font-mono text-emerald-400">
-          <button onclick="copyTokenToClipboard()" class="px-2.5 py-1 text-xs bg-slate-800 hover:bg-slate-700 text-white rounded border border-slate-700">Copy</button>
+          <input type="text" id="generated-token-text" readonly class="w-full bg-white border border-blue-300 rounded p-2 text-xs font-mono text-gray-900">
+          <button onclick="copyTokenToClipboard()" class="px-3 py-2 text-xs font-bold bg-[#0052CC] text-white rounded hover:bg-[#0043A8]">Copy</button>
         </div>
-        <p class="text-[10px] text-gray-400">Only the SHA-256 digest is saved in Oracle. Share this plaintext code securely with the passenger.</p>
+        <p class="text-[11px] text-gray-600">Provide this code to the passenger to allow them to set their password.</p>
       </div>
     </div>
   </div>
 
-  <!-- Modal: Add Airport -->
-  <div id="modal-add-airport" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-    <div class="glass-card-gold rounded-2xl max-w-md w-full p-6 space-y-4">
-      <div class="flex items-center justify-between border-b border-white/10 pb-3">
-        <h3 class="text-lg font-display font-bold text-white flex items-center gap-2"><span>🏢</span> Add New Airport</h3>
-        <button onclick="closeModal('modal-add-airport')" class="text-gray-400 hover:text-white text-lg">✕</button>
+  <!-- Modal: Add Airport (Admin) -->
+  <div id="modal-add-airport" class="hidden fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4">
+    <div class="bg-white rounded-xl border border-gray-200 shadow-xl max-w-md w-full p-6 space-y-4">
+      <div class="flex items-center justify-between border-b border-gray-100 pb-3">
+        <h3 class="text-lg font-bold text-[#001B48]">Add New Airport</h3>
+        <button onclick="closeModal('modal-add-airport')" class="text-gray-400 hover:text-gray-600 text-lg">✕</button>
       </div>
       <form onsubmit="handleCreateAirport(event)" class="space-y-3 text-sm">
         <div>
-          <label class="block text-xs font-medium text-gray-300 mb-1">Airport Code (e.g. SFO)</label>
-          <input type="text" id="new-airport-id" required maxlength="5" placeholder="SFO" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-white uppercase focus:outline-none focus:border-amber-400">
+          <label class="block text-xs font-semibold text-gray-700 mb-1">Airport Code (e.g. SFO)</label>
+          <input type="text" id="new-airport-id" required maxlength="5" placeholder="SFO" class="w-full bg-white border border-gray-300 rounded-lg p-2.5 text-gray-900 uppercase">
         </div>
         <div>
-          <label class="block text-xs font-medium text-gray-300 mb-1">Airport Name</label>
-          <input type="text" id="new-airport-name" required placeholder="San Francisco International Airport" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-white focus:outline-none focus:border-amber-400">
+          <label class="block text-xs font-semibold text-gray-700 mb-1">Airport Name</label>
+          <input type="text" id="new-airport-name" required placeholder="San Francisco International Airport" class="w-full bg-white border border-gray-300 rounded-lg p-2.5 text-gray-900">
         </div>
         <div>
-          <label class="block text-xs font-medium text-gray-300 mb-1">City</label>
-          <input type="text" id="new-airport-city" required placeholder="San Francisco" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-white focus:outline-none focus:border-amber-400">
+          <label class="block text-xs font-semibold text-gray-700 mb-1">City</label>
+          <input type="text" id="new-airport-city" required placeholder="San Francisco" class="w-full bg-white border border-gray-300 rounded-lg p-2.5 text-gray-900">
         </div>
         <div>
-          <label class="block text-xs font-medium text-gray-300 mb-1">Country</label>
-          <input type="text" id="new-airport-country" required placeholder="United States" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-white focus:outline-none focus:border-amber-400">
+          <label class="block text-xs font-semibold text-gray-700 mb-1">Country</label>
+          <input type="text" id="new-airport-country" required placeholder="United States" class="w-full bg-white border border-gray-300 rounded-lg p-2.5 text-gray-900">
         </div>
         <div>
-          <label class="block text-xs font-medium text-gray-300 mb-1">Timezone</label>
-          <input type="text" id="new-airport-tz" required value="America/Los_Angeles" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-white focus:outline-none focus:border-amber-400">
+          <label class="block text-xs font-semibold text-gray-700 mb-1">Timezone</label>
+          <input type="text" id="new-airport-tz" required value="America/Los_Angeles" class="w-full bg-white border border-gray-300 rounded-lg p-2.5 text-gray-900">
         </div>
-        <button type="submit" class="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold p-2.5 rounded-lg transition mt-2">
-          Save Airport to Oracle
+        <button type="submit" class="w-full bg-[#0052CC] hover:bg-[#0043A8] text-white font-bold p-2.5 rounded-lg transition shadow-sm mt-2">
+          Save Airport
         </button>
       </form>
     </div>
   </div>
 
-  <!-- Modal: Add Flight -->
-  <div id="modal-add-flight" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-    <div class="glass-card-gold rounded-2xl max-w-md w-full p-6 space-y-4">
-      <div class="flex items-center justify-between border-b border-white/10 pb-3">
-        <h3 class="text-lg font-display font-bold text-white flex items-center gap-2"><span>✈️</span> Schedule New Flight</h3>
-        <button onclick="closeModal('modal-add-flight')" class="text-gray-400 hover:text-white text-lg">✕</button>
+  <!-- Modal: Schedule Flight (Admin) -->
+  <div id="modal-add-flight" class="hidden fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4">
+    <div class="bg-white rounded-xl border border-gray-200 shadow-xl max-w-md w-full p-6 space-y-4">
+      <div class="flex items-center justify-between border-b border-gray-100 pb-3">
+        <h3 class="text-lg font-bold text-[#001B48]">Schedule New Flight</h3>
+        <button onclick="closeModal('modal-add-flight')" class="text-gray-400 hover:text-gray-600 text-lg">✕</button>
       </div>
       <form onsubmit="handleCreateFlight(event)" class="space-y-3 text-sm">
         <div>
-          <label class="block text-xs font-medium text-gray-300 mb-1">Flight Number (e.g. AI202)</label>
-          <input type="text" id="new-flight-no" required placeholder="AI202" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-white uppercase focus:outline-none focus:border-amber-400">
+          <label class="block text-xs font-semibold text-gray-700 mb-1">Flight Number (e.g. AZ-202)</label>
+          <input type="text" id="new-flight-no" required placeholder="AZ-202" class="w-full bg-white border border-gray-300 rounded-lg p-2.5 text-gray-900 uppercase">
         </div>
         <div class="grid grid-cols-2 gap-2">
           <div>
-            <label class="block text-xs font-medium text-gray-300 mb-1">Origin Airport</label>
-            <select id="new-flight-orig" required class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-white"></select>
+            <label class="block text-xs font-semibold text-gray-700 mb-1">Origin Airport</label>
+            <select id="new-flight-orig" required class="w-full bg-white border border-gray-300 rounded-lg p-2 text-xs text-gray-900"></select>
           </div>
           <div>
-            <label class="block text-xs font-medium text-gray-300 mb-1">Destination Airport</label>
-            <select id="new-flight-dest" required class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-white"></select>
+            <label class="block text-xs font-semibold text-gray-700 mb-1">Destination Airport</label>
+            <select id="new-flight-dest" required class="w-full bg-white border border-gray-300 rounded-lg p-2 text-xs text-gray-900"></select>
           </div>
         </div>
         <div>
-          <label class="block text-xs font-medium text-gray-300 mb-1">Departure (YYYY-MM-DD HH24:MI:SS TZR)</label>
-          <input type="text" id="new-flight-dep" required value="2026-11-15 08:00:00 Asia/Kolkata" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-xs font-mono text-white">
+          <label class="block text-xs font-semibold text-gray-700 mb-1">Departure (YYYY-MM-DD HH24:MI:SS TZR)</label>
+          <input type="text" id="new-flight-dep" required value="2026-11-15 08:00:00 Asia/Kolkata" class="w-full bg-white border border-gray-300 rounded-lg p-2 text-xs font-mono text-gray-900">
         </div>
         <div>
-          <label class="block text-xs font-medium text-gray-300 mb-1">Arrival (YYYY-MM-DD HH24:MI:SS TZR)</label>
-          <input type="text" id="new-flight-arr" required value="2026-11-15 11:30:00 Asia/Kolkata" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-xs font-mono text-white">
+          <label class="block text-xs font-semibold text-gray-700 mb-1">Arrival (YYYY-MM-DD HH24:MI:SS TZR)</label>
+          <input type="text" id="new-flight-arr" required value="2026-11-15 11:30:00 Asia/Kolkata" class="w-full bg-white border border-gray-300 rounded-lg p-2 text-xs font-mono text-gray-900">
         </div>
         <div>
-          <label class="block text-xs font-medium text-gray-300 mb-1">Base Fare (INR)</label>
-          <input type="number" id="new-flight-fare" required min="1000" step="100" value="7500" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-white font-mono">
+          <label class="block text-xs font-semibold text-gray-700 mb-1">Base Fare (INR)</label>
+          <input type="number" id="new-flight-fare" required min="1000" step="100" value="7500" class="w-full bg-white border border-gray-300 rounded-lg p-2.5 text-gray-900">
         </div>
-        <button type="submit" class="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold p-2.5 rounded-lg transition mt-2">
-          Insert Flight into Oracle
+        <button type="submit" class="w-full bg-[#0052CC] hover:bg-[#0043A8] text-white font-bold p-2.5 rounded-lg transition shadow-sm mt-2">
+          Schedule Flight
         </button>
       </form>
     </div>
   </div>
 
-  <!-- Modal: Update Flight Fare -->
-  <div id="modal-update-fare" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-    <div class="glass-card-gold rounded-2xl max-w-sm w-full p-6 space-y-4">
-      <div class="flex items-center justify-between border-b border-white/10 pb-3">
-        <h3 class="text-lg font-display font-bold text-white flex items-center gap-2"><span>🏷️</span> Update Fare</h3>
-        <button onclick="closeModal('modal-update-fare')" class="text-gray-400 hover:text-white text-lg">✕</button>
+  <!-- Modal: Update Flight Fare (Admin) -->
+  <div id="modal-update-fare" class="hidden fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4">
+    <div class="bg-white rounded-xl border border-gray-200 shadow-xl max-w-sm w-full p-6 space-y-4">
+      <div class="flex items-center justify-between border-b border-gray-100 pb-3">
+        <h3 class="text-lg font-bold text-[#001B48]">Update Flight Fare</h3>
+        <button onclick="closeModal('modal-update-fare')" class="text-gray-400 hover:text-gray-600 text-lg">✕</button>
       </div>
       <form onsubmit="handleUpdateFare(event)" class="space-y-3 text-sm">
         <input type="hidden" id="edit-fare-flight-id">
         <div>
-          <label class="block text-xs font-medium text-gray-300 mb-1">Flight Number</label>
-          <input type="text" id="edit-fare-flight-no" readonly class="w-full bg-slate-900/60 border border-slate-800 rounded p-2 text-gray-400">
+          <label class="block text-xs font-semibold text-gray-700 mb-1">Flight</label>
+          <input type="text" id="edit-fare-flight-no" readonly class="w-full bg-gray-100 border border-gray-300 rounded p-2 text-gray-600">
         </div>
         <div>
-          <label class="block text-xs font-medium text-gray-300 mb-1">New Fare (INR)</label>
-          <input type="number" id="edit-fare-amount" required min="500" step="50" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-white font-mono">
+          <label class="block text-xs font-semibold text-gray-700 mb-1">New Fare (INR)</label>
+          <input type="number" id="edit-fare-amount" required min="500" step="50" class="w-full bg-white border border-gray-300 rounded-lg p-2.5 text-gray-900 font-mono">
         </div>
-        <button type="submit" class="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold p-2.5 rounded-lg transition mt-2">
-          Update in Oracle
+        <button type="submit" class="w-full bg-[#0052CC] hover:bg-[#0043A8] text-white font-bold p-2.5 rounded-lg transition shadow-sm mt-2">
+          Save Fare
         </button>
       </form>
     </div>
   </div>
 
   <!-- ============================================================== -->
-  <!-- JAVASCRIPT APPLICATION CORE                                    -->
+  <!-- 5. JAVASCRIPT APPLICATION CORE                                 -->
   <!-- ============================================================== -->
   <script>
-    // Configuration
     const API_BASE = "http://127.0.0.1:8000";
 
     // Global State
     let currentUser = null;
-    let authRole = null; // 'PASSENGER' | 'ADMIN' | null
+    let authRole = null;
     let authToken = null;
     let globalFlights = [];
-    let globalAirports = [];
     let currentSelectedFlight = null;
     let activeCrudTab = 'airports';
 
     // ----------------------------------------------------------------
-    // Centralized API Client
+    // Centralized API Client (Clean Error Extraction)
     // ----------------------------------------------------------------
     async function apiRequest(endpoint, method = 'GET', data = null, customToken = null) {
       const headers = { 'Content-Type': 'application/json' };
@@ -846,26 +878,29 @@
         }
         return json;
       } catch (err) {
-        showToast(err.message || "Network error communicating with API", "error");
+        showToast(err.message || "Network error communicating with server", "error");
         throw err;
       }
     }
 
     // ----------------------------------------------------------------
-    // Application Lifecycle & Initialization
+    // Application Lifecycle
     // ----------------------------------------------------------------
     window.addEventListener('DOMContentLoaded', async () => {
+      // Set default travel date to today
+      const today = new Date().toISOString().split('T')[0];
+      const dateInput = document.getElementById('search-date');
+      if (dateInput) dateInput.value = today;
+
       loadSession();
-      await checkBackendHealth();
       await fetchAirportsList();
-      await fetchFlights();
       await loadSqlExplanations();
     });
 
     function loadSession() {
-      const savedToken = localStorage.getItem('aero_token');
-      const savedUser = localStorage.getItem('aero_user');
-      const savedRole = localStorage.getItem('aero_role');
+      const savedToken = localStorage.getItem('az_token');
+      const savedUser = localStorage.getItem('az_user');
+      const savedRole = localStorage.getItem('az_role');
 
       if (savedToken && savedUser) {
         authToken = savedToken;
@@ -879,9 +914,9 @@
       authToken = token;
       currentUser = user;
       authRole = role;
-      localStorage.setItem('aero_token', token);
-      localStorage.setItem('aero_user', JSON.stringify(user));
-      localStorage.setItem('aero_role', role);
+      localStorage.setItem('az_token', token);
+      localStorage.setItem('az_user', JSON.stringify(user));
+      localStorage.setItem('az_role', role);
       updateAuthUI();
     }
 
@@ -889,9 +924,9 @@
       authToken = null;
       currentUser = null;
       authRole = null;
-      localStorage.removeItem('aero_token');
-      localStorage.removeItem('aero_user');
-      localStorage.removeItem('aero_role');
+      localStorage.removeItem('az_token');
+      localStorage.removeItem('az_user');
+      localStorage.removeItem('az_role');
       updateAuthUI();
       switchView('landing');
       showToast("Signed out successfully.", "info");
@@ -900,7 +935,6 @@
     function updateAuthUI() {
       const guestControls = document.getElementById('auth-guest-controls');
       const userControls = document.getElementById('auth-user-controls');
-      const navBookings = document.getElementById('nav-btn-bookings');
       const navAdmin = document.getElementById('nav-btn-admin');
       const navRecords = document.getElementById('nav-btn-records');
       const userBadge = document.getElementById('user-role-badge');
@@ -914,28 +948,25 @@
 
         if (authRole === 'ADMIN') {
           userBadge.textContent = currentUser.role || "ADMIN";
-          userBadge.className = "px-1.5 py-0.5 rounded text-[10px] font-bold uppercase bg-red-500/20 text-red-300";
-          navBookings.classList.add('hidden');
+          userBadge.className = "px-1.5 py-0.5 rounded text-[10px] font-bold uppercase bg-red-100 text-red-800";
           navAdmin.classList.remove('hidden');
           navRecords.classList.remove('hidden');
         } else {
           userBadge.textContent = "PASSENGER";
-          userBadge.className = "px-1.5 py-0.5 rounded text-[10px] font-bold uppercase bg-amber-500/20 text-amber-300";
-          navBookings.classList.remove('hidden');
+          userBadge.className = "px-1.5 py-0.5 rounded text-[10px] font-bold uppercase bg-blue-100 text-blue-800";
           navAdmin.classList.add('hidden');
           navRecords.classList.add('hidden');
         }
       } else {
         guestControls.classList.remove('hidden');
         userControls.classList.add('hidden');
-        navBookings.classList.add('hidden');
         navAdmin.classList.add('hidden');
         navRecords.classList.add('hidden');
       }
     }
 
     // ----------------------------------------------------------------
-    // Navigation & View Switching
+    // Navigation & Views
     // ----------------------------------------------------------------
     function switchView(viewName) {
       const views = ['landing', 'my-bookings', 'admin-dashboard', 'admin-crud'];
@@ -947,15 +978,13 @@
       const targetEl = document.getElementById(`view-${viewName}`);
       if (targetEl) targetEl.classList.remove('hidden');
 
-      // Update Nav Button styling
+      // Update Nav active styling
       document.querySelectorAll('header nav button').forEach(b => {
-        b.classList.remove('text-amber-400');
-        b.classList.add('text-gray-300');
+        b.className = "px-3.5 py-2 rounded-md text-gray-700 hover:text-[#0052CC] hover:bg-gray-50 transition";
       });
       const activeBtn = document.getElementById(`nav-btn-${viewName.replace('admin-', '').replace('my-', '')}`);
       if (activeBtn) {
-        activeBtn.classList.add('text-amber-400');
-        activeBtn.classList.remove('text-gray-300');
+        activeBtn.className = "px-3.5 py-2 rounded-md text-[#0052CC] bg-blue-50 font-semibold transition";
       }
 
       window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -974,7 +1003,7 @@
     function openAdminPortalView() {
       if (!currentUser || authRole !== 'ADMIN') {
         openModal('modal-admin-login');
-        showToast("Administrator privileges required.", "info");
+        showToast("Administrator credentials required.", "info");
         return;
       }
       switchView('admin-dashboard');
@@ -990,26 +1019,19 @@
       switchCrudTab(activeCrudTab);
     }
 
-    // ----------------------------------------------------------------
-    // Health Check & Initial Data
-    // ----------------------------------------------------------------
-    async function checkBackendHealth() {
-      const pill = document.getElementById('health-status-text');
-      try {
-        const data = await apiRequest('/health');
-        if (data.status === 'healthy') {
-          pill.textContent = `Connected: Oracle 23ai Free`;
-          pill.className = "text-emerald-300 font-medium";
-        } else {
-          pill.textContent = "Oracle Disconnected";
-          pill.className = "text-rose-400 font-medium";
-        }
-      } catch {
-        pill.textContent = "API Offline";
-        pill.className = "text-rose-400 font-medium";
-      }
+    function toggleTripType(type) {
+      // Future-proofing for round-trip return date toggle
     }
 
+    function selectQuickRoute(from, to) {
+      document.getElementById('search-origin').value = from;
+      document.getElementById('search-destination').value = to;
+      handleSearchClick();
+    }
+
+    // ----------------------------------------------------------------
+    // Airports & Initial Data
+    // ----------------------------------------------------------------
     async function fetchAirportsList() {
       try {
         const data = await apiRequest('/api/flights');
@@ -1018,15 +1040,14 @@
         const newFlightOrig = document.getElementById('new-flight-orig');
         const newFlightDest = document.getElementById('new-flight-dest');
 
-        // Extract distinct airports from flight data
         const airportsMap = new Map();
         data.flights.forEach(f => {
           airportsMap.set(f.origin_id, `${f.origin_city} (${f.origin_id})`);
           airportsMap.set(f.destination_id, `${f.destination_city} (${f.destination_id})`);
         });
 
-        originSelect.innerHTML = '<option value="">All Origins</option>';
-        destSelect.innerHTML = '<option value="">All Destinations</option>';
+        originSelect.innerHTML = '<option value="">All Airports</option>';
+        destSelect.innerHTML = '<option value="">All Airports</option>';
         if (newFlightOrig) newFlightOrig.innerHTML = '';
         if (newFlightDest) newFlightDest.innerHTML = '';
 
@@ -1055,16 +1076,30 @@
     }
 
     // ----------------------------------------------------------------
-    // Flight Search & Display
+    // Flight Search Logic (Triggered ONLY on Search button click)
     // ----------------------------------------------------------------
-    async function fetchFlights() {
+    async function handleSearchClick() {
       const origin = document.getElementById('search-origin').value;
       const destination = document.getElementById('search-destination').value;
       const tz = document.getElementById('search-tz').value;
+      const resultsWrapper = document.getElementById('flight-results-wrapper');
       const container = document.getElementById('flights-container');
       const countBadge = document.getElementById('flight-results-count');
+      const heading = document.getElementById('flight-results-heading');
+      const subheading = document.getElementById('flight-results-subheading');
 
-      container.innerHTML = `<div class="text-center py-12 text-gray-400">Searching Oracle database...</div>`;
+      // Make results visible
+      resultsWrapper.classList.remove('hidden');
+      container.innerHTML = `<div class="text-center py-12 text-gray-500 font-medium">Searching available flights...</div>`;
+
+      // Update heading text
+      if (origin && destination) {
+        heading.textContent = `Flights from ${origin} to ${destination}`;
+        subheading.textContent = `Direct scheduled flights with AZ Airlines`;
+      } else {
+        heading.textContent = `Available Scheduled Flights`;
+        subheading.textContent = `Direct domestic and international routes`;
+      }
 
       try {
         let endpoint = `/api/flights?timezone=${encodeURIComponent(tz)}`;
@@ -1077,73 +1112,84 @@
 
         if (!data.flights || data.flights.length === 0) {
           container.innerHTML = `
-            <div class="glass-card rounded-2xl p-8 text-center text-gray-400">
+            <div class="bg-white rounded-xl border border-gray-200 p-8 text-center text-gray-500 shadow-sm">
               <span class="text-3xl block mb-2">🛫</span>
-              <p class="font-semibold text-white">No direct scheduled flights match your search criteria.</p>
-              <p class="text-xs text-gray-500 mt-1">Try selecting different origin/destination hubs.</p>
+              <p class="font-bold text-gray-800 text-base">No flights found for this route.</p>
+              <p class="text-xs text-gray-500 mt-1">Please try searching for another origin or destination airport.</p>
             </div>
           `;
           return;
         }
 
-        container.innerHTML = data.flights.map(f => `
-          <div class="glass-card hover:border-amber-500/40 transition-all rounded-2xl p-5 flex flex-col md:flex-row items-center justify-between gap-6">
-            <div class="flex items-center gap-4 w-full md:w-auto">
-              <div class="w-12 h-12 rounded-xl bg-slate-800 border border-amber-500/20 flex items-center justify-center text-2xl flex-shrink-0">
-                ✈️
-              </div>
-              <div>
-                <div class="flex items-center gap-2">
-                  <span class="font-bold text-white font-mono text-base">${f.flight_no}</span>
-                  <span class="text-[10px] px-2 py-0.5 rounded bg-slate-800 text-amber-300 font-semibold border border-slate-700">Non-Stop</span>
+        container.innerHTML = data.flights.map(f => {
+          const depTime = f.departure_time_local ? f.departure_time_local.split(' ')[1].substring(0, 5) : '00:00';
+          const arrTime = f.arrival_time_local ? f.arrival_time_local.split(' ')[1].substring(0, 5) : '00:00';
+          const depDate = f.departure_time_local ? f.departure_time_local.split(' ')[0] : '';
+
+          return `
+            <div class="bg-white rounded-xl border border-gray-200 hover:border-blue-400 p-5 flex flex-col sm:flex-row items-center justify-between gap-5 shadow-sm transition">
+              
+              <!-- Flight Identifier -->
+              <div class="flex items-center gap-3.5 w-full sm:w-auto">
+                <div class="w-10 h-10 rounded-lg bg-[#001B48] text-white flex items-center justify-center font-bold text-sm shadow-xs flex-shrink-0">
+                  AZ
                 </div>
-                <p class="text-xs text-gray-400 font-medium">Aircraft: Boeing 777-300ER</p>
-              </div>
-            </div>
-
-            <!-- Flight Timeline -->
-            <div class="flex items-center gap-6 w-full md:w-auto justify-between md:justify-center">
-              <div class="text-left">
-                <span class="text-lg font-bold text-white block">${f.departure_time_local ? f.departure_time_local.split(' ')[1].substring(0, 5) : '00:00'}</span>
-                <span class="text-xs text-amber-300 font-bold block">${f.origin_id}</span>
-                <span class="text-[11px] text-gray-400 max-w-[100px] truncate block">${f.origin_city}</span>
-              </div>
-
-              <div class="flex flex-col items-center px-4">
-                <span class="text-[10px] text-gray-400 mb-1">${f.duration_hours || '2.5'}h</span>
-                <div class="w-24 sm:w-32 h-[1px] bg-slate-600 relative flex items-center justify-center">
-                  <span class="absolute text-xs text-amber-400">✈</span>
+                <div>
+                  <div class="flex items-center gap-2">
+                    <span class="font-extrabold text-gray-900 text-base font-mono">${f.flight_no}</span>
+                    <span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-blue-50 text-blue-700">Airbus A321</span>
+                  </div>
+                  <span class="text-xs text-gray-400">${depDate}</span>
                 </div>
-                <span class="text-[9px] text-emerald-400 mt-1">Direct</span>
               </div>
 
-              <div class="text-right">
-                <span class="text-lg font-bold text-white block">${f.arrival_time_local ? f.arrival_time_local.split(' ')[1].substring(0, 5) : '00:00'}</span>
-                <span class="text-xs text-amber-300 font-bold block">${f.destination_id}</span>
-                <span class="text-[11px] text-gray-400 max-w-[100px] truncate block">${f.destination_city}</span>
-              </div>
-            </div>
+              <!-- Flight Route & Timing (IndiGo Style Center Bar) -->
+              <div class="flex items-center gap-5 w-full sm:w-auto justify-between sm:justify-center">
+                <div class="text-left">
+                  <span class="text-lg font-bold text-gray-900 block font-mono">${depTime}</span>
+                  <span class="text-xs font-bold text-[#0052CC] block">${f.origin_id}</span>
+                  <span class="text-[11px] text-gray-500 block max-w-[90px] truncate">${f.origin_city}</span>
+                </div>
 
-            <!-- Fare & Book Action -->
-            <div class="flex items-center justify-between md:justify-end gap-4 w-full md:w-auto border-t md:border-t-0 border-white/5 pt-3 md:pt-0">
-              <div class="text-left md:text-right">
-                <span class="text-[10px] text-gray-400 block uppercase tracking-wider">Starting from</span>
-                <span class="text-xl font-bold font-mono text-amber-300">INR ${Number(f.fare).toLocaleString('en-IN', {minimumFractionDigits: 2})}</span>
+                <div class="flex flex-col items-center px-2">
+                  <span class="text-[11px] text-gray-500 font-medium mb-1">${f.duration_hours || '2.5'}h</span>
+                  <div class="w-24 sm:w-28 h-[2px] bg-gray-300 relative flex items-center justify-center">
+                    <span class="absolute text-[10px] text-[#0052CC]">✈</span>
+                  </div>
+                  <span class="text-[10px] font-semibold text-emerald-600 mt-1">Non-stop</span>
+                </div>
+
+                <div class="text-right">
+                  <span class="text-lg font-bold text-gray-900 block font-mono">${arrTime}</span>
+                  <span class="text-xs font-bold text-[#0052CC] block">${f.destination_id}</span>
+                  <span class="text-[11px] text-gray-500 block max-w-[90px] truncate">${f.destination_city}</span>
+                </div>
               </div>
-              <button onclick="openBookingCheckout(${f.flight_id})" class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-bold text-xs uppercase tracking-wider shadow-lg shadow-amber-600/20 transition">
-                Select Seat
-              </button>
+
+              <!-- Fare & Book Action Button -->
+              <div class="flex items-center justify-between sm:justify-end gap-5 w-full sm:w-auto border-t sm:border-t-0 border-gray-100 pt-3 sm:pt-0">
+                <div class="text-left sm:text-right">
+                  <span class="text-[10px] text-gray-400 block uppercase font-medium">Starting from</span>
+                  <span class="text-xl font-extrabold text-[#001B48] font-mono">₹${Number(f.fare).toLocaleString('en-IN')}</span>
+                </div>
+                <button onclick="openBookingCheckout(${f.flight_id})" class="px-5 py-2.5 rounded-lg bg-[#0052CC] hover:bg-[#0043A8] text-white font-bold text-xs uppercase tracking-wider shadow-sm transition">
+                  Book Now
+                </button>
+              </div>
             </div>
-          </div>
-        `).join('');
+          `;
+        }).join('');
+
+        // Smooth scroll to results
+        resultsWrapper.scrollIntoView({ behavior: 'smooth', block: 'start' });
 
       } catch (err) {
-        container.innerHTML = `<div class="glass-card rounded-2xl p-8 text-center text-rose-400">Error loading flight records: ${err.message}</div>`;
+        container.innerHTML = `<div class="bg-white rounded-xl border border-rose-200 p-8 text-center text-rose-600">Error loading flight records: ${err.message}</div>`;
       }
     }
 
     // ----------------------------------------------------------------
-    // Passenger Authentication & Account Claiming Handlers
+    // Authentication Handlers
     // ----------------------------------------------------------------
     async function handlePassengerLogin(e) {
       e.preventDefault();
@@ -1158,9 +1204,7 @@
         saveSession(res.access_token, res.user, 'PASSENGER');
         closeModal('modal-passenger-login');
         showToast(`Welcome back, ${res.user.name}!`, "success");
-      } catch (e) {
-        // Error toast handled in apiRequest
-      }
+      } catch (e) {}
     }
 
     async function handlePassengerRegister(e) {
@@ -1180,10 +1224,8 @@
         const res = await apiRequest('/api/auth/passenger/register', 'POST', payload);
         saveSession(res.access_token, res.user, 'PASSENGER');
         closeModal('modal-passenger-register');
-        showToast(`Registration complete! Welcome, ${res.user.name}.`, "success");
-      } catch (e) {
-        // Error toast handled in apiRequest
-      }
+        showToast(`Welcome to AZ Airlines, ${res.user.name}!`, "success");
+      } catch (e) {}
     }
 
     async function handleClaimAccount(e) {
@@ -1198,10 +1240,8 @@
         const res = await apiRequest('/api/auth/passenger/claim', 'POST', payload);
         saveSession(res.access_token, res.user, 'PASSENGER');
         closeModal('modal-claim');
-        showToast("Account activated successfully! You are now logged in.", "success");
-      } catch (e) {
-        // Error toast handled in apiRequest
-      }
+        showToast("Account claimed and activated successfully!", "success");
+      } catch (e) {}
     }
 
     async function handleAdminLogin(e) {
@@ -1215,20 +1255,18 @@
         const res = await apiRequest('/api/auth/admin/login', 'POST', payload);
         saveSession(res.access_token, res.admin, 'ADMIN');
         closeModal('modal-admin-login');
-        showToast(`Administrator authenticated (${res.admin.role}).`, "success");
+        showToast(`Staff authenticated (${res.admin.role}).`, "success");
         openAdminPortalView();
-      } catch (e) {
-        // Error toast handled in apiRequest
-      }
+      } catch (e) {}
     }
 
     // ----------------------------------------------------------------
-    // Booking Checkout & Confirmation
+    // Booking Checkout Flow
     // ----------------------------------------------------------------
     function openBookingCheckout(flightId) {
       if (!currentUser || authRole !== 'PASSENGER') {
         openModal('modal-passenger-login');
-        showToast("Please sign in or register to book a flight.", "info");
+        showToast("Please sign in or register to book your ticket.", "info");
         return;
       }
 
@@ -1239,7 +1277,7 @@
       document.getElementById('checkout-flight-no').textContent = `Flight ${currentSelectedFlight.flight_no}`;
       document.getElementById('checkout-route').textContent = `${currentSelectedFlight.origin_city} (${currentSelectedFlight.origin_id}) → ${currentSelectedFlight.destination_city} (${currentSelectedFlight.destination_id})`;
       document.getElementById('checkout-dep').textContent = currentSelectedFlight.departure_time_local || 'Scheduled';
-      
+
       updateCheckoutCurrency();
       openModal('modal-booking-checkout');
     }
@@ -1264,7 +1302,7 @@
       e.preventDefault();
       const btn = document.getElementById('btn-submit-booking');
       btn.disabled = true;
-      btn.textContent = "Processing Transaction in Oracle...";
+      btn.textContent = "Confirming Reservation...";
 
       const payload = {
         flight_id: parseInt(document.getElementById('checkout-flight-id').value),
@@ -1279,21 +1317,19 @@
         showToast(`Booking Confirmed! Reference ID: #${res.booking.booking_id}`, "success");
         openMyBookingsView();
       } catch (err) {
-        // Toast handled in apiRequest
       } finally {
         btn.disabled = false;
-        btn.textContent = "Confirm & Pay (ACID)";
+        btn.textContent = "Confirm & Pay";
       }
     }
 
     // ----------------------------------------------------------------
-    // Passenger My Bookings Logic
+    // Manage Bookings (Passenger)
     // ----------------------------------------------------------------
     async function loadPassengerBookings() {
       const container = document.getElementById('my-bookings-container');
-      container.innerHTML = `<div class="text-center py-8 text-gray-400">Fetching reservations from Oracle...</div>`;
+      container.innerHTML = `<div class="text-center py-10 text-gray-500 font-medium">Fetching reservations...</div>`;
 
-      // Update Profile Card
       if (currentUser) {
         document.getElementById('my-profile-name').textContent = currentUser.name || "Passenger";
         document.getElementById('my-profile-email').textContent = currentUser.email || "";
@@ -1310,10 +1346,10 @@
         const data = await apiRequest('/api/bookings/my');
         if (!data.bookings || data.bookings.length === 0) {
           container.innerHTML = `
-            <div class="glass-card rounded-2xl p-8 text-center text-gray-400">
+            <div class="bg-white rounded-xl border border-gray-200 p-8 text-center text-gray-500 shadow-sm">
               <span class="text-3xl block mb-2">🎫</span>
-              <p class="font-semibold text-white">No active flight reservations found.</p>
-              <button onclick="switchView('landing')" class="mt-3 px-4 py-2 text-xs font-bold rounded-lg bg-amber-500 text-slate-950 hover:bg-amber-400 transition">
+              <p class="font-bold text-gray-800 text-base">No active flight reservations found.</p>
+              <button onclick="switchView('landing')" class="mt-3 px-4 py-2 text-xs font-bold rounded-lg bg-[#0052CC] text-white hover:bg-[#0043A8] transition">
                 Search & Reserve a Flight
               </button>
             </div>
@@ -1324,38 +1360,38 @@
         container.innerHTML = data.bookings.map(b => {
           const isCancelled = b.booking_status === 'CANCELLED';
           const badgeClass = isCancelled 
-            ? 'bg-rose-500/20 text-rose-300 border-rose-500/30' 
-            : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30';
+            ? 'bg-rose-50 text-rose-700 border-rose-200' 
+            : 'bg-emerald-50 text-emerald-700 border-emerald-200';
 
           return `
-            <div class="glass-card rounded-2xl p-5 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 border-l-4 ${isCancelled ? 'border-rose-500' : 'border-amber-500'}">
+            <div class="bg-white rounded-xl border border-gray-200 p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-sm border-l-4 ${isCancelled ? 'border-rose-500' : 'border-blue-600'}">
               <div class="space-y-1">
                 <div class="flex items-center gap-2">
-                  <span class="text-xs font-mono text-gray-400">Booking Ref:</span>
-                  <span class="font-bold font-mono text-white text-base">#${b.booking_id}</span>
-                  <span class="text-xs px-2 py-0.5 rounded-full border ${badgeClass} font-semibold uppercase">${b.booking_status}</span>
+                  <span class="text-xs text-gray-400 font-medium">PNR / Ref:</span>
+                  <span class="font-bold font-mono text-gray-900 text-base">#${b.booking_id}</span>
+                  <span class="text-xs px-2 py-0.5 rounded border ${badgeClass} font-bold uppercase">${b.booking_status}</span>
                 </div>
-                <div class="text-sm font-semibold text-amber-200">
+                <div class="text-sm font-bold text-gray-900">
                   Flight ${b.flight_no}: ${b.origin_city} (${b.origin_id}) → ${b.destination_city} (${b.destination_id})
                 </div>
-                <div class="text-xs text-gray-400">
-                  Booked on: <span class="text-gray-300">${b.booking_date}</span> | Departure: <span class="text-gray-300 font-mono">${b.departure_time || 'Scheduled'}</span>
+                <div class="text-xs text-gray-500">
+                  Booking Date: <span class="text-gray-700 font-medium">${b.booking_date}</span> | Departure: <span class="text-gray-700 font-semibold font-mono">${b.departure_time || 'Scheduled'}</span>
                 </div>
               </div>
 
-              <div class="flex items-center justify-between md:justify-end gap-6 w-full md:w-auto border-t md:border-t-0 border-white/5 pt-3 md:pt-0">
-                <div class="text-left md:text-right">
-                  <span class="text-[10px] text-gray-400 block uppercase">Payment Status</span>
-                  <span class="font-mono text-xs text-emerald-400 font-bold block">${b.payment_status || 'PAID'} (${b.currency} ${Number(b.amount || 0).toLocaleString()})</span>
+              <div class="flex items-center justify-between sm:justify-end gap-6 w-full sm:w-auto border-t sm:border-t-0 border-gray-100 pt-3 sm:pt-0">
+                <div class="text-left sm:text-right">
+                  <span class="text-[10px] text-gray-400 block uppercase font-medium">Payment</span>
+                  <span class="font-mono text-xs text-emerald-700 font-bold block">${b.payment_status || 'SUCCESS'} (${b.currency} ${Number(b.amount || 0).toLocaleString()})</span>
                   <span class="text-[10px] text-gray-500 block">Method: ${b.payment_method || 'CARD'}</span>
                 </div>
 
                 ${!isCancelled ? `
-                  <button onclick="handleCancelBooking(${b.booking_id})" class="px-4 py-2 rounded-lg bg-rose-950/80 hover:bg-rose-900 text-rose-200 border border-rose-800/40 text-xs font-bold transition">
-                    Cancel Reservation
+                  <button onclick="handleCancelBooking(${b.booking_id})" class="px-3.5 py-2 rounded-lg bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 text-xs font-bold transition">
+                    Cancel Flight
                   </button>
                 ` : `
-                  <span class="text-xs text-rose-400 italic">Cancelled</span>
+                  <span class="text-xs text-gray-400 italic">Cancelled</span>
                 `}
               </div>
             </div>
@@ -1363,32 +1399,28 @@
         }).join('');
 
       } catch (err) {
-        container.innerHTML = `<div class="glass-card rounded-2xl p-6 text-rose-400 text-center">Failed to load reservations: ${err.message}</div>`;
+        container.innerHTML = `<div class="bg-white rounded-xl border border-rose-200 p-6 text-rose-600 text-center">Failed to load reservations: ${err.message}</div>`;
       }
     }
 
     async function handleCancelBooking(bookingId) {
-      if (!confirm(`Are you sure you want to cancel booking #${bookingId}? This will update the Oracle database transaction record.`)) {
-        return;
-      }
+      if (!confirm(`Are you sure you want to cancel booking #${bookingId}?`)) return;
 
       try {
         await apiRequest(`/api/bookings/${bookingId}/cancel`, 'POST');
-        showToast(`Booking #${bookingId} successfully cancelled.`, "success");
+        showToast(`Booking #${bookingId} has been cancelled.`, "success");
         await loadPassengerBookings();
-      } catch (e) {
-        // Toast handled in apiRequest
-      }
+      } catch (e) {}
     }
 
     // ----------------------------------------------------------------
-    // Administrator Operations & Analytics
+    // Admin Analytics & KPIs
     // ----------------------------------------------------------------
     async function loadAdminAnalytics() {
       if (!currentUser || authRole !== 'ADMIN') return;
       document.getElementById('admin-role-title').textContent = currentUser.role || "ADMIN";
 
-      // 1. Fetch KPIs
+      // 1. KPIs
       try {
         const kpis = await apiRequest('/api/admin/analytics/kpis');
         const d = kpis.data;
@@ -1397,12 +1429,11 @@
         document.getElementById('kpi-cancelled-bookings').textContent = d.cancelled_bookings ?? '0';
         document.getElementById('kpi-total-revenue').textContent = `₹${Number(d.total_revenue_inr || 0).toLocaleString('en-IN')}`;
         document.getElementById('kpi-total-passengers').textContent = d.total_passengers ?? '0';
-        document.getElementById('kpi-active-routes').textContent = d.active_routes ?? '0';
       } catch (e) {
         console.error("Failed to load KPIs", e);
       }
 
-      // 2. Chart: Route Rankings (RANK() OVER)
+      // 2. Chart: Route Ranking (Clean White/Navy Palette)
       try {
         const rr = await apiRequest('/api/admin/analytics/route-ranking');
         const routes = rr.data.map(r => r.route);
@@ -1413,20 +1444,18 @@
           y: routes.slice(0, 8).reverse(),
           type: 'bar',
           orientation: 'h',
-          marker: { color: '#D4AF37' },
+          marker: { color: '#0052CC' },
         }], {
           margin: { l: 120, r: 20, t: 10, b: 30 },
           paper_bgcolor: 'transparent',
           plot_bgcolor: 'transparent',
-          font: { color: '#94A3B8', size: 10 },
-          xaxis: { gridcolor: '#1E293B' },
+          font: { color: '#334155', size: 10 },
+          xaxis: { gridcolor: '#F1F5F9' },
           yaxis: { gridcolor: 'transparent' }
         }, { responsive: true, displayModeBar: false });
-      } catch (e) {
-        console.error("Route ranking chart error", e);
-      }
+      } catch (e) {}
 
-      // 3. Chart: Day-over-Day Trends (LAG())
+      // 3. Chart: Day-over-Day Trends
       try {
         const dod = await apiRequest('/api/admin/analytics/day-over-day');
         const days = dod.data.map(d => d.day);
@@ -1437,21 +1466,19 @@
           y: dailyRev,
           type: 'scatter',
           mode: 'lines+markers',
-          line: { color: '#10B981', width: 2 },
-          marker: { size: 5, color: '#10B981' }
+          line: { color: '#059669', width: 2 },
+          marker: { size: 5, color: '#059669' }
         }], {
-          margin: { l: 50, r: 20, t: 10, b: 40 },
+          margin: { l: 60, r: 20, t: 10, b: 40 },
           paper_bgcolor: 'transparent',
           plot_bgcolor: 'transparent',
-          font: { color: '#94A3B8', size: 10 },
-          xaxis: { gridcolor: '#1E293B' },
-          yaxis: { gridcolor: '#1E293B' }
+          font: { color: '#334155', size: 10 },
+          xaxis: { gridcolor: '#F1F5F9' },
+          yaxis: { gridcolor: '#F1F5F9' }
         }, { responsive: true, displayModeBar: false });
-      } catch (e) {
-        console.error("Day-over-day chart error", e);
-      }
+      } catch (e) {}
 
-      // 4. Chart: Cumulative Revenue (SUM() OVER)
+      // 4. Chart: Cumulative Total
       try {
         const cum = await apiRequest('/api/admin/analytics/cumulative-revenue');
         const days = cum.data.map(d => d.payment_day);
@@ -1463,21 +1490,19 @@
           type: 'scatter',
           mode: 'lines',
           fill: 'tozeroy',
-          line: { color: '#8B5CF6', width: 2 },
-          fillcolor: 'rgba(139, 92, 246, 0.15)'
+          line: { color: '#7C3AED', width: 2 },
+          fillcolor: 'rgba(124, 58, 237, 0.08)'
         }], {
-          margin: { l: 60, r: 20, t: 10, b: 40 },
+          margin: { l: 70, r: 20, t: 10, b: 40 },
           paper_bgcolor: 'transparent',
           plot_bgcolor: 'transparent',
-          font: { color: '#94A3B8', size: 10 },
-          xaxis: { gridcolor: '#1E293B' },
-          yaxis: { gridcolor: '#1E293B' }
+          font: { color: '#334155', size: 10 },
+          xaxis: { gridcolor: '#F1F5F9' },
+          yaxis: { gridcolor: '#F1F5F9' }
         }, { responsive: true, displayModeBar: false });
-      } catch (e) {
-        console.error("Cumulative chart error", e);
-      }
+      } catch (e) {}
 
-      // 5. Chart: Meal Preferences (JSON_VALUE)
+      // 5. Chart: Meal Preferences
       try {
         const mp = await apiRequest('/api/admin/analytics/meal-preferences');
         const labels = mp.data.map(m => m.meal_choice);
@@ -1487,34 +1512,31 @@
           labels: labels,
           values: values,
           type: 'pie',
-          hole: 0.5,
+          hole: 0.45,
           marker: {
-            colors: ['#D4AF37', '#3B82F6', '#10B981', '#F43F5E', '#8B5CF6']
+            colors: ['#0052CC', '#059669', '#E11D48', '#D97706', '#7C3AED']
           }
         }], {
           margin: { l: 20, r: 20, t: 10, b: 20 },
           paper_bgcolor: 'transparent',
           plot_bgcolor: 'transparent',
-          font: { color: '#E2E8F0', size: 11 },
+          font: { color: '#1E293B', size: 11 },
           showlegend: true,
           legend: { orientation: 'h', x: 0, y: -0.1 }
         }, { responsive: true, displayModeBar: false });
-      } catch (e) {
-        console.error("Meal preferences chart error", e);
-      }
+      } catch (e) {}
     }
 
     async function triggerMvRefresh() {
       const btn = document.getElementById('btn-refresh-mv');
       btn.disabled = true;
-      btn.innerHTML = `<span>⏳</span> Refreshing ROUTE_REVENUE_MV...`;
+      btn.innerHTML = `<span>⏳</span> Refreshing...`;
 
       try {
         const res = await apiRequest('/api/admin/analytics/refresh-mv', 'POST');
         showToast(res.message, "success");
         await loadAdminAnalytics();
       } catch (e) {
-        // Handled in apiRequest
       } finally {
         btn.disabled = false;
         btn.innerHTML = `<span>⚡</span> Refresh Materialized View`;
@@ -1522,7 +1544,7 @@
     }
 
     // ----------------------------------------------------------------
-    // Administrator CRUD Record Management Tabs
+    // Admin CRUD Record Management Tabs
     // ----------------------------------------------------------------
     async function switchCrudTab(tab) {
       activeCrudTab = tab;
@@ -1530,26 +1552,26 @@
       tabs.forEach(t => {
         const btn = document.getElementById(`tab-btn-${t}`);
         if (btn) {
-          btn.className = (t === tab) 
-            ? "px-4 py-2 text-xs font-semibold rounded-lg bg-amber-500 text-slate-950 transition"
-            : "px-4 py-2 text-xs font-semibold rounded-lg bg-slate-800 text-gray-300 hover:text-white transition";
+          btn.className = (t === tab)
+            ? "px-4 py-2 text-xs font-bold rounded-lg bg-[#0052CC] text-white transition"
+            : "px-4 py-2 text-xs font-bold rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition";
         }
       });
 
       const container = document.getElementById('crud-table-container');
       const actionArea = document.getElementById('crud-action-buttons');
-      container.innerHTML = `<div class="text-center py-10 text-gray-400">Loading ${tab} records from Oracle...</div>`;
+      container.innerHTML = `<div class="text-center py-10 text-gray-500 font-medium">Loading ${tab} records...</div>`;
 
       if (tab === 'airports') {
         actionArea.innerHTML = `
-          <button onclick="openModal('modal-add-airport')" class="px-3.5 py-1.5 text-xs font-semibold bg-amber-500 hover:bg-amber-400 text-slate-950 rounded-lg transition">
+          <button onclick="openModal('modal-add-airport')" class="px-3.5 py-1.5 text-xs font-bold bg-[#0052CC] hover:bg-[#0043A8] text-white rounded-lg transition shadow-sm">
             + Add Airport
           </button>
         `;
         await renderAirportsTable(container);
       } else if (tab === 'flights') {
         actionArea.innerHTML = `
-          <button onclick="openModal('modal-add-flight')" class="px-3.5 py-1.5 text-xs font-semibold bg-amber-500 hover:bg-amber-400 text-slate-950 rounded-lg transition">
+          <button onclick="openModal('modal-add-flight')" class="px-3.5 py-1.5 text-xs font-bold bg-[#0052CC] hover:bg-[#0043A8] text-white rounded-lg transition shadow-sm">
             + Schedule Flight
           </button>
         `;
@@ -1557,14 +1579,14 @@
       } else if (tab === 'passengers') {
         actionArea.innerHTML = `
           <div class="flex items-center gap-2">
-            <input type="text" id="pass-search-input" placeholder="Search name/email..." onkeyup="if(event.key==='Enter') searchPassengersTable()" class="bg-slate-900 border border-slate-700 rounded px-2.5 py-1 text-xs text-white">
-            <button onclick="searchPassengersTable()" class="px-2.5 py-1 text-xs bg-slate-800 text-gray-300 rounded hover:text-white">Filter</button>
+            <input type="text" id="pass-search-input" placeholder="Search name or email..." onkeyup="if(event.key==='Enter') searchPassengersTable()" class="bg-white border border-gray-300 rounded px-3 py-1.5 text-xs text-gray-900 focus:outline-none focus:border-blue-500">
+            <button onclick="searchPassengersTable()" class="px-3 py-1.5 text-xs font-bold bg-gray-100 hover:bg-gray-200 text-gray-700 rounded transition">Search</button>
           </div>
         `;
         await renderPassengersTable(container);
       } else if (tab === 'bookings') {
         actionArea.innerHTML = `
-          <select id="bookings-status-filter" onchange="filterBookingsTable(this.value)" class="bg-slate-900 border border-slate-700 rounded px-2.5 py-1 text-xs text-white">
+          <select id="bookings-status-filter" onchange="filterBookingsTable(this.value)" class="bg-white border border-gray-300 rounded px-3 py-1.5 text-xs text-gray-900 font-medium">
             <option value="">All Statuses</option>
             <option value="CONFIRMED">CONFIRMED</option>
             <option value="CANCELLED">CANCELLED</option>
@@ -1572,37 +1594,37 @@
         `;
         await renderBookingsTable(container);
       } else if (tab === 'payments') {
-        actionArea.innerHTML = `<span class="text-xs text-emerald-400 font-mono">Immutable Audit Ledger</span>`;
+        actionArea.innerHTML = `<span class="text-xs text-emerald-700 font-semibold">Immutable Ledger</span>`;
         await renderPaymentsTable(container);
       }
     }
 
-    // --- Render Airports ---
+    // --- Render Airports Table ---
     async function renderAirportsTable(container) {
       try {
         const airports = await apiRequest('/api/admin/airports');
         container.innerHTML = `
           <table class="w-full text-left text-xs">
-            <thead class="text-gray-400 border-b border-white/10 uppercase font-semibold">
+            <thead class="text-gray-500 border-b border-gray-200 uppercase font-bold bg-gray-50">
               <tr>
                 <th class="py-2.5 px-3">Code</th>
                 <th class="py-2.5 px-3">Airport Name</th>
                 <th class="py-2.5 px-3">City</th>
                 <th class="py-2.5 px-3">Country</th>
                 <th class="py-2.5 px-3">Timezone</th>
-                <th class="py-2.5 px-3 text-right">Actions</th>
+                <th class="py-2.5 px-3 text-right">Action</th>
               </tr>
             </thead>
-            <tbody class="divide-y divide-white/5 text-gray-300">
+            <tbody class="divide-y divide-gray-100 text-gray-700">
               ${airports.map(a => `
-                <tr class="hover:bg-white/[0.02]">
-                  <td class="py-2.5 px-3 font-mono font-bold text-amber-300">${a.airport_id}</td>
-                  <td class="py-2.5 px-3 text-white font-medium">${a.name}</td>
+                <tr class="hover:bg-gray-50 transition">
+                  <td class="py-2.5 px-3 font-mono font-bold text-[#0052CC]">${a.airport_id}</td>
+                  <td class="py-2.5 px-3 font-medium text-gray-900">${a.name}</td>
                   <td class="py-2.5 px-3">${a.city}</td>
                   <td class="py-2.5 px-3">${a.country}</td>
-                  <td class="py-2.5 px-3 font-mono text-gray-400">${a.timezone || 'UTC'}</td>
+                  <td class="py-2.5 px-3 font-mono text-gray-500">${a.timezone || 'UTC'}</td>
                   <td class="py-2.5 px-3 text-right">
-                    <button onclick="handleDeleteAirport('${a.airport_id}')" class="text-rose-400 hover:text-rose-300 font-semibold text-xs">Delete</button>
+                    <button onclick="handleDeleteAirport('${a.airport_id}')" class="text-red-600 hover:text-red-700 font-bold text-xs">Delete</button>
                   </td>
                 </tr>
               `).join('')}
@@ -1610,7 +1632,7 @@
           </table>
         `;
       } catch (e) {
-        container.innerHTML = `<div class="text-rose-400 text-center py-4">${e.message}</div>`;
+        container.innerHTML = `<div class="text-red-600 text-center py-4">${e.message}</div>`;
       }
     }
 
@@ -1633,43 +1655,43 @@
     }
 
     async function handleDeleteAirport(code) {
-      if (!confirm(`Delete airport ${code}? Oracle will verify that no active flights reference this airport.`)) return;
+      if (!confirm(`Delete airport ${code}?`)) return;
       try {
         await apiRequest(`/api/admin/airports/${code}`, 'DELETE');
-        showToast(`Airport ${code} deleted successfully.`, "success");
+        showToast(`Airport ${code} deleted.`, "success");
         await renderAirportsTable(document.getElementById('crud-table-container'));
         await fetchAirportsList();
       } catch (err) {}
     }
 
-    // --- Render Flights ---
+    // --- Render Flights Table ---
     async function renderFlightsTable(container) {
       try {
         const flights = await apiRequest('/api/admin/flights');
         container.innerHTML = `
           <table class="w-full text-left text-xs">
-            <thead class="text-gray-400 border-b border-white/10 uppercase font-semibold">
+            <thead class="text-gray-500 border-b border-gray-200 uppercase font-bold bg-gray-50">
               <tr>
                 <th class="py-2.5 px-3">Flight ID</th>
                 <th class="py-2.5 px-3">Number</th>
                 <th class="py-2.5 px-3">Route</th>
-                <th class="py-2.5 px-3">Departure (UTC)</th>
-                <th class="py-2.5 px-3">Arrival (UTC)</th>
+                <th class="py-2.5 px-3">Departure</th>
+                <th class="py-2.5 px-3">Arrival</th>
                 <th class="py-2.5 px-3">Fare (INR)</th>
-                <th class="py-2.5 px-3 text-right">Actions</th>
+                <th class="py-2.5 px-3 text-right">Action</th>
               </tr>
             </thead>
-            <tbody class="divide-y divide-white/5 text-gray-300">
+            <tbody class="divide-y divide-gray-100 text-gray-700">
               ${flights.map(f => `
-                <tr class="hover:bg-white/[0.02]">
-                  <td class="py-2.5 px-3 font-mono text-gray-500">#${f.flight_id}</td>
-                  <td class="py-2.5 px-3 font-mono font-bold text-white">${f.flight_no}</td>
-                  <td class="py-2.5 px-3 font-medium text-amber-300">${f.origin} → ${f.destination}</td>
-                  <td class="py-2.5 px-3 font-mono text-gray-400">${f.departure_time}</td>
-                  <td class="py-2.5 px-3 font-mono text-gray-400">${f.arrival_time}</td>
-                  <td class="py-2.5 px-3 font-mono text-emerald-400 font-bold">₹${Number(f.fare).toLocaleString()}</td>
+                <tr class="hover:bg-gray-50 transition">
+                  <td class="py-2.5 px-3 font-mono text-gray-400">#${f.flight_id}</td>
+                  <td class="py-2.5 px-3 font-mono font-bold text-gray-900">${f.flight_no}</td>
+                  <td class="py-2.5 px-3 font-semibold text-[#0052CC]">${f.origin} → ${f.destination}</td>
+                  <td class="py-2.5 px-3 font-mono text-gray-600">${f.departure_time}</td>
+                  <td class="py-2.5 px-3 font-mono text-gray-600">${f.arrival_time}</td>
+                  <td class="py-2.5 px-3 font-mono text-emerald-700 font-bold">₹${Number(f.fare).toLocaleString()}</td>
                   <td class="py-2.5 px-3 text-right">
-                    <button onclick="openUpdateFareModal(${f.flight_id}, '${f.flight_no}', ${f.fare})" class="text-amber-400 hover:text-amber-300 font-semibold text-xs">Edit Fare</button>
+                    <button onclick="openUpdateFareModal(${f.flight_id}, '${f.flight_no}', ${f.fare})" class="text-[#0052CC] hover:underline font-bold text-xs">Edit Fare</button>
                   </td>
                 </tr>
               `).join('')}
@@ -1677,7 +1699,7 @@
           </table>
         `;
       } catch (e) {
-        container.innerHTML = `<div class="text-rose-400 text-center py-4">${e.message}</div>`;
+        container.innerHTML = `<div class="text-red-600 text-center py-4">${e.message}</div>`;
       }
     }
 
@@ -1698,7 +1720,6 @@
         closeModal('modal-update-fare');
         showToast(`Fare for Flight #${id} updated to ₹${fare}.`, "success");
         await renderFlightsTable(document.getElementById('crud-table-container'));
-        await fetchFlights();
       } catch (err) {}
     }
 
@@ -1717,45 +1738,44 @@
       try {
         await apiRequest('/api/admin/flights', 'POST', payload);
         closeModal('modal-add-flight');
-        showToast(`Flight ${payload.flight_no} scheduled successfully.`, "success");
+        showToast(`Flight ${payload.flight_no} scheduled.`, "success");
         await renderFlightsTable(document.getElementById('crud-table-container'));
-        await fetchFlights();
       } catch (err) {}
     }
 
-    // --- Render Passengers ---
+    // --- Render Passengers Table ---
     async function renderPassengersTable(container, search = null) {
       try {
         const url = search ? `/api/admin/passengers?search=${encodeURIComponent(search)}` : '/api/admin/passengers';
         const passengers = await apiRequest(url);
         container.innerHTML = `
           <table class="w-full text-left text-xs">
-            <thead class="text-gray-400 border-b border-white/10 uppercase font-semibold">
+            <thead class="text-gray-500 border-b border-gray-200 uppercase font-bold bg-gray-50">
               <tr>
                 <th class="py-2.5 px-3">ID</th>
                 <th class="py-2.5 px-3">Passenger Name</th>
                 <th class="py-2.5 px-3">Email</th>
                 <th class="py-2.5 px-3">Phone</th>
-                <th class="py-2.5 px-3">Auth Status</th>
+                <th class="py-2.5 px-3">Status</th>
                 <th class="py-2.5 px-3">Bookings</th>
                 <th class="py-2.5 px-3 text-right">Action</th>
               </tr>
             </thead>
-            <tbody class="divide-y divide-white/5 text-gray-300">
+            <tbody class="divide-y divide-gray-100 text-gray-700">
               ${passengers.map(p => `
-                <tr class="hover:bg-white/[0.02]">
-                  <td class="py-2.5 px-3 font-mono text-gray-500">#${p.passenger_id}</td>
-                  <td class="py-2.5 px-3 font-semibold text-white">${p.name}</td>
-                  <td class="py-2.5 px-3 text-gray-300 font-mono text-[11px]">${p.email}</td>
-                  <td class="py-2.5 px-3 text-gray-400">${p.phone}</td>
+                <tr class="hover:bg-gray-50 transition">
+                  <td class="py-2.5 px-3 font-mono text-gray-400">#${p.passenger_id}</td>
+                  <td class="py-2.5 px-3 font-bold text-gray-900">${p.name}</td>
+                  <td class="py-2.5 px-3 text-gray-600 font-mono">${p.email}</td>
+                  <td class="py-2.5 px-3 text-gray-500">${p.phone}</td>
                   <td class="py-2.5 px-3">
-                    <span class="px-2 py-0.5 rounded text-[10px] font-bold ${p.auth_status === 'ACTIVE' ? 'bg-emerald-500/20 text-emerald-300' : 'bg-amber-500/20 text-amber-300'}">
+                    <span class="px-2 py-0.5 rounded text-[10px] font-bold ${p.auth_status === 'ACTIVE' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}">
                       ${p.auth_status}
                     </span>
                   </td>
-                  <td class="py-2.5 px-3 font-mono text-center">${p.total_bookings}</td>
+                  <td class="py-2.5 px-3 font-mono text-center font-semibold">${p.total_bookings}</td>
                   <td class="py-2.5 px-3 text-right">
-                    <button onclick="openIssueTokenModal(${p.passenger_id}, '${p.name}')" class="px-2.5 py-1 bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 rounded font-semibold text-[11px] transition">
+                    <button onclick="openIssueTokenModal(${p.passenger_id}, '${p.name}')" class="px-2.5 py-1 bg-blue-50 hover:bg-blue-100 text-[#0052CC] rounded font-bold text-[11px] transition">
                       Issue Activation Code
                     </button>
                   </td>
@@ -1765,7 +1785,7 @@
           </table>
         `;
       } catch (e) {
-        container.innerHTML = `<div class="text-rose-400 text-center py-4">${e.message}</div>`;
+        container.innerHTML = `<div class="text-red-600 text-center py-4">${e.message}</div>`;
       }
     }
 
@@ -1794,7 +1814,7 @@
 
         document.getElementById('generated-token-text').value = res.activation_code;
         document.getElementById('token-result-box').classList.remove('hidden');
-        showToast(`Activation code generated for Passenger #${pid}`, "success");
+        showToast(`Activation code issued for Passenger #${pid}`, "success");
       } catch (err) {}
     }
 
@@ -1802,17 +1822,17 @@
       const input = document.getElementById('generated-token-text');
       input.select();
       navigator.clipboard.writeText(input.value);
-      showToast("Activation token copied to clipboard!", "info");
+      showToast("Activation code copied to clipboard!", "info");
     }
 
-    // --- Render Bookings ---
+    // --- Render Bookings Table ---
     async function renderBookingsTable(container, status = '') {
       try {
         const url = status ? `/api/admin/bookings?status=${status}` : '/api/admin/bookings';
         const bookings = await apiRequest(url);
         container.innerHTML = `
           <table class="w-full text-left text-xs">
-            <thead class="text-gray-400 border-b border-white/10 uppercase font-semibold">
+            <thead class="text-gray-500 border-b border-gray-200 uppercase font-bold bg-gray-50">
               <tr>
                 <th class="py-2.5 px-3">Booking ID</th>
                 <th class="py-2.5 px-3">Passenger</th>
@@ -1820,35 +1840,31 @@
                 <th class="py-2.5 px-3">Date</th>
                 <th class="py-2.5 px-3">Status</th>
                 <th class="py-2.5 px-3">Payment</th>
-                <th class="py-2.5 px-3">Metadata (JSON)</th>
               </tr>
             </thead>
-            <tbody class="divide-y divide-white/5 text-gray-300">
+            <tbody class="divide-y divide-gray-100 text-gray-700">
               ${bookings.slice(0, 50).map(b => `
-                <tr class="hover:bg-white/[0.02]">
-                  <td class="py-2.5 px-3 font-mono font-bold text-white">#${b.booking_id}</td>
-                  <td class="py-2.5 px-3 text-white font-medium">${b.passenger_name} (ID: ${b.passenger_id})</td>
-                  <td class="py-2.5 px-3 font-mono text-amber-300">${b.flight_no}</td>
-                  <td class="py-2.5 px-3 font-mono text-gray-400">${b.booking_date}</td>
+                <tr class="hover:bg-gray-50 transition">
+                  <td class="py-2.5 px-3 font-mono font-bold text-gray-900">#${b.booking_id}</td>
+                  <td class="py-2.5 px-3 text-gray-900 font-medium">${b.passenger_name} (ID: ${b.passenger_id})</td>
+                  <td class="py-2.5 px-3 font-mono font-bold text-[#0052CC]">${b.flight_no}</td>
+                  <td class="py-2.5 px-3 font-mono text-gray-500">${b.booking_date}</td>
                   <td class="py-2.5 px-3">
-                    <span class="px-2 py-0.5 rounded text-[10px] font-bold ${b.status === 'CONFIRMED' ? 'bg-emerald-500/20 text-emerald-300' : 'bg-rose-500/20 text-rose-300'}">
+                    <span class="px-2 py-0.5 rounded text-[10px] font-bold ${b.status === 'CONFIRMED' ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'}">
                       ${b.status}
                     </span>
                   </td>
-                  <td class="py-2.5 px-3 font-mono text-emerald-400">
-                    ${b.currency || 'INR'} ${Number(b.amount || 0).toLocaleString()} (${b.payment_status || 'SUCCESS'})
-                  </td>
-                  <td class="py-2.5 px-3 font-mono text-[10px] text-gray-400 max-w-[150px] truncate">
-                    ${b.metadata || '{}'}
+                  <td class="py-2.5 px-3 font-mono text-emerald-700 font-bold">
+                    ${b.currency || 'INR'} ${Number(b.amount || 0).toLocaleString()}
                   </td>
                 </tr>
               `).join('')}
             </tbody>
           </table>
-          ${bookings.length > 50 ? `<p class="text-center text-[11px] text-gray-500 py-2">Showing first 50 of ${bookings.length} fleet bookings</p>` : ''}
+          ${bookings.length > 50 ? `<p class="text-center text-[11px] text-gray-400 py-2">Showing first 50 of ${bookings.length} reservations</p>` : ''}
         `;
       } catch (e) {
-        container.innerHTML = `<div class="text-rose-400 text-center py-4">${e.message}</div>`;
+        container.innerHTML = `<div class="text-red-600 text-center py-4">${e.message}</div>`;
       }
     }
 
@@ -1856,50 +1872,50 @@
       renderBookingsTable(document.getElementById('crud-table-container'), val);
     }
 
-    // --- Render Payments ---
+    // --- Render Payments Table ---
     async function renderPaymentsTable(container) {
       try {
         const payments = await apiRequest('/api/admin/payments');
         container.innerHTML = `
           <table class="w-full text-left text-xs">
-            <thead class="text-gray-400 border-b border-white/10 uppercase font-semibold">
+            <thead class="text-gray-500 border-b border-gray-200 uppercase font-bold bg-gray-50">
               <tr>
                 <th class="py-2.5 px-3">Payment ID</th>
-                <th class="py-2.5 px-3">Booking ID</th>
+                <th class="py-2.5 px-3">Booking Ref</th>
                 <th class="py-2.5 px-3">Amount</th>
                 <th class="py-2.5 px-3">Currency</th>
                 <th class="py-2.5 px-3">Method</th>
                 <th class="py-2.5 px-3">Status</th>
-                <th class="py-2.5 px-3">Transaction Date</th>
+                <th class="py-2.5 px-3">Date</th>
               </tr>
             </thead>
-            <tbody class="divide-y divide-white/5 text-gray-300">
+            <tbody class="divide-y divide-gray-100 text-gray-700">
               ${payments.slice(0, 50).map(p => `
-                <tr class="hover:bg-white/[0.02]">
-                  <td class="py-2.5 px-3 font-mono text-gray-500">#${p.payment_id}</td>
-                  <td class="py-2.5 px-3 font-mono font-bold text-white">#${p.booking_id}</td>
-                  <td class="py-2.5 px-3 font-mono font-bold text-emerald-400">${Number(p.amount).toLocaleString()}</td>
-                  <td class="py-2.5 px-3 font-mono text-gray-300">${p.currency}</td>
-                  <td class="py-2.5 px-3 font-medium text-amber-300">${p.payment_method}</td>
+                <tr class="hover:bg-gray-50 transition">
+                  <td class="py-2.5 px-3 font-mono text-gray-400">#${p.payment_id}</td>
+                  <td class="py-2.5 px-3 font-mono font-bold text-gray-900">#${p.booking_id}</td>
+                  <td class="py-2.5 px-3 font-mono font-bold text-emerald-700">${Number(p.amount).toLocaleString()}</td>
+                  <td class="py-2.5 px-3 font-mono text-gray-600">${p.currency}</td>
+                  <td class="py-2.5 px-3 font-medium text-gray-900">${p.payment_method}</td>
                   <td class="py-2.5 px-3">
-                    <span class="px-2 py-0.5 rounded text-[10px] font-bold ${p.status === 'SUCCESS' ? 'bg-emerald-500/20 text-emerald-300' : 'bg-rose-500/20 text-rose-300'}">
+                    <span class="px-2 py-0.5 rounded text-[10px] font-bold ${p.status === 'SUCCESS' ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'}">
                       ${p.status}
                     </span>
                   </td>
-                  <td class="py-2.5 px-3 font-mono text-gray-400">${p.payment_date}</td>
+                  <td class="py-2.5 px-3 font-mono text-gray-500">${p.payment_date}</td>
                 </tr>
               `).join('')}
             </tbody>
           </table>
-          ${payments.length > 50 ? `<p class="text-center text-[11px] text-gray-500 py-2">Showing first 50 of ${payments.length} ledger payments</p>` : ''}
+          ${payments.length > 50 ? `<p class="text-center text-[11px] text-gray-400 py-2">Showing first 50 of ${payments.length} ledger payments</p>` : ''}
         `;
       } catch (e) {
-        container.innerHTML = `<div class="text-rose-400 text-center py-4">${e.message}</div>`;
+        container.innerHTML = `<div class="text-red-600 text-center py-4">${e.message}</div>`;
       }
     }
 
     // ----------------------------------------------------------------
-    // UI Helpers (Modals & Toast Notifications)
+    // UI Helpers (Modals & Toast)
     // ----------------------------------------------------------------
     function openModal(id) {
       const el = document.getElementById(id);
@@ -1915,14 +1931,14 @@
       const container = document.getElementById('toast-container');
       const toast = document.createElement('div');
 
-      const bg = type === 'success' ? 'bg-emerald-950 border-emerald-500 text-emerald-200'
-               : type === 'error' ? 'bg-rose-950 border-rose-500 text-rose-200'
-               : 'bg-slate-900 border-amber-500 text-amber-200';
+      const bg = type === 'success' ? 'bg-emerald-50 border-emerald-300 text-emerald-900'
+               : type === 'error' ? 'bg-rose-50 border-rose-300 text-rose-900'
+               : 'bg-blue-50 border-blue-300 text-blue-900';
 
-      toast.className = `p-4 rounded-xl border shadow-xl flex items-center justify-between text-xs pointer-events-auto transition-all transform duration-300 translate-y-2 opacity-0 ${bg}`;
+      toast.className = `p-3.5 rounded-lg border shadow-md flex items-center justify-between text-xs pointer-events-auto transition-all transform duration-300 translate-y-2 opacity-0 ${bg}`;
       toast.innerHTML = `
         <div class="flex items-center gap-2">
-          <span>${type === 'success' ? '✓' : type === 'error' ? '✕' : 'ℹ'}</span>
+          <span class="font-bold">${type === 'success' ? '✓' : type === 'error' ? '✕' : 'ℹ'}</span>
           <span class="font-medium">${message}</span>
         </div>
       `;

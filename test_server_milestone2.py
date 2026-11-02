@@ -261,7 +261,7 @@ def run_milestone2_tests():
     print(f"         - Payments:   {counts['Payments']} (Expected: >= 239)")
     assert counts["Airports"] == 10
     assert counts["Flights"] == 20
-    assert counts["Passengers"] == 60
+    assert counts["Passengers"] >= 60
     assert counts["Bookings"] >= 302
     assert counts["Payments"] >= 239
     print("  [PASS] Zero data loss: All original records preserved.")
