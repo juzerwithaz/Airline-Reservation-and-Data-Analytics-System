@@ -1,5 +1,6 @@
 import os
 import json
+import math
 import hashlib
 import secrets
 from typing import Any, Dict, List, Optional, Tuple
@@ -102,6 +103,23 @@ def fetch_df(sql: str, params: Optional[Any] = None) -> pd.DataFrame:
         raise RuntimeError(f"Database Query Error: {error_obj.message}") from e
     finally:
         conn.close()
+
+
+def clean_records(df: pd.DataFrame) -> List[Dict[str, Any]]:
+    """
+    Convert a pandas DataFrame to a list of dicts, ensuring that all NaN/NaT
+    values are replaced with Python None (which serializes cleanly to JSON null).
+    """
+    if df.empty:
+        return []
+    records = df.to_dict(orient="records")
+    for r in records:
+        for k, v in r.items():
+            if isinstance(v, float) and (math.isnan(v) or pd.isna(v)):
+                r[k] = None
+            elif pd.isna(v):
+                r[k] = None
+    return records
 
 
 def fetch_one(sql: str, params: Optional[Any] = None) -> Optional[Tuple]:
@@ -626,7 +644,7 @@ def search_flights(
         "dest_id": destination_airport_id if destination_airport_id and destination_airport_id != "All" else None,
     }
     df = fetch_df(sql, params)
-    return df.to_dict(orient="records")
+    return clean_records(df)
 
 
 def book_flight(
@@ -802,7 +820,7 @@ def get_passenger_bookings_history(passenger_id: int) -> List[Dict[str, Any]]:
         ORDER BY b.booking_id DESC
     """
     df = fetch_df(sql, {"pid": passenger_id})
-    return df.to_dict(orient="records")
+    return clean_records(df)
 
 
 def cancel_passenger_booking(booking_id: int, passenger_id: int) -> bool:
@@ -846,7 +864,7 @@ def cancel_passenger_booking(booking_id: int, passenger_id: int) -> bool:
 
 def admin_get_airports() -> List[Dict[str, Any]]:
     sql = "SELECT airport_id, name, city, country, timezone FROM Airports ORDER BY airport_id"
-    return fetch_df(sql).to_dict(orient="records")
+    return clean_records(fetch_df(sql))
 
 
 def admin_create_airport(airport_id: str, name: str, city: str, country: str, timezone: str) -> Dict[str, Any]:
@@ -952,7 +970,7 @@ def admin_get_flights() -> List[Dict[str, Any]]:
         JOIN Airports a2 ON f.destination_id = a2.airport_id
         ORDER BY f.flight_id
     """
-    return fetch_df(sql).to_dict(orient="records")
+    return clean_records(fetch_df(sql))
 
 
 def admin_create_flight(
@@ -1048,7 +1066,7 @@ def admin_get_passengers(search: Optional[str] = None) -> List[Dict[str, Any]]:
             a.status, a.last_login
         ORDER BY p.passenger_id
     """
-    return fetch_df(sql, {"s": search.strip() if search else None}).to_dict(orient="records")
+    return clean_records(fetch_df(sql, {"s": search.strip() if search else None}))
 
 
 def admin_get_bookings(status: Optional[str] = None) -> List[Dict[str, Any]]:
@@ -1072,7 +1090,7 @@ def admin_get_bookings(status: Optional[str] = None) -> List[Dict[str, Any]]:
         WHERE (:st IS NULL OR b.status = :st)
         ORDER BY b.booking_id DESC
     """
-    return fetch_df(sql, {"st": status}).to_dict(orient="records")
+    return clean_records(fetch_df(sql, {"st": status}))
 
 
 def admin_get_payments(status: Optional[str] = None) -> List[Dict[str, Any]]:
@@ -1089,7 +1107,7 @@ def admin_get_payments(status: Optional[str] = None) -> List[Dict[str, Any]]:
         WHERE (:st IS NULL OR pay.status = :st)
         ORDER BY pay.payment_id DESC
     """
-    return fetch_df(sql, {"st": status}).to_dict(orient="records")
+    return clean_records(fetch_df(sql, {"st": status}))
 
 
 # ====================================================================
@@ -1199,24 +1217,30 @@ def get_admin_kpis() -> Dict[str, Any]:
     df = fetch_df(SQL_EXPLANATIONS["kpis"]["sql"])
     if df.empty:
         return {}
-    return df.iloc[0].to_dict()
+    res = df.iloc[0].to_dict()
+    for k, v in res.items():
+        if isinstance(v, float) and (math.isnan(v) or pd.isna(v)):
+            res[k] = None
+        elif pd.isna(v):
+            res[k] = None
+    return res
 
 
 def get_route_ranking() -> List[Dict[str, Any]]:
-    return fetch_df(SQL_EXPLANATIONS["route_ranking"]["sql"]).to_dict(orient="records")
+    return clean_records(fetch_df(SQL_EXPLANATIONS["route_ranking"]["sql"]))
 
 
 def get_day_over_day_revenue() -> List[Dict[str, Any]]:
-    return fetch_df(SQL_EXPLANATIONS["day_over_day"]["sql"]).to_dict(orient="records")
+    return clean_records(fetch_df(SQL_EXPLANATIONS["day_over_day"]["sql"]))
 
 
 def get_cumulative_revenue() -> List[Dict[str, Any]]:
-    return fetch_df(SQL_EXPLANATIONS["cumulative_revenue"]["sql"]).to_dict(orient="records")
+    return clean_records(fetch_df(SQL_EXPLANATIONS["cumulative_revenue"]["sql"]))
 
 
 def get_passenger_meal_preferences() -> List[Dict[str, Any]]:
-    return fetch_df(SQL_EXPLANATIONS["meal_preferences"]["sql"]).to_dict(orient="records")
+    return clean_records(fetch_df(SQL_EXPLANATIONS["meal_preferences"]["sql"]))
 
 
 def get_route_revenue_mv_data() -> List[Dict[str, Any]]:
-    return fetch_df(SQL_EXPLANATIONS["route_revenue_mv"]["sql"]).to_dict(orient="records")
+    return clean_records(fetch_df(SQL_EXPLANATIONS["route_revenue_mv"]["sql"]))
