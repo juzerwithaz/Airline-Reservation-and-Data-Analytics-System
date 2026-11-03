@@ -1194,11 +1194,13 @@
       try {
         const resp = await fetch(`${url}/health`);
         const data = await resp.json();
-        if (resp.ok && data.status === 'connected') {
+        const isDbConnected = data.database?.status === 'connected' || data.status === 'connected' || data.status === 'healthy';
+        if (resp.ok && isDbConnected) {
+          const banner = data.database?.banner || data.banner || 'Oracle AI Database 23ai Free';
           resultEl.className = "p-2.5 rounded text-xs bg-emerald-50 text-emerald-800 border border-emerald-200 block";
-          resultEl.textContent = `✓ Connected to Oracle Database: ${data.banner || 'OK'}`;
+          resultEl.textContent = `✓ Connected to Oracle Database: ${banner}`;
         } else {
-          throw new Error(data.detail || "Health check failed");
+          throw new Error(data.detail || "Health check returned an unhealthy database status.");
         }
       } catch (e) {
         resultEl.className = "p-2.5 rounded text-xs bg-rose-50 text-rose-800 border border-rose-200 block";
