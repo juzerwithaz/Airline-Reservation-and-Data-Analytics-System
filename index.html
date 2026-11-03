@@ -1069,6 +1069,53 @@
     // ----------------------------------------------------------------
     // Centralized API Client (Clean Error Extraction & Failover)
     // ----------------------------------------------------------------
+    function isTokenExpired(token) {
+      if (!token) return true;
+      try {
+        const parts = token.split('.');
+        if (parts.length !== 3) return true;
+        const payloadBase64 = parts[1].replace(/-/g, '+').replace(/_/g, '/');
+        const jsonStr = decodeURIComponent(atob(payloadBase64).split('').map(c => {
+          return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+        }).join(''));
+        const payload = JSON.parse(jsonStr);
+        if (!payload.exp) return false;
+        // Expired if current time >= exp (buffered by 5 seconds)
+        return (payload.exp * 1000) <= (Date.now() + 5000);
+      } catch (e) {
+        return true;
+      }
+    }
+
+    let isHandlingSessionExpiry = false;
+
+    function handleSessionExpired(reason = "Token has expired. Please log in again.") {
+      if (isHandlingSessionExpiry) return;
+      isHandlingSessionExpiry = true;
+
+      const wasAdmin = (authRole === 'ADMIN' || currentPortal === 'admin');
+
+      authToken = null;
+      currentUser = null;
+      authRole = null;
+      localStorage.removeItem('az_token');
+      localStorage.removeItem('az_user');
+      localStorage.removeItem('az_role');
+
+      updatePortalUI();
+      showToast(reason, "error");
+
+      if (wasAdmin) {
+        openModal('modal-admin-login');
+      } else {
+        openModal('modal-passenger-login');
+      }
+
+      setTimeout(() => {
+        isHandlingSessionExpiry = false;
+      }, 3000);
+    }
+
     async function apiRequest(endpoint, method = 'GET', data = null, customToken = null) {
       const headers = { 'Content-Type': 'application/json' };
       const token = customToken || authToken;
@@ -1095,6 +1142,12 @@
               errorMsg = json.detail;
             }
           }
+
+          if (resp.status === 401 && authToken) {
+            handleSessionExpired(errorMsg);
+            throw new Error(errorMsg);
+          }
+
           throw new Error(errorMsg);
         }
         return json;
@@ -1103,7 +1156,9 @@
         if (msg === "Failed to fetch" || err.name === "TypeError") {
           msg = `Cannot reach backend at ${API_BASE}. Please ensure FastAPI is running (uvicorn server:app --reload).`;
         }
-        showToast(msg, "error");
+        if (!isHandlingSessionExpiry || !msg.toLowerCase().includes("token")) {
+          showToast(msg, "error");
+        }
         throw err;
       }
     }
@@ -1180,9 +1235,22 @@
       const savedRole = localStorage.getItem('az_role');
       const savedPortal = localStorage.getItem('az_portal_mode');
 
-      if (savedToken && savedUser) {
+      if (savedToken && isTokenExpired(savedToken)) {
+        // Proactively clear expired session without spamming 5 failed requests
+        localStorage.removeItem('az_token');
+        localStorage.removeItem('az_user');
+        localStorage.removeItem('az_role');
+        authToken = null;
+        currentUser = null;
+        authRole = null;
+        showToast("Previous session has expired. Please sign in again.", "info");
+      } else if (savedToken && savedUser) {
         authToken = savedToken;
-        currentUser = JSON.parse(savedUser);
+        try {
+          currentUser = JSON.parse(savedUser);
+        } catch (e) {
+          currentUser = null;
+        }
         authRole = savedRole;
       }
 
@@ -1716,6 +1784,15 @@
     // Manage Bookings (Passenger)
     // ----------------------------------------------------------------
     async function loadPassengerBookings() {
+      if (!currentUser || authRole !== 'PASSENGER' || !authToken) {
+        openModal('modal-passenger-login');
+        return;
+      }
+      if (isTokenExpired(authToken)) {
+        handleSessionExpired("Token has expired. Please log in again.");
+        return;
+      }
+
       const container = document.getElementById('my-bookings-container');
       container.innerHTML = `<div class="text-center py-10 text-gray-500 font-medium">Fetching reservations...</div>`;
 
@@ -1806,7 +1883,14 @@
     // Admin Analytics & KPIs
     // ----------------------------------------------------------------
     async function loadAdminAnalytics() {
-      if (!currentUser || authRole !== 'ADMIN') return;
+      if (!currentUser || authRole !== 'ADMIN' || !authToken) {
+        openModal('modal-admin-login');
+        return;
+      }
+      if (isTokenExpired(authToken)) {
+        handleSessionExpired("Token has expired. Please log in again.");
+        return;
+      }
       document.getElementById('admin-role-title').textContent = currentUser.role || "ADMIN";
 
       // 1. KPIs
@@ -1936,6 +2020,15 @@
     // Admin CRUD Record Management Tabs
     // ----------------------------------------------------------------
     async function switchCrudTab(tab) {
+      if (!currentUser || authRole !== 'ADMIN' || !authToken) {
+        openModal('modal-admin-login');
+        return;
+      }
+      if (isTokenExpired(authToken)) {
+        handleSessionExpired("Token has expired. Please log in again.");
+        return;
+      }
+
       activeCrudTab = tab;
       const tabs = ['airports', 'flights', 'passengers', 'bookings', 'payments'];
       tabs.forEach(t => {
@@ -2338,7 +2431,6 @@
     function showToast(message, type = 'info') {
       const container = document.getElementById('toast-container');
       if (!container) return;
-      const toast = document.createElement('div');
 
       let displayMessage = message;
       if (typeof message === 'object' && message !== null) {
@@ -2353,6 +2445,20 @@
         displayMessage = String(message || 'An unexpected error occurred.');
       }
 
+      // 1. Prevent stacking duplicate toasts with identical messages
+      const existing = container.querySelectorAll('.toast-msg');
+      for (const el of existing) {
+        if (el.textContent.trim() === displayMessage.trim()) {
+          return;
+        }
+      }
+
+      // 2. Limit maximum simultaneous visible toasts to 3
+      while (container.children.length >= 3) {
+        container.firstElementChild.remove();
+      }
+
+      const toast = document.createElement('div');
       const bg = type === 'success' ? 'bg-emerald-50 border-emerald-300 text-emerald-900'
                : type === 'error' ? 'bg-rose-50 border-rose-300 text-rose-900'
                : 'bg-blue-50 border-blue-300 text-blue-900';
@@ -2361,7 +2467,7 @@
       toast.innerHTML = `
         <div class="flex items-center gap-2">
           <span class="font-bold">${type === 'success' ? '✓' : type === 'error' ? '✕' : 'ℹ'}</span>
-          <span class="font-medium">${displayMessage}</span>
+          <span class="font-medium toast-msg">${displayMessage}</span>
         </div>
       `;
 
